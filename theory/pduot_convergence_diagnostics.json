@@ -1,0 +1,75 @@
+{
+  "purpose": "Diagnostics for the standalone PDUOT convergence theory note",
+  "date": "2026-10-12",
+  "geometry_experiment": {
+    "dataset": "TOME E11.5--E12.5",
+    "num_samples_per_side": 2048,
+    "pca_dimension": 30,
+    "seed": 43,
+    "cost_precision": "fp64",
+    "restricted_tolerance": 1e-8,
+    "full_dual_tolerance": 1e-8,
+    "split_count": 8,
+    "results": [
+      {
+        "rho_source": 1.0,
+        "rho_target": 1.0,
+        "positive_edges": 3982,
+        "positive_support_is_forest": true,
+        "covered_source_nodes": 2048,
+        "covered_target_nodes": 2048,
+        "minimum_inactive_slack": 4.756099080849285e-6
+      },
+      {
+        "rho_source": 0.1,
+        "rho_target": 0.1,
+        "positive_edges": 3674,
+        "positive_support_is_forest": true,
+        "covered_source_nodes": 2048,
+        "covered_target_nodes": 2048,
+        "minimum_inactive_slack": 6.2237145561985785e-6
+      },
+      {
+        "rho_source": 0.01,
+        "rho_target": 0.01,
+        "positive_edges": 3214,
+        "positive_support_is_forest": true,
+        "covered_source_nodes": 2041,
+        "covered_target_nodes": 2024,
+        "minimum_inactive_slack": 1.0436209104680572e-6,
+        "note": "Some computed marginals reached numerical zero; exact KL-UOT marginals remain positive under node coverage, but the local conditioning constant is not numerically useful here."
+      }
+    ]
+  },
+  "restart_experiment": {
+    "dataset": "TOME E11.5--E12.5",
+    "num_samples_per_side": 1024,
+    "pca_dimension": 30,
+    "seed": 44,
+    "rho_source": 1.0,
+    "rho_target": 1.0,
+    "cost_precision": "fp64",
+    "tolerance": 1e-8,
+    "restricted_problem": "Cold solve on the 1958 positive edges returned by a high-accuracy HierUOT solve",
+    "results": [
+      {
+        "variant": "fixed_metric_certified_restart",
+        "iterations": 27000,
+        "restarts": 11,
+        "final_kkt_error": 7.886894289488729e-9
+      },
+      {
+        "variant": "fixed_metric_practical_restart",
+        "iterations": 28000,
+        "restarts": 11,
+        "final_kkt_error": 9.53426927050346e-9
+      },
+      {
+        "variant": "pid_metric_practical_restart",
+        "iterations": 4600,
+        "restarts": 8,
+        "final_kkt_error": 9.933992437231402e-9
+      }
+    ]
+  }
+}

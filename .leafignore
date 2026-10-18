@@ -1,0 +1,14 @@
+.git/
+.leaflink/
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.xdv
+*.toc
+main.pdf
+theory/*.pdf

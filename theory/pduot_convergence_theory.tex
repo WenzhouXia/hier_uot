@@ -1,0 +1,362 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newtheorem{assumption}{Assumption}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\dist}{\operatorname{dist}}
+\newcommand{\prox}{\operatorname{prox}}
+\newcommand{\Fix}{\operatorname{Fix}}
+
+\title{Local Sharpness and Restarted Convergence of PDUOT\\\large Working Theory Note}
+\author{}
+\date{October 12, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note isolates a convergence result that is both valid for restricted KL-UOT and relevant to the implemented PDUOT solver.
+For fixed step sizes, the PDUOT update is a reflected Halpern iteration applied to a firmly nonexpansive PDHG map.
+This observation gives global convergence and an $O(1/k)$ fixed-point residual bound by existing operator theory.
+The KL-specific contribution is a verifiable sufficient condition for local fixed-point sharpness: strict complementarity together with full column rank of the incidence matrix on the positive transport support.
+For a bipartite transport graph, the rank condition holds when the positive support is a forest.
+We prove strong metric regularity directly by identifying the inactive face and applying the implicit function theorem to the reduced KKT equations.
+The resulting error bound yields tail linear convergence for fixed-frequency or residual-based restarts.
+The result covers a fixed-metric core of PDUOT and deliberately excludes the PID primal-weight controller and the complete practical restart policy.
+\end{abstract}
+
+\section{Scope}
+
+The theoretical target is one restricted KL-UOT problem on a fixed active support.
+All convergence statements concern the exact-arithmetic proximal map and a certified step satisfying $\tau\sigma\lVert K\rVert_2^2<1$.
+The proof has two layers.
+The first layer identifies the fixed-metric PDUOT iteration with reflected Halpern PDHG and is largely inherited from existing theory \cite{lu2024restarted,liu2026restarted}.
+The second layer establishes a local error bound from the geometry of KL-UOT.
+Only the second layer is problem-specific.
+
+The current implementation updates the primal weight at restarts with a PID controller and uses sufficient, necessary, and artificial restart triggers inherited from cuPDLPx \cite{lu2025cupdlpx}.
+Those mechanisms are discussed separately in Section~\ref{sec:implementation-gap}.
+
+\section{Restricted KL-UOT as a saddle problem}
+
+Let $\mathcal A$ be the active support and let $x\in\R^{|\mathcal A|}$ contain its transport values.
+Let $K\in\R^{(n_s+n_t)\times|\mathcal A|}$ be the unsigned bipartite incidence matrix, so that $Kx=(r,q)$ contains the source and target transported marginals.
+For positive reference masses $a$ and $b$, restricted KL-UOT is
+$$\min_{x\geq 0}\ c^\top x+\rho_a\sum_i\left(r_i\log\frac{r_i}{a_i}-r_i+a_i\right)+\rho_b\sum_j\left(q_j\log\frac{q_j}{b_j}-q_j+b_j\right),\qquad (r,q)=Kx.$$
+Define $F(x)=c^\top x+\iota_{\R_+^{|\mathcal A|}}(x)$ and let $G(Kx)$ denote the two KL terms.
+Its conjugate is
+$$G^*(y)=\rho_a\sum_i a_i\left(e^{y_i/\rho_a}-1\right)+\rho_b\sum_j b_j\left(e^{y_{n_s+j}/\rho_b}-1\right).$$
+The saddle formulation is $\min_x\max_y F(x)+\langle Kx,y\rangle-G^*(y)$.
+The paper potentials satisfy $y=-(f,g)$.
+
+The KKT mapping is
+$$\mathcal M(x,y)=\begin{pmatrix}c+K^\top y+N_{\R_+^{|\mathcal A|}}(x)\\ \nabla G^*(y)-Kx\end{pmatrix}.$$
+For steps $\tau,\sigma>0$, define the canonical PDHG metric
+$$P=\begin{pmatrix}\tau^{-1}I&-K^\top\\-K&\sigma^{-1}I\end{pmatrix}.$$
+The condition $\tau\sigma\lVert K\rVert_2^2<1$ makes $P$ positive definite.
+A constant common step of $0.998/\lVert K\rVert_2$ satisfies this condition while preserving the product $\tau\sigma$.
+The implementation uses a power-iteration estimate in place of the exact norm, so this statement becomes certified only when that estimate is replaced by a verified upper bound.
+
+One PDHG image $T(x,y)=(\widehat x,\widehat y)$ is
+$$\widehat x=\prox_{\tau F}(x-\tau K^\top y),\qquad \widehat y=\prox_{\sigma G^*}\left(y+\sigma K(2\widehat x-x)\right).$$
+The exponential proximal map for $G^*$ is the Lambert--$W$ update implemented by PDUOT.
+
+\begin{proposition}[Operator form]
+If $P\succ0$, then $T=(P+\mathcal M)^{-1}P$ and $T$ is firmly nonexpansive in the $P$-norm.
+Consequently, $2T-I$ is nonexpansive and $\Fix(T)=\mathcal M^{-1}(0)$.
+\end{proposition}
+
+\begin{proof}
+The inclusion $P(z-Tz)\in\mathcal M(Tz)$ expands into the two displayed proximal updates.
+The mapping $\mathcal M$ is maximally monotone because it is the KKT operator of a proper closed convex saddle problem.
+The preconditioned resolvent is therefore firmly nonexpansive in the $P$-metric.
+\end{proof}
+
+Within one restart epoch, PDUOT applies the Halpern iteration to the reflected map:
+$$z^{k+1}=\frac{1}{k+2}z^0+\frac{k+1}{k+2}(2T-I)z^k.$$
+
+\begin{corollary}[Fixed-metric global convergence]
+Suppose the restricted KL-UOT problem has a KKT point and $P\succ0$ is fixed.
+Then the unrestarted reflected Halpern iterates converge to a fixed point of $T$ and satisfy
+$$\lVert z^k-Tz^k\rVert_P\leq\frac{\dist_P(z^0,\Fix T)}{k+1}.$$
+\end{corollary}
+
+This corollary is a direct use of reflected Halpern fixed-point theory and should not be presented as a new KL-UOT theorem.
+
+\section{A KL-specific local error bound}
+
+Let $(x^*,y^*)$ be a KKT point.
+Define the positive support $B=\{e:x_e^*>0\}$ and its complement $N=\mathcal A\setminus B$.
+The dual slack is $s^*=c+K^\top y^*=c-f-g$.
+
+\begin{lemma}[Positive optimal marginals]
+If every source and target node is incident to at least one active-support edge, then every optimal transported marginal is strictly positive.
+\end{lemma}
+
+\begin{proof}
+Let $x^*$ be optimal and suppose that $r_i^*=0$ for some source node $i$.
+Choose an active-support edge $e=(i,j)$ and set $x(t)=x^*+t\mathbf e_e$ for $t>0$.
+The source KL change divided by $t$ is $\rho_a(\log(t/a_i)-1)$, which tends to $-\infty$ as $t\downarrow0$.
+The linear-cost quotient is the finite number $c_e$.
+If $q_j^*>0$, the target KL quotient converges to the finite derivative $\rho_b\log(q_j^*/b_j)$; if $q_j^*=0$, it also tends to $-\infty$.
+Hence the total directional quotient is negative for all sufficiently small $t$, contradicting optimality.
+The target-side argument is identical.
+\end{proof}
+
+The lemma also gives existence of a finite KKT dual variable.
+Indeed, the objective is differentiable at every optimal transported marginal, so the convex Fermat rule yields the stationarity inclusion with $y^*=\nabla G(Kx^*)$.
+At a KKT point, $y^*=\nabla G(Kx^*)$ and $Kx^*=\nabla G^*(y^*)$.
+The conjugate is locally strongly convex at $y^*$, although its smallest curvature can be arbitrarily small.
+More precisely,
+$$H:=\nabla^2G^*(y^*)=\operatorname{diag}\left(\frac{r^*}{\rho_a},\frac{q^*}{\rho_b}\right)\succ0.$$
+
+\begin{assumption}[Nondegenerate positive support]\label{ass:nondegenerate}
+The KKT point satisfies strict complementarity $s_e^*>0$ for every $e\in N$, and $K_B$ has full column rank.
+\end{assumption}
+
+\begin{lemma}[Graph interpretation]
+The unsigned bipartite incidence matrix $K_B$ has full column rank if and only if the graph formed by the positive transport edges is a forest.
+\end{lemma}
+
+\begin{proof}
+Multiplying all target rows by $-1$ turns $K_B$ into an oriented incidence matrix without changing its column rank.
+The columns of an oriented incidence matrix are independent exactly when the corresponding edge set contains no cycle.
+\end{proof}
+
+\begin{lemma}[Reduced Jacobian]\label{lem:reduced-jacobian}
+Under Assumption~\ref{ass:nondegenerate}, the matrix
+$$J=\begin{pmatrix}0&K_B^\top\\-K_B&H\end{pmatrix}$$
+is nonsingular.
+\end{lemma}
+
+\begin{proof}
+If $J(\delta x,\delta y)=0$, then $K_B^\top\delta y=0$ and $-K_B\delta x+H\delta y=0$.
+Taking the inner product of the second equality with $\delta y$ gives $\delta y^\top H\delta y=0$, hence $\delta y=0$.
+Full column rank of $K_B$ then gives $\delta x=0$.
+\end{proof}
+
+\begin{theorem}[Local strong regularity]\label{thm:strong-regularity}
+Under Assumption~\ref{ass:nondegenerate}, the inverse KKT mapping $\mathcal M^{-1}$ has a single-valued Lipschitz localization around $(0,z^*)$, where $z^*=(x^*,y^*)$.
+Consequently, there are a neighborhood $U$ of $z^*$ and a constant $\kappa>0$ such that
+$$\lVert z-z^*\rVert_2\leq\kappa\dist_2(0,\mathcal M(z))\qquad\text{for all }z\in U.$$
+\end{theorem}
+
+\begin{proof}
+Write a perturbation of the KKT inclusion as $w=(u,v)\in\mathcal M(x,y)$.
+For every positive edge $e\in B$, continuity preserves $x_e>0$ near $x^*$, so the normal cone vanishes and $u_B=c_B+K_B^\top y$.
+When $N$ is nonempty, let $\delta=\min_{e\in N}s_e^*>0$ and shrink the neighborhoods so that $c_N+K_N^\top y\geq 2\delta/3$ and $\lVert u_N\rVert_\infty<\delta/3$.
+If a nearby solution had $x_e>0$ for an edge $e\in N$, then the normal cone would vanish and $u_e=c_e+K_e^\top y\geq2\delta/3$, contradicting $|u_e|<\delta/3$.
+Thus every nearby solution satisfies $x_N=0$; when $N$ is empty, this conclusion is vacuous.
+
+The remaining equations are
+$$c_B+K_B^\top y=u_B,\qquad \nabla G^*(y)-K_Bx_B=v.$$
+Their Jacobian with respect to $(x_B,y)$ at $(x_B^*,y^*)$ is the nonsingular matrix in Lemma~\ref{lem:reduced-jacobian}.
+The classical implicit function theorem therefore gives a unique continuously differentiable, hence locally Lipschitz, solution $(x_B(u_B,v),y(u_B,v))$ for all sufficiently small $(u_B,v)$.
+For $e\in N$, the inclusion at $x_e=0$ is equivalent to $u_e\leq c_e+K_e^\top y$, which holds automatically in the chosen neighborhoods.
+The localized solution is consequently independent of $u_N$ and is unique for every sufficiently small full perturbation $(u,v)$.
+This proves strong metric regularity in the sense of \cite{robinson1980strongly}.
+Strong metric regularity implies the displayed strong metric subregularity estimate.
+\end{proof}
+
+The proof also gives a local conditioning interpretation.
+The derivative of the localized inverse at zero contains $J^{-1}$, and the Schur complement for the primal block is $K_B^\top H^{-1}K_B$.
+Thus the error-bound constant is controlled by the KL marginal curvatures and the singular geometry of the positive-support incidence matrix.
+A nearly vanishing entry of $H$ or a poorly conditioned $K_B$ can make the bound weak.
+
+\begin{proposition}[Cycle obstruction]\label{prop:cycle-obstruction}
+If the positive-support graph contains a cycle, then $x^*$ is not an isolated primal optimum.
+Therefore the pointwise strong metric regularity conclusion of Theorem~\ref{thm:strong-regularity} cannot hold at $(x^*,y^*)$.
+\end{proposition}
+
+\begin{proof}
+A cycle gives a nonzero vector $d_B\in\ker K_B$.
+Because $x_B^*>0$, both $x_B^*+td_B$ and $x_B^*-td_B$ remain positive for sufficiently small $t$.
+The transported marginals are unchanged.
+Stationarity on $B$ gives $c_B=-K_B^\top y^*$ and hence $c_B^\top d_B=0$.
+The two perturbed plans therefore have the same objective value as $x^*$.
+\end{proof}
+
+Proposition~\ref{prop:cycle-obstruction} does not rule out a weaker error bound to the full solution set.
+It shows that a different argument would be needed for cyclic optimal supports.
+
+\begin{corollary}[Fixed-point sharpness]\label{cor:sharpness}
+Under the conditions of Theorem~\ref{thm:strong-regularity}, there are a neighborhood $V$ of $z^*$ and a constant $\alpha>0$ such that
+$$\alpha\dist_P(z,\Fix T)\leq\lVert z-Tz\rVert_P\qquad\text{for all }z\in V.$$
+One valid choice is
+$$\alpha=\left(1+\kappa\lambda_{\max}(P)\sqrt{\frac{\lambda_{\max}(P)}{\lambda_{\min}(P)}}\right)^{-1}.$$
+\end{corollary}
+
+\begin{proof}
+Let $\widehat z=Tz$.
+The resolvent identity gives $P(z-\widehat z)\in\mathcal M(\widehat z)$.
+Continuity of $T$ permits $V$ to be chosen so that $\widehat z\in U$ whenever $z\in V$.
+Theorem~\ref{thm:strong-regularity} and the spectral bounds for $P$ give
+$$\lVert\widehat z-z^*\rVert_2\leq\kappa\lVert P(z-\widehat z)\rVert_2\leq\frac{\kappa\lambda_{\max}(P)}{\sqrt{\lambda_{\min}(P)}}\lVert z-\widehat z\rVert_P.$$
+The triangle inequality then yields
+$$\dist_P(z,\Fix T)\leq\lVert z-z^*\rVert_P\leq\left(1+\kappa\lambda_{\max}(P)\sqrt{\frac{\lambda_{\max}(P)}{\lambda_{\min}(P)}}\right)\lVert z-Tz\rVert_P.$$
+\end{proof}
+
+\begin{theorem}[Tail linear convergence under certified restart]\label{thm:restart}
+Suppose Assumption~\ref{ass:nondegenerate} holds and $P$ is fixed.
+There is a neighborhood $W$ of $z^*$ with the following properties.
+For any restart anchor $a^0\in W$, fixed-frequency reflected Halpern PDHG with epoch length $L$ satisfying $L+1\geq e/\alpha$ obeys
+$$\dist_P(a^{n+1},\Fix T)\leq e^{-1}\dist_P(a^n,\Fix T).$$
+Alternatively, terminate each epoch at the first $k$ satisfying
+$$\lVert z^k-Tz^k\rVert_P\leq\theta\lVert a^n-Ta^n\rVert_P$$
+for a fixed $\theta\in(0,1)$ and restart from $a^{n+1}=Tz^k$.
+Then every epoch is finite and
+$$\lVert a^n-Ta^n\rVert_P\leq\theta^n\lVert a^0-Ta^0\rVert_P,\qquad \dist_P(a^n,\Fix T)\leq\alpha^{-1}\theta^n\lVert a^0-Ta^0\rVert_P.$$
+\end{theorem}
+
+\begin{proof}
+Choose a closed $P$-ball around $z^*$ contained in the sharpness neighborhood $V$ and let $W$ be its interior.
+Both $T$ and $2T-I$ are nonexpansive and fix $z^*$.
+The Halpern convex combination therefore keeps every inner iterate and every PDHG image in the ball whenever its anchor lies in $W$.
+
+For an epoch anchored at $a$, the reflected Halpern residual estimate is
+$$\lVert z^k-Tz^k\rVert_P\leq\frac{\dist_P(a,\Fix T)}{k+1}.$$
+At a restart $a^+=Tz^k$, nonexpansiveness of $T$ gives
+$$\lVert a^+-Ta^+\rVert_P=\lVert Tz^k-T(Tz^k)\rVert_P\leq\lVert z^k-Tz^k\rVert_P.$$
+Corollary~\ref{cor:sharpness} at $a^+$ consequently gives
+$$\dist_P(a^+,\Fix T)\leq\frac{1}{\alpha(k+1)}\dist_P(a,\Fix T).$$
+The fixed-frequency conclusion follows when $k=L$ and $L+1\geq e/\alpha$.
+
+For residual-based restart, the second displayed inequality and the restart condition imply $\lVert a^{n+1}-Ta^{n+1}\rVert_P\leq\theta\lVert a^n-Ta^n\rVert_P$.
+Induction gives the residual bound, and Corollary~\ref{cor:sharpness} gives the distance bound.
+Finally, sharpness at the anchor and the reflected Halpern residual estimate imply
+$$\lVert z^k-Tz^k\rVert_P\leq\frac{1}{\alpha(k+1)}\lVert a-Ta\rVert_P,$$
+so the restart condition must hold once $k+1\geq1/(\alpha\theta)$.
+\end{proof}
+
+\section{Relation to existing theory}
+
+The operator form, global convergence, and reflected Halpern residual rate are standard consequences of fixed-point theory.
+Recent work also gives restarted reflected Halpern guarantees for broad composite primal--dual methods under an assumed local error bound \cite{liu2026restarted}.
+Repeating those abstract results for PDUOT has little independent value.
+
+The useful result is Theorem~\ref{thm:strong-regularity} and its graph interpretation.
+It replaces an abstract sharpness assumption by conditions expressed in transport quantities: inactive-edge slack, positive marginals, and the cycle structure of the positive support.
+This is suitable as a supporting theorem in a HierUOT paper.
+It is unlikely to support a separate theory paper without a sharper constant, a weaker condition that allows cyclic optimal supports, or a global result.
+
+\section{Implementation gap}\label{sec:implementation-gap}
+
+\begin{table}[ht]
+\centering
+\caption{Coverage of the current PDUOT implementation by the proposed proof.}
+\begin{tabular}{lll}
+\toprule
+Component & Current implementation & Covered here \\
+\midrule
+PDHG map and KL proximal step & Yes & Yes \\
+Reflection and Halpern anchoring & Yes & Yes \\
+Constant common step & Default & Yes \\
+Fixed primal weight & Optional & Yes \\
+Residual reduction by $e^{-1}$ & Available as a variant & Yes \\
+$0.2/0.5/0.36$ practical restart rules & Default & No \\
+PID primal-weight update & Default & No \\
+Adaptive common step & Optional & No \\
+Six-step Lambert--$W$ evaluation & Default & No \\
+Power-iteration norm estimate & Default & Needs a certified upper bound \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The sufficient restart trigger with factor $0.2$ is compatible with a residual contraction argument when it fires.
+The necessary trigger allows factor $0.5$, and the artificial trigger does not require residual reduction.
+They therefore do not coincide with the certified $e^{-1}$ rule.
+
+The PID controller changes $\tau$ and $\sigma$ across epochs while preserving their product.
+Each epoch still has a valid PDHG metric, but the Fej\'er and sharpness arguments use different norms after successive restarts.
+A variable-metric extension would require explicit control of metric changes, such as uniform equivalence plus a summable relative-change condition.
+The present PID safeguards bound the weight but do not impose summable changes.
+The full-controller proof is therefore a separate problem rather than a direct corollary.
+The CUDA proximal kernel also uses a fixed number of Newton steps to evaluate the Lambert--$W$ expression, and the spectral norm is estimated by power iteration.
+These are floating-point realizations of the exact map analyzed above.
+A code-level convergence theorem would additionally require a controlled inexact-prox sequence and a certified upper bound on $\lVert K\rVert_2$.
+
+\section{Diagnostic evidence}
+
+The following experiments test whether the sufficient conditions occur in representative solutions.
+They are diagnostics, not a convergence study.
+
+% Data source: papers/hier_uot/pduot_convergence_diagnostics.json, geometry_experiment.
+\begin{table}[ht]
+\centering
+\caption{Local geometry of high-accuracy HierUOT solutions on TOME with $n_s=n_t=2048$, FP64 costs, and tolerance $10^{-8}$.}
+\begin{tabular}{rrrrr}
+\toprule
+$\rho_a=\rho_b$ & Positive edges & Forest & Covered nodes & Minimum inactive slack \\
+\midrule
+$1$ & 3982 & yes & $2048/2048$ & $4.76\times10^{-6}$ \\
+$0.1$ & 3674 & yes & $2048/2048$ & $6.22\times10^{-6}$ \\
+$0.01$ & 3214 & yes & $2041/2024$ & $1.04\times10^{-6}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The first two cases satisfy the numerical counterparts of forest support, strict complementarity, and positive node coverage.
+At $\rho=0.01$, several computed marginals reach numerical zero even though exact optimal marginals are positive under node coverage.
+The theorem remains qualitatively applicable to the exact problem, but its curvature-dependent constant is unlikely to predict the observed finite-precision behavior in this regime.
+
+% Data source: papers/hier_uot/pduot_convergence_diagnostics.json, restart_experiment.
+\begin{table}[ht]
+\centering
+\caption{Cold restricted solves on the 1958 positive edges of one TOME solution with $n_s=n_t=1024$, $\rho_a=\rho_b=1$, and tolerance $10^{-8}$.}
+\begin{tabular}{lrr}
+\toprule
+Variant & Inner iterations & Restarts \\
+\midrule
+Fixed metric, certified restart & 27,000 & 11 \\
+Fixed metric, practical restart & 28,000 & 11 \\
+PID metric, practical restart & 4,600 & 8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The fixed-metric certified variant converges and displays geometric residual reduction across restart anchors, as predicted.
+The PID controller is substantially faster on this instance.
+This gap is a reason to keep the controller in the implementation while stating the theorem for a controlled core variant.
+
+\section{Recommended paper claim}
+
+The main paper can state three levels of results.
+First, fixed-metric PDUOT is reflected Halpern PDHG and inherits global convergence with an $O(1/k)$ fixed-point residual.
+Second, strict complementarity and a forest positive support imply a KL-specific local error bound.
+Third, a certified restart variant then has tail linear convergence.
+
+The practical PID and restart rules should be described as computational enhancements shared with cuPDLPx.
+Their empirical value can be shown by ablation, while the theorem explicitly applies to the fixed-metric certified variant.
+
+\begin{thebibliography}{9}
+
+\bibitem{lu2024restarted}
+H.~Lu and J.~Yang.
+\newblock Restarted Halpern PDHG for Linear Programming.
+\newblock \emph{arXiv preprint arXiv:2407.16144}, 2024.
+
+\bibitem{lu2025cupdlpx}
+H.~Lu, Z.~Peng, and J.~Yang.
+\newblock cuPDLPx: A Further Enhanced GPU-Based First-Order Solver for Linear Programming.
+\newblock \emph{arXiv preprint arXiv:2507.14051}, 2025.
+
+\bibitem{liu2026restarted}
+B.~Liu, J.~Cao, W.~Yin, and Z.~Wen.
+\newblock Restarted Reflected Halpern Acceleration for Augmented Primal--Dual Methods.
+\newblock \emph{arXiv preprint arXiv:2606.16552}, 2026.
+
+\bibitem{robinson1980strongly}
+S.~M. Robinson.
+\newblock Strongly regular generalized equations.
+\newblock \emph{Mathematics of Operations Research}, 5(1):43--62, 1980.
+
+\end{thebibliography}
+
+\end{document}

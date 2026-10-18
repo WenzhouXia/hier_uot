@@ -1,0 +1,294 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+
+\newtheorem{assumption}{Assumption}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\supp}{\operatorname{supp}}
+
+\title{Finite-Tolerance Refinement with Inexact Restricted KL-UOT Solves\\\large Working Theory Note}
+\author{}
+\date{October 12, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note studies active-support refinement when restricted KL-UOT subproblems are solved only approximately.
+The main observation is specific to unbalanced transport: increasing one missing transport edge is always primal feasible because the marginals are penalized rather than imposed as hard constraints.
+At any coupling with positive transported marginals, a positive primal-consistent dual score therefore gives an explicit one-edge objective decrease.
+We use this decrease to prove finite termination to a prescribed full-space tolerance for a safeguarded inexact-oracle refinement scheme.
+The theorem requires the updated support to preserve the current positive flow and the inexact restricted solve to retain a fixed fraction of the certified one-edge decrease.
+For nonnegative costs and node-covering restricted supports, an explicit curvature bound follows from the objective sublevel set and the restricted projected-gradient residual; a curvature-scaled stopping rule gives an alternative.
+These conditions identify a small certified variant of HierUOT rather than proving the current production refinement loop unchanged.
+\end{abstract}
+
+\section{Scope and relation to prior work}
+
+We consider one hierarchy level of KL-unbalanced optimal transport on the complete edge set $\mathcal E=[m]\times[n]$.
+The equivalent-transformation mechanism of Liu et al.~\cite{liu2025etm} determines the optimal transported marginals and then reduces KL-UOT to balanced OT.
+Consequently, existence of a forest-supported optimal coupling follows from standard extreme-point theory for the resulting balanced transport problem.
+We use that fact only as background and do not claim it as a contribution here.
+
+The target of this note is different.
+We ask whether active-support refinement can terminate at a finite tolerance when each restricted KL-UOT call returns an approximate primal--dual point rather than an exact restricted optimum.
+The result below exploits a feasible one-edge direction that has no analogue in balanced OT.
+
+\section{Primal-consistent scores}
+
+For $X\in\R_+^{m\times n}$, let $r=X\mathbf 1_n$ and $q=X^\top\mathbf 1_m$.
+The full KL-UOT objective is
+$$\Phi(X)=\langle C,X\rangle+\rho_a\sum_i\left(r_i\log\frac{r_i}{a_i}-r_i+a_i\right)+\rho_b\sum_j\left(q_j\log\frac{q_j}{b_j}-q_j+b_j\right),$$
+where $a_i,b_j,\rho_a,\rho_b$ are positive and all costs are finite.
+
+Suppose first that every entry of $r$ and $q$ is positive.
+Define the primal-consistent potentials and scores by
+$$f_i^X=-\rho_a\log\frac{r_i}{a_i},\qquad g_j^X=-\rho_b\log\frac{q_j}{b_j},\qquad \sigma_{ij}^X=f_i^X+g_j^X-C_{ij}.$$
+The coordinate derivative of the primal objective is
+$$\nabla_{ij}\Phi(X)=C_{ij}+\rho_a\log\frac{r_i}{a_i}+\rho_b\log\frac{q_j}{b_j}=-\sigma_{ij}^X.$$
+
+For a fixed stepsize parameter $\gamma>0$ and an active support $\mathcal A\subseteq\mathcal E$, define the restricted projected-gradient residual
+$$R_{\mathcal A}^{\gamma}(X)=\frac{1}{\gamma}\left\|X_{\mathcal A}-\left[X_{\mathcal A}-\gamma\nabla_{\mathcal A}\Phi(X)\right]_+\right\|_{\infty}$$
+and the inactive full-space violation
+$$V_{\mathcal A}(X)=\max_{e\in\mathcal E\setminus\mathcal A}(\sigma_e^X)_+.$$
+
+\begin{proposition}[Global KKT residual]\label{prop:global-kkt}
+Extend a coupling supported on $\mathcal A$ by zero outside $\mathcal A$.
+Then
+$$R_{\mathcal E}^{\gamma}(X)=\max\{R_{\mathcal A}^{\gamma}(X),V_{\mathcal A}(X)\}.$$
+In particular, $R_{\mathcal A}^{\gamma}(X)=V_{\mathcal A}(X)=0$ if and only if $X$ is a global KL-UOT optimum.
+\end{proposition}
+
+\begin{proof}
+For every inactive coordinate, $X_e=0$ and its projected-gradient residual is
+$$\frac{1}{\gamma}\left|0-[0-\gamma\nabla_e\Phi(X)]_+\right|=(-\nabla_e\Phi(X))_+=(\sigma_e^X)_+.$$
+Splitting the maximum over active and inactive coordinates proves the identity.
+The projected-gradient residual vanishes exactly when the convex first-order optimality condition holds.
+\end{proof}
+
+Proposition~\ref{prop:global-kkt} shows that primal-consistent scores provide a complete finite-tolerance KKT certificate when combined with a restricted projected-gradient residual.
+No primal objective-gap conclusion is implied without an additional error bound.
+
+\section{One-edge descent}
+
+\begin{lemma}[Certified one-edge decrease]\label{lem:one-edge}
+Let $X\geq0$ have positive transported marginals and let $e=(i,j)$ be any edge.
+Define
+$$h_e(X)=\frac{\rho_a}{r_i}+\frac{\rho_b}{q_j}.$$
+If $\sigma_e^X>0$, then the step $t_e=\sigma_e^X/h_e(X)$ satisfies
+$$\Phi(X+t_eE_e)\leq\Phi(X)-\frac{(\sigma_e^X)^2}{2h_e(X)},$$
+where $E_e$ contains one at edge $e$ and zero elsewhere.
+\end{lemma}
+
+\begin{proof}
+Let $\psi(t)=\Phi(X+tE_e)-\Phi(X)$ for $t\geq0$.
+Direct differentiation gives
+$$\psi'(0)=-\sigma_e^X,\qquad \psi''(t)=\frac{\rho_a}{r_i+t}+\frac{\rho_b}{q_j+t}\leq h_e(X).$$
+The integral form of Taylor's theorem yields
+$$\psi(t)=-\sigma_e^Xt+\int_0^t(t-s)\psi''(s)\,ds\leq-\sigma_e^Xt+\frac{h_e(X)}{2}t^2.$$
+Substitution of $t=t_e$ proves the claim.
+\end{proof}
+
+The lemma is global and does not assume that $X$ is a restricted optimum or even an approximate restricted stationary point.
+Its denominator is the same local curvature quantity that appears in curvature-aware pricing.
+The score $(\sigma_e^X)^2/(2h_e(X))$ is therefore a guaranteed primal decrease, although ranking edges by this bound need not improve practical refinement time.
+
+If a transported marginal is zero, the corresponding KL directional quotient tends to $-\infty$ along any incident edge.
+Such a node also admits a strict one-edge decrease, but the finite bound in Lemma~\ref{lem:one-edge} is unavailable until the marginal becomes positive.
+
+\subsection{Using approximate dual potentials}
+
+The production full-space scan uses PDUOT potentials $(f,g)$ rather than the primal-consistent pair $(f^X,g^X)$.
+Define the nodewise response mismatches
+$$\eta_i^a=|f_i-f_i^X|,\qquad \eta_j^b=|g_j-g_j^X|.$$
+For the scanned score $\sigma_{ij}=f_i+g_j-C_{ij}$, we have the two-sided enclosure
+$$\sigma_{ij}-\eta_i^a-\eta_j^b\leq\sigma_{ij}^X\leq\sigma_{ij}+\eta_i^a+\eta_j^b.$$
+
+\begin{corollary}[Dual-score correction]\label{cor:dual-correction}
+Let $\delta_{ij}=(\sigma_{ij}-\eta_i^a-\eta_j^b)_+$.
+If $\delta_{ij}>0$, the step $t=\delta_{ij}/h_{ij}(X)$ satisfies
+$$\Phi(X+tE_{ij})\leq\Phi(X)-\frac{\delta_{ij}^2}{2h_{ij}(X)}.$$
+If $\max_{(i,j)\notin\mathcal A}(\sigma_{ij}+\eta_i^a+\eta_j^b)_+\leq\varepsilon_f$, then $V_{\mathcal A}(X)\leq\varepsilon_f$.
+\end{corollary}
+
+\begin{proof}
+The lower enclosure gives $\sigma_{ij}^X\geq\delta_{ij}$.
+Applying the quadratic upper bound in the proof of Lemma~\ref{lem:one-edge} at $t=\delta_{ij}/h_{ij}(X)$ gives the first conclusion.
+The upper enclosure gives the second conclusion.
+\end{proof}
+
+Let $\widehat r_i=a_i e^{-f_i/\rho_a}$ and $\widehat q_j=b_j e^{-g_j/\rho_b}$ be the dual-implied marginal responses.
+The mismatches can be computed exactly as
+$$\eta_i^a=\rho_a\left|\log\frac{r_i}{\widehat r_i}\right|,\qquad \eta_j^b=\rho_b\left|\log\frac{q_j}{\widehat q_j}\right|.$$
+If $r_i,\widehat r_i\geq\underline m_a>0$, then the mean-value theorem gives $\eta_i^a\leq\rho_a|r_i-\widehat r_i|/\underline m_a$, with the analogous target bound.
+Thus the existing marginal-response residual controls score uncertainty only when the relevant primal and dual-implied marginals have a positive lower bound.
+
+The lower and upper enclosures play different roles.
+A positive lower enclosure certifies a descent direction, whereas a small upper enclosure certifies full-space stationarity.
+If neither condition holds, the restricted oracle must be tightened or the full scan can be repeated directly with $(f^X,g^X)$.
+
+\section{Safeguarded inexact refinement}
+
+We now state a finite-tolerance result for a certified refinement variant.
+At round $k$, an inexact restricted oracle returns $X^k$ supported on $\mathcal A_k$ with positive marginals and $R_{\mathcal A_k}^{\gamma}(X^k)\leq\varepsilon_r$.
+If $V_{\mathcal A_k}(X^k)\leq\varepsilon_f$, the level terminates.
+Otherwise, the update selects an inactive edge $e_k$ satisfying $\sigma_{e_k}^{X^k}>\varepsilon_f$ and forms
+$$t_k=\frac{\sigma_{e_k}^{X^k}}{h_{e_k}(X^k)},\qquad Y^k=X^k+t_kE_{e_k}.$$
+The next support contains $\supp(X^k)\cup\{e_k\}$, so $Y^k$ remains feasible after pruning.
+The next inexact restricted solve is required to return $X^{k+1}$ satisfying
+$$R_{\mathcal A_{k+1}}^{\gamma}(X^{k+1})\leq\varepsilon_r,\qquad \Phi(X^{k+1})\leq\Phi(Y^k)+\xi_k.$$
+The second condition is an objective safeguard rather than an objective-error certificate for the unrestricted problem.
+
+\begin{theorem}[Finite-tolerance refinement with an inexact oracle]\label{thm:inexact-refinement}
+Assume that $\Phi$ is bounded below by $\Phi_{\inf}$ and that every nonterminal round satisfies
+$$h_{e_k}(X^k)\leq H,\qquad 0\leq\xi_k\leq\theta\frac{(\sigma_{e_k}^{X^k})^2}{2h_{e_k}(X^k)}$$
+for constants $H<\infty$ and $\theta\in[0,1)$.
+Then the safeguarded refinement scheme terminates after at most
+$$N_{\mathrm{ref}}\leq\left\lceil\frac{2H(\Phi(X^0)-\Phi_{\inf})}{(1-\theta)\varepsilon_f^2}\right\rceil$$
+nonterminal rounds.
+Its output satisfies
+$$R_{\mathcal E}^{\gamma}(X)\leq\max\{\varepsilon_r,\varepsilon_f\}.$$
+\end{theorem}
+
+\begin{proof}
+Lemma~\ref{lem:one-edge} and the inexact-oracle safeguard give
+$$\Phi(X^{k+1})\leq\Phi(X^k)-(1-\theta)\frac{(\sigma_{e_k}^{X^k})^2}{2h_{e_k}(X^k)}\leq\Phi(X^k)-\frac{(1-\theta)\varepsilon_f^2}{2H}.$$
+If the number of nonterminal rounds exceeded the displayed bound, telescoping this inequality would force an iterate below $\Phi_{\inf}$.
+The scheme must therefore terminate in finitely many rounds.
+At termination, the restricted oracle gives $R_{\mathcal A}^{\gamma}(X)\leq\varepsilon_r$ and the full scan gives $V_{\mathcal A}(X)\leq\varepsilon_f$.
+Proposition~\ref{prop:global-kkt} proves the final estimate.
+\end{proof}
+
+For the squared-Euclidean costs used by HierUOT, $C\geq0$ and every generalized KL term is nonnegative, so one may take $\Phi_{\inf}=0$.
+
+The next proposition removes the separate curvature assumption when the restricted supports cover all nodes.
+For $s>0$ and $B\geq0$, let $M(s,B)$ be the unique number in $[s,\infty)$ satisfying
+$$M(s,B)\log\frac{M(s,B)}{s}-M(s,B)+s=B.$$
+
+\begin{proposition}[Explicit marginal lower bound]\label{prop:marginal-lower-bound}
+Assume $0\leq C_{ij}\leq C_{\max}$, $\Phi(X)\leq B$, the support $\mathcal A$ covers every source and target node, and $R_{\mathcal A}^{\gamma}(X)\leq\varepsilon_r$.
+Define
+$$L_a(B)=\max_i\log\frac{M(a_i,B/\rho_a)}{a_i},\qquad L_b(B)=\max_j\log\frac{M(b_j,B/\rho_b)}{b_j},$$
+$$\underline r_i(B)=a_i\exp\left(\frac{-\varepsilon_r-C_{\max}-\rho_bL_b(B)}{\rho_a}\right),\qquad \underline q_j(B)=b_j\exp\left(\frac{-\varepsilon_r-C_{\max}-\rho_aL_a(B)}{\rho_b}\right).$$
+Then $r_i\geq\underline r_i(B)$ and $q_j\geq\underline q_j(B)$ for every node.
+Consequently,
+$$h_{ij}(X)\leq H(B):=\frac{\rho_a}{\min_i\underline r_i(B)}+\frac{\rho_b}{\min_j\underline q_j(B)}.$$
+\end{proposition}
+
+\begin{proof}
+Nonnegativity of the cost and KL terms implies
+$$\rho_a\left(r_i\log\frac{r_i}{a_i}-r_i+a_i\right)\leq B,\qquad \rho_b\left(q_j\log\frac{q_j}{b_j}-q_j+b_j\right)\leq B.$$
+Monotonicity of the generalized KL divergence above its minimizer gives $r_i\leq M(a_i,B/\rho_a)$ and $q_j\leq M(b_j,B/\rho_b)$.
+The projected-gradient residual bound implies $\nabla_e\Phi(X)\geq-\varepsilon_r$ for every $e\in\mathcal A$.
+Indeed, this is immediate when the gradient is nonnegative, whereas a negative gradient makes the projection inactive and its absolute value equals the coordinate residual.
+For each source node $i$, choose an incident active edge $(i,j)$ and rearrange its gradient inequality to obtain
+$$\rho_a\log\frac{r_i}{a_i}\geq-\varepsilon_r-C_{ij}-\rho_b\log\frac{q_j}{b_j}\geq-\varepsilon_r-C_{\max}-\rho_bL_b(B).$$
+Exponentiation proves the source bound, and the target bound is symmetric.
+Substitution in the definition of $h_{ij}$ proves the last claim.
+\end{proof}
+
+\begin{corollary}[Data-dependent refinement bound]\label{cor:data-dependent-bound}
+Suppose the hypotheses of Theorem~\ref{thm:inexact-refinement} hold except for the assumed constant $H$, every restricted support covers all nodes, and $C\geq0$.
+Then the theorem remains valid with $H=H(\Phi(X^0))$ from Proposition~\ref{prop:marginal-lower-bound}.
+\end{corollary}
+
+\begin{proof}
+Every nonterminal update decreases the objective, so $\Phi(X^k)\leq\Phi(X^0)$.
+Proposition~\ref{prop:marginal-lower-bound} supplies the required uniform curvature bound at every restricted-oracle output.
+\end{proof}
+
+The explicit constant is generally too conservative to predict the observed number of refinement rounds.
+Its role is qualitative: it closes the finite-termination argument using verifiable problem data and oracle conditions rather than a separate lower-marginal assumption.
+
+\subsection{A curvature-scaled alternative}
+
+Define the maximum certified one-edge gain
+$$G_{\mathcal A}(X)=\max_{e\notin\mathcal A}\frac{((\sigma_e^X)_+)^2}{2h_e(X)}.$$
+
+\begin{corollary}[Gain-based termination]\label{cor:gain-termination}
+Suppose a nonterminal round is executed only when $G_{\mathcal A_k}(X^k)>\varepsilon_G$, the selected edge attains this maximum, and $\xi_k\leq\theta G_{\mathcal A_k}(X^k)$ for a fixed $\theta<1$.
+Then refinement terminates after at most
+$$N_{\mathrm{ref}}\leq\left\lceil\frac{\Phi(X^0)-\Phi_{\inf}}{(1-\theta)\varepsilon_G}\right\rceil$$
+rounds with $G_{\mathcal A}(X)\leq\varepsilon_G$.
+\end{corollary}
+
+\begin{proof}
+Each nonterminal round decreases the objective by at least $(1-\theta)\varepsilon_G$.
+The result follows by telescoping and the lower bound on $\Phi$.
+\end{proof}
+
+This alternative removes the uniform curvature assumption but terminates with a curvature-scaled certificate rather than the standard maximum dual violation.
+If $h_e(X)\leq H$ on all inactive edges, then $G_{\mathcal A}(X)\leq\varepsilon_G$ implies $V_{\mathcal A}(X)\leq\sqrt{2H\varepsilon_G}$.
+
+\section{Can PDUOT realize the inexact oracle?}
+
+Fix one node-covering active support and consider the exact fixed-metric PDUOT core.
+Its reflected Halpern iterates converge to a restricted KKT point, and the restricted optimal transported marginals are positive.
+Consequently, the primal objective and the restricted projected-gradient residual converge to their optimal values.
+
+\begin{proposition}[Oracle realizability]\label{prop:oracle-realizability}
+Let $Y$ be any feasible coupling on a fixed node-covering active support.
+For every $\varepsilon_r>0$ and $\xi>0$, an exact fixed-metric PDUOT run eventually produces a primal iterate $X$ satisfying
+$$R_{\mathcal A}^{\gamma}(X)\leq\varepsilon_r,\qquad \Phi(X)\leq\Phi(Y)+\xi.$$
+\end{proposition}
+
+\begin{proof}
+Let $X_{\mathcal A}^*$ be a restricted optimum.
+Convergence of the PDUOT iterates gives $X^k\to X_{\mathcal A}^*$.
+Positivity of the optimal marginals makes both $\Phi$ and $R_{\mathcal A}^{\gamma}$ continuous in a neighborhood of the limit, hence $R_{\mathcal A}^{\gamma}(X^k)\to0$ and $\Phi(X^k)\to\Phi(X_{\mathcal A}^*)$.
+Because $Y$ is feasible, $\Phi(X_{\mathcal A}^*)\leq\Phi(Y)$.
+Both required inequalities therefore hold after finitely many inner iterations.
+\end{proof}
+
+The proposition does not give an explicit inner-iteration bound because converting the fixed-point residual to primal objective error globally requires additional conditioning.
+It nevertheless shows that the objective safeguard in Theorem~\ref{thm:inexact-refinement} is compatible with the convergent PDUOT core.
+The inner tolerance can be tightened until both the restricted KKT condition and the round-dependent objective safeguard pass.
+
+\section{Gap to the production refinement loop}
+
+Theorem~\ref{thm:inexact-refinement} is not yet a theorem for the current HierUOT implementation unchanged.
+The main difference is that PDUOT termination uses KKT measures and a split objective gap but does not enforce the round-dependent primal objective safeguard displayed in the refinement scheme.
+The production loop therefore accepts the next restricted solution without checking that it retains a fixed fraction of the certified one-edge decrease.
+
+Three smaller differences remain.
+First, the production full-space scan uses PDUOT potentials, whereas the clean theorem uses primal-consistent potentials or the two-sided corrections in Corollary~\ref{cor:dual-correction}.
+Second, production pruning protects flows only above a numerical threshold, whereas the proof preserves the exact current positive support and the selected descent edge.
+Third, production stopping uses a relative $\ell_2$ residual by default and a relative $\ell_\infty$ residual as an option, whereas the theorem is stated with an absolute $\ell_\infty$ residual.
+The norm and normalization difference changes only the constants on a finite-dimensional problem, but a floating-point theorem would also need an explicit full-scan error allowance.
+
+Zero initialization of newly inserted edges is not a theoretical difference.
+The analytic trial $Y^k$ only needs to be feasible on the expanded support, and the restricted solver need not use it as its warm start.
+Adding multiple candidates is also compatible with the proof as long as the expanded support contains at least one certified descent edge.
+The permanently protected structural edges already make the production supports node covering.
+
+A certified implementation variant would compute primal-consistent node potentials after every restricted solve, evaluate the active projected-gradient residual, and use these potentials for the full-space scan.
+When refinement is required, it would compute the analytic one-edge trial value without changing the warm start.
+It would preserve the trial support through pruning and continue the restricted solve until both displayed oracle conditions are satisfied.
+
+These changes are not needed to obtain the practical production result.
+They define a controlled variant whose finite-tolerance guarantee is substantially closer to floating-point computation than an exact-restricted-oracle theorem.
+
+\section{Assessment}
+
+The one-edge descent lemma and Theorem~\ref{thm:inexact-refinement} provide a viable UOT-specific route to approximate-oracle convergence.
+The key advantage over balanced OT is structural rather than technical: the soft KL marginals make every nonnegative coordinate direction feasible.
+The price is a curvature constant governed by small transported marginals and an objective safeguard absent from the current code.
+
+The remaining mathematical task is to replace the conservative global constant by a local or path-dependent complexity estimate that reflects the observed marginals.
+The next implementation task is a diagnostic that measures whether production restricted solves already satisfy the round-dependent objective safeguard and how much positive flow is removed by threshold pruning.
+
+\begin{thebibliography}{9}
+
+\bibitem{liu2025etm}
+W.~Liu, X.~Liao, J.~Dan, F.~Wang, H.~Yu, J.~Dong, S.~Dong, L.~Qi, and Y.-S.~Ong.
+\newblock Solving Discrete (Semi) Unbalanced Optimal Transport with Equivalent Transformation Mechanism and KKT-Multiplier Regularization.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2025.
+
+\end{thebibliography}
+
+\end{document}

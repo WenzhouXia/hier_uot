@@ -1,0 +1,407 @@
+\documentclass{article}
+
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xspace}
+
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% CN: ICML 2027 author kit 尚未发布；当前使用最新的官方 ICML 2026 review style。
+% EN: The ICML 2027 author kit is not yet available; this draft uses the latest official ICML 2026 review style.
+\usepackage{icml2026}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+\newcommand{\ours}{\texttt{SHUTTLE}\xspace} 
+\newcommand{\subsolver}{\texttt{PDUOT}\xspace}
+\newcommand{\mm}{\texttt{MM}\xspace}
+\newcommand{\sinkhorn}{\texttt{Sinkhorn}\xspace}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\supp}{\operatorname{supp}}
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+
+\icmltitlerunning{\ours: Linear-Memory UOT via Edge Localization}
+
+\begin{document}
+
+\twocolumn[
+%   \icmltitle{\ours: Sparse Hierarchical Unbalanced Optimal Transport Through Linear-Memory Edge Localization}
+    \icmltitle{A Linear-Memory Hierarchical Solver for Unbalanced Optimal Transport}
+
+    \begin{icmlauthorlist}
+        \icmlauthor{Anonymous Authors}{anon}
+    \end{icmlauthorlist}
+
+    \icmlaffiliation{anon}{Anonymous Institution}
+    \icmlcorrespondingauthor{Anonymous Author}{anon@example.com}
+    \icmlkeywords{unbalanced optimal transport, large-scale optimization, hierarchical methods, sparse Sinkhorn}
+
+    \vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+% 问题背景和难点：说明 UOT 的作用以及无熵离散问题的规模瓶颈。
+Unbalanced optimal transport (UOT) compares distributions while allowing their total mass to vary, yet its discrete formulation still involves quadratically many transport variables.
+% 核心框架来源：将 balanced OT 的 dual-guided hierarchy 适配到 UOT。
+We introduce \ours, which adapts the dual-guided hierarchical framework of balanced OT to large-scale unregularized UOT.
+% 结构性依据与规模优势：共享的约束支持层间和层内定位边，并维持线性内存。
+Exploiting the shared sparse-solution structure and dual constraints of balanced OT and UOT, \ours localizes edges across and within hierarchy levels while maintaining linear memory complexity.
+% UOT 专门适配：校准传播的势，并开发 restricted UOT 子问题求解器。
+We calibrate propagated potentials to account for soft marginal penalties and develop a tailored GPU-friendly restricted UOT solver for resulting subproblems.
+% 理论保证：保留证明所需条件，但压缩为摘要级短语。
+Under suitable conditions, we prove convergence of the subproblem solver and finite-tolerance termination of the hierarchical refinement.
+% 实验结果：合并三层实验，突出效率和可扩展性。
+Experiments on synthetic and real-world transport problems demonstrate accurate solutions, linear memory growth, and efficient scaling beyond dense solvers.
+% 扩展能力：UFGW 与 sparse Sinkhorn 依赖 localized support，放在摘要结尾简洁说明。
+We further extend the localized-support framework to sparse entropic refinement and UOT variants, obtaining efficient large-scale solvers with downstream behavior comparable to dense Sinkhorn on biological data.
+\end{abstract}
+
+\section{Introduction}
+
+Optimal transport (OT) provides a geometric framework for comparing distributions and aligning datasets, while unbalanced optimal transport (UOT) relaxes marginal constraints to allow mass variation~\citep{chizat2018scaling,sejourne2023unbalanced}.
+% CN: 先介绍单细胞应用，再列举其他领域及其需要边际放松的原因。
+% EN: Introduce single-cell applications first, followed by other fields and their motivations for marginal relaxation.
+This flexibility supports applications in single-cell genomics~\citep{schiebinger2019optimal,klein2025mapping}, domain adaptation~\citep{fatras2021unbalanced}, and point-cloud motion estimation~\citep{puy2020flot}, accommodating cell proliferation and death, mismatched class proportions, and occlusions.
+
+Let $a\in\mathbb R_{++}^m$ and $b\in\mathbb R_{++}^n$ be the reference masses of two discrete measures, and let $C\in\mathbb R^{m\times n}$ be their pairwise cost matrix.
+UOT minimizes transport cost plus divergence penalties on the deviations of the transported marginals from $a$ and $b$.
+We focus on KL marginal penalties, with other penalties discussed in Appendix~\ref{app:extension_penalty}:
+\begin{equation}
+\label{eq:primal-uot}
+\min_{X\geq 0}\quad \langle C,X\rangle+\rho_a\KL(X\mathbf 1_n\,|\,a)
++\rho_b\KL(X^\top\mathbf 1_m\,|\,b),
+\end{equation}
+Here, $X\in\mathbb R_+^{m\times n}$ is the transport plan, $\rho_a,\rho_b>0$ control the marginal penalties, and $\KL(p\,|\,h)=\sum_k(p_k\log(p_k/h_k)-p_k+h_k)$.
+
+The dual of~\eqref{eq:primal-uot} optimizes potentials $f\in\mathbb R^m$ and $g\in\mathbb R^n$:
+\begin{equation}
+\label{eq:dual-uot}
+\begin{aligned}
+\max_{f,g}\quad
+&\rho_a\sum_i a_i\bigl(1-e^{-f_i/\rho_a}\bigr)
++\rho_b\sum_j b_j\bigl(1-e^{-g_j/\rho_b}\bigr),\\
+\text{s.t.}\quad
+&f_i+g_j\leq C_{ij},\qquad (i,j)\in[m]\times[n].
+\end{aligned}
+\end{equation}
+The primal formulation has one transport variable for each of the $mn$ source--target pairs; the dual has only $m+n$ potentials but still imposes $mn$ constraints.
+This quadratic problem size poses substantial memory and computational challenges at large sample sizes.
+
+\paragraph{Related work.}
+Regularization methods add penalties to the transport plan to facilitate optimization, including squared-$\ell_2$ regularization~\citep{nguyen2023unbalanced} and, most prominently, entropic regularization.
+The latter enables generalized \sinkhorn iterations, including stabilized and translation-invariant scaling variants~\citep{chizat2018scaling,schmitzer2019stabilized,pham2020unbalanced,sejourne2022faster}.
+However, additional regularization introduces bias relative to unregularized UOT, and entropic regularization generally yields a dense coupling whose explicit materialization requires $\Theta(mn)$ memory.
+
+Low-rank methods constrain the coupling to admit a compact nonnegative factorization, improving computational and memory scalability at a fixed rank~\citep{scetbon2023unbalanced,halmos2024low}.
+This scalability comes at the cost of potentially substantial approximation error when the chosen rank is insufficient to represent the optimal coupling.
+
+A third line of work solves the original UOT problem.
+Majorization--minimization (\mm) directly updates the coupling through multiplicative iterations~\citep{chapel2021unbalanced}.
+Alternatively, balanced-OT reductions separate marginal estimation from coupling construction through upfront estimation~\citep{liu2026solving} or iterative Frank--Wolfe refinement~\citep{sejourne2022faster,xia2026dual}.
+Another approach exploits coupling sparsity through a network-simplex framework that maintains forest-supported transport plans~\citep{agazzotti2026network}.
+Scalability remains limited by quadratic coupling storage in standard \mm implementations, the cost of marginal estimation or sequential balanced OT subproblems in reduction methods, and sequential tree updates in network simplex that hinder GPU parallelization.
+This leaves open how to solve the large scale unregularized UOT problem with linear memory and efficient GPU parallelism.
+
+We introduce \ours, a \textbf{S}parse \textbf{H}ierarchical solver for large-scale \textbf{U}nbalanced Optimal \textbf{T}ransport \textbf{T}hrough \textbf{L}inear-Memory \textbf{E}dge Localization.
+UOT admits sparse optimal couplings and, for convex marginal penalties, shares the dual constraints $f_i+g_j \leq C_{ij}$ of balanced OT, which motivates extending the dual-guided hierarchy of HELLO to the unbalanced setting~\citep{xia2026dual}.
+The marginal penalties, however, turn the restricted transport linear programs into nonlinear convex problems.
+We therefore develop \subsolver, a GPU-friendly primal--dual solver for restricted UOT.
+Combining \subsolver with hierarchical edge localization and calibration of propagated dual potentials yields a GPU-friendly UOT solver with linear memory.
+
+Our contributions are summarized as follows:
+\begin{itemize}
+    \item \textit{Dual-guided hierarchy for UOT:} We extend dual-guided hierarchical edge localization to unregularized UOT, enabling large-scale optimization with linear memory and finite-tolerance termination guarantees for safeguarded refinement.
+    \item \textit{GPU-efficient restricted solver:} We develop \subsolver, an efficient GPU-parallel primal--dual solver for restricted UOT, with convergence guarantees for its fixed-metric core.
+    \item \textit{Extensions and applications:} We extend \ours to efficiently approximate entropic UOT at small regularization strengths and solve unbalanced fused Gromov--Wasserstein (UFGW) problems, demonstrating their effectiveness on large-scale biological alignment tasks.
+\end{itemize}
+
+\section{Sparse Hierarchical Solver for UOT}
+\label{sec:method}
+
+
+\subsection{Dual Structure and Overall Framework}
+\label{sec:framework}
+
+Let $\mathcal S=\{s_i\}_{i=1}^m$ and $\mathcal D=\{d_j\}_{j=1}^n$ denote the source and target supports in~\eqref{eq:primal-uot}, with $C_{ij}=c(s_i,d_j)$.
+For any coupling $X$, let $r=X\mathbf 1_n$ and $q=X^\top\mathbf 1_m$ denote its transported marginals.
+With $r$ and $q$ fixed, the marginal penalties are constant and minimizing over $X$ reduces to balanced OT.
+Consequently, whenever an optimum exists, there is an optimal coupling with at most $m+n-1$ positive entries.
+The KKT conditions for~\eqref{eq:primal-uot} and~\eqref{eq:dual-uot} are
+\begin{equation}
+\label{eq:uot-kkt}
+\begin{aligned}
+r&=a\odot e^{-f/\rho_a},\qquad q=b\odot e^{-g/\rho_b},\\
+f_i+g_j&\leq C_{ij},\\
+X_{ij}(f_i+g_j-C_{ij})&=0.
+\end{aligned}
+\end{equation}
+
+Balanced OT and KL-UOT have different dual objectives but the same pairwise feasible region $f_i+g_j\leq C_{ij}$.
+We therefore retain the dual score
+\begin{equation}
+\label{eq:dual-score}
+\sigma_{ij}:=f_i+g_j-C_{ij}
+\end{equation}
+as the common signal for cross-level initialization and within-level refinement.
+The hierarchy, dual completion, candidate ranking, and streamed full-space scans of HELLO depend on these pairwise constraints and extend directly to KL-UOT~\citep{xia2026dual}.
+The marginal responses in~\eqref{eq:uot-kkt}, the restricted nonlinear problem, and the translation of propagated potentials require UOT-specific treatment.
+
+Algorithm~\ref{alg:shuttle} summarizes the resulting framework.
+The finest problem is indexed by $0$, and the coarsest problem is indexed by $L$.
+Adjacent levels change one marginal at a time, allowing the unchanged potential to be inherited directly.
+
+\begin{algorithm}[t]
+\caption{\ours}
+\label{alg:shuttle}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} KL-UOT problem $\mathcal P^{(0)}$, support budgets $\kappa,\gamma,\beta$, and tolerances $\varepsilon_{\mathrm r},\varepsilon_{\mathrm f}$.
+\STATE Construct a hierarchy $\{\mathcal P^{(\ell)}\}_{\ell=0}^{L}$.
+\STATE Solve the coarsest problem $\mathcal P^{(L)}$ on its complete graph.
+\FOR{$\ell=L-1,\ldots,0$}
+    \STATE Propagate and calibrate the coarse dual potentials.
+    \STATE Construct $\mathcal A^{(\ell)}$ by bidirectional dual assignment and structural edges.
+    \REPEAT
+        \STATE Solve restricted KL-UOT on $\mathcal A^{(\ell)}$ with \subsolver.
+        \STATE Stream over the full edge space and select nodewise dual violators.
+        \IF{the restricted residual and full-space violation meet their tolerances}
+            \STATE \textbf{break}
+        \ENDIF
+        \STATE Insert the selected edges and apply budgeted pruning.
+    \UNTIL{the refinement limit is reached}
+\ENDFOR
+\STATE \textbf{Return:} the finest-level sparse coupling and dual potentials.
+\end{algorithmic}
+\end{algorithm}
+
+The three UOT-specific components are developed next.
+\subsolver replaces the restricted OT linear program with a sparse nonlinear solver; analytic translation calibration aligns the propagated potentials with the KL marginal responses; and the outer loop combines restricted KKT residuals with full-space dual violations.
+
+\subsection{Restricted UOT with \subsolver}
+\label{sec:pduot}
+
+Let $\mathcal A\subseteq[m]\times[n]$ be an active support and let $x\in\mathbb R_+^{|\mathcal A|}$ collect its edge flows.
+The sparse incidence operators $P_{\mathcal A}$ and $Q_{\mathcal A}$ aggregate edge flows onto source and target nodes.
+The restricted problem is
+\begin{equation}
+\label{eq:restricted-uot}
+\min_{x\geq0}\;\langle c_{\mathcal A},x\rangle+\rho_a\KL(P_{\mathcal A}x\,|\,a)+\rho_b\KL(Q_{\mathcal A}x\,|\,b).
+\end{equation}
+Define $K_{\mathcal A}x=(P_{\mathcal A}x,Q_{\mathcal A}x)$,
+\begin{equation*}
+F(x)=\langle c_{\mathcal A},x\rangle+\iota_{\mathbb R_+^{|\mathcal A|}}(x),
+\end{equation*}
+and let $G(K_{\mathcal A}x)$ denote the two KL terms in~\eqref{eq:restricted-uot}.
+The saddle formulation is
+\begin{equation}
+\label{eq:restricted-saddle}
+\min_x\max_y\;F(x)+\langle K_{\mathcal A}x,y\rangle-G^*(y),
+\end{equation}
+where $y=-(f,g)$ and
+\begin{equation*}
+G^*(y)=\rho_a\sum_i a_i(e^{y_i/\rho_a}-1)+\rho_b\sum_j b_j(e^{y_{m+j}/\rho_b}-1).
+\end{equation*}
+
+\subsolver applies a primal-first PDHG map to~\eqref{eq:restricted-saddle}~\citep{esser2010general,chambolle2011first}:
+\begin{equation}
+\label{eq:pduot-map}
+\begin{aligned}
+\widehat x&=\left[x-\tau(c_{\mathcal A}+K_{\mathcal A}^\top y)\right]_+,\\
+\widehat y&=\operatorname{prox}_{\sigma G^*}\left(y+\sigma K_{\mathcal A}(2\widehat x-x)\right).
+\end{aligned}
+\end{equation}
+The dual proximal map separates over nodes.
+For an input $u$, reference mass $a$, and marginal penalty $\rho$, each coordinate solves
+\begin{equation*}
+z-u+\sigma a e^{z/\rho}=0.
+\end{equation*}
+We evaluate this scalar proximal map in the log domain to avoid overflow and cancellation.
+Applications of $K_{\mathcal A}$ and $K_{\mathcal A}^\top$ use source-CSR and transposed edge indices, so each \subsolver iteration costs $O(|\mathcal A|+m+n)$ time and memory.
+
+Let $T$ denote the fixed-step PDHG map in~\eqref{eq:pduot-map} and $R=2T-I$ its reflection.
+Within one restart epoch, \subsolver applies the Halpern iteration
+\begin{equation}
+\label{eq:halpern}
+z^{k+1}=\frac{1}{k+2}z^{\mathrm a}+\frac{k+1}{k+2}R(z^k),
+\end{equation}
+where $z^{\mathrm a}$ is the epoch anchor.
+Restarts update the anchor and rebalance the primal and dual step sizes, following restarted primal--dual methods for large-scale linear and conic optimization~\citep{lu2407restarted,lin2025practical}.
+When the active support changes, existing flows and node potentials are warm-started, newly inserted flows are initialized to zero, and the restart epoch is reset.
+
+The fixed-metric core admits a direct convergence statement.
+
+\begin{theorem}[Convergence of fixed-metric \subsolver]
+\label{thm:pduot-convergence}
+Assume that the restricted problem~\eqref{eq:restricted-uot} has a KKT point and that $\tau\sigma\|K_{\mathcal A}\|_2^2<1$.
+Then the unrestarted iteration~\eqref{eq:halpern} converges to a restricted KKT point and satisfies
+\begin{equation*}
+\|z^k-Tz^k\|_{P}\leq\frac{\operatorname{dist}_{P}(z^{\mathrm a},\operatorname{Fix}T)}{k+1},
+\end{equation*}
+where $P$ is the canonical PDHG metric.
+\end{theorem}
+
+Theorem~\ref{thm:pduot-convergence} follows from the firm nonexpansiveness of the preconditioned PDHG resolvent and reflected Halpern fixed-point theory.
+The KL-UOT geometry gives a stronger local statement.
+
+\begin{proposition}[Local sharpness]
+\label{prop:pduot-sharpness}
+Suppose a restricted KKT point satisfies strict complementarity and the incidence matrix restricted to its positive-flow support has full column rank.
+Then the \subsolver fixed-point residual obeys a local error bound around that solution.
+In particular, a positive-flow forest satisfies the rank condition, and fixed-frequency or residual-based restarts yield tail linear convergence once the iterates enter this neighborhood.
+\end{proposition}
+
+The supplementary material will give the proof and distinguish the fixed-metric core from the practical step-size controller.
+
+\subsection{UOT-Aware Hierarchy and Active-Support Refinement}
+\label{sec:uot-hierarchy}
+
+\paragraph{Potential propagation and calibration.}
+The hierarchy follows the nested construction of HELLO: one fixed permutation is applied to each marginal, and each coarser level truncates the currently larger side~\citep{xia2026dual}.
+Suppose the target side is shared by two adjacent levels.
+We inherit its potential $g$ and complete the finer source potential by the $c$-transform
+\begin{equation*}
+f_i=\min_j\{C_{ij}-g_j\}.
+\end{equation*}
+This completion is feasible for every pairwise dual constraint at the finer level.
+
+The transformation $f\leftarrow f+t\mathbf 1_m$ and $g\leftarrow g-t\mathbf 1_n$ preserves all dual scores, while the KL-UOT dual objective varies with $t$.
+Define
+\begin{equation*}
+Z_a=\sum_i a_i e^{-f_i/\rho_a},\qquad Z_b=\sum_j b_j e^{-g_j/\rho_b}.
+\end{equation*}
+
+\begin{proposition}[Translation calibration]
+\label{prop:translation-calibration}
+Along the score-preserving translation direction, the KL-UOT dual objective is strictly concave and is maximized at
+\begin{equation*}
+t^\star=\frac{\rho_a\rho_b}{\rho_a+\rho_b}\left(\log Z_a-\log Z_b\right).
+\end{equation*}
+At the calibrated potentials, the total transported masses implied by the two marginal responses are equal.
+\end{proposition}
+
+The result follows by setting the directional derivative $e^{-t/\rho_a}Z_a-e^{t/\rho_b}Z_b$ to zero.
+Calibration retains every edge ranking while removing the global response mismatch introduced by cross-level propagation.
+
+\paragraph{Initial active support.}
+For every source node, we retain the $\kappa$ target nodes with largest propagated dual scores and apply the symmetric selection for every target node.
+Their union gives the bidirectional dual assignment and covers both sides of the bipartite graph.
+We additionally include a northwest-corner skeleton constructed from the reference masses.
+In KL-UOT, these structural edges provide persistent node coverage and improve the conditioning of repeated restricted solves; they do not enforce hard marginal equalities.
+
+\paragraph{Refinement and stopping.}
+At a fixed hierarchy level, \subsolver first solves~\eqref{eq:restricted-uot} on the current active support.
+A tiled full-space scan then evaluates~\eqref{eq:dual-score} without materializing $C$ or the dense coupling.
+For each source and target node, the scan retains up to $\gamma$ largest positive dual scores and inserts their union into the active support.
+Budgeted pruning protects structural edges, numerically positive-flow edges, and newly inserted violators; remaining old edges are removed in increasing order of relevance to dual tightness.
+
+The restricted stopping criterion combines the marginal-response residuals from~\eqref{eq:uot-kkt}, projected stationarity on $\mathcal A$, and a split primal--dual consistency measure.
+The outer refinement terminates when this restricted criterion and the full-space dual-violation criterion both meet their prescribed tolerances.
+The full-space scan also produces the candidates for the next round, so stopping and support insertion share one streamed pass.
+
+\paragraph{Sparse entropic refinement.}
+The unregularized output optionally initializes an entropic approximation on a fixed sparse support.
+Given the final unregularized coupling $X^0$ and dual score $\sigma$, we form
+\begin{equation*}
+\mathcal A_b=\supp(X^0)\cup\operatorname{RowTopB}(\sigma)\cup\operatorname{ColTopB}(\sigma)
+\end{equation*}
+and solve
+\begin{equation*}
+\min_{X\geq0,\,\supp(X)\subseteq\mathcal A_b}\;\Phi(X)+\varepsilon\KL(X\,|\,a\otimes b).
+\end{equation*}
+Sparse Sinkhorn iterations cost $O(|\mathcal A_b|+m+n)$ per iteration and retain an explicitly sparse coupling for downstream computations.
+
+\subsection{Convergence and Complexity}
+\label{sec:analysis}
+
+We first connect a restricted \subsolver solution to the full KL-UOT problem.
+
+\begin{proposition}[Restricted-to-full recovery]
+\label{prop:restricted-recovery}
+Let $(\widehat x,\widehat f,\widehat g)$ satisfy the KKT conditions of~\eqref{eq:restricted-uot} on $\mathcal A$.
+If $\widehat f_i+\widehat g_j\leq C_{ij}$ for every $(i,j)\in[m]\times[n]$, then extending $\widehat x$ by zero outside $\mathcal A$ yields a global primal solution of~\eqref{eq:primal-uot}, and $(\widehat f,\widehat g)$ is a global dual solution of~\eqref{eq:dual-uot}.
+\end{proposition}
+
+Restricted KKT conditions already provide the marginal responses, active-edge feasibility, and complementarity.
+The full-space inequalities supply the only missing KKT conditions.
+
+Finite-tolerance refinement requires accounting for inexact restricted solves.
+For a coupling $X$ with positive transported marginals, define primal-consistent potentials and scores by
+\begin{equation*}
+\begin{aligned}
+f_i^X&=-\rho_a\log(r_i/a_i),\quad g_j^X=-\rho_b\log(q_j/b_j),\\
+\sigma_{ij}^X&=f_i^X+g_j^X-C_{ij}.
+\end{aligned}
+\end{equation*}
+The coordinate derivative satisfies $\nabla_{ij}\Phi(X)=-\sigma_{ij}^X$.
+
+\begin{proposition}[One-edge descent]
+\label{prop:one-edge-descent}
+Let $h_{ij}(X)=\rho_a/r_i+\rho_b/q_j$.
+If $\sigma_{ij}^X>0$, then $t=\sigma_{ij}^X/h_{ij}(X)$ satisfies
+\begin{equation*}
+\Phi(X+tE_{ij})\leq\Phi(X)-\frac{(\sigma_{ij}^X)^2}{2h_{ij}(X)}.
+\end{equation*}
+\end{proposition}
+
+The proposition follows from a second-order upper bound along the nonnegative coordinate direction $E_{ij}$.
+This direction is always primal feasible because KL-UOT penalizes its marginals rather than imposing hard marginal equalities.
+
+The following theorem states a finite-tolerance guarantee for a safeguarded refinement variant.
+At round $k$, let an inexact restricted oracle return $X^k$ on $\mathcal A_k$ with restricted projected-gradient residual at most $\varepsilon_{\mathrm r}$.
+If the largest inactive primal-consistent score exceeds $\varepsilon_{\mathrm f}$, the update selects such an edge $e_k$, forms the trial point from Proposition~\ref{prop:one-edge-descent}, and retains $\supp(X^k)\cup\{e_k\}$ in the next support.
+
+\begin{theorem}[Finite-tolerance refinement]
+\label{thm:refinement}
+Assume that $\Phi$ is bounded below by $\Phi_{\inf}$, $h_{e_k}(X^k)\leq H$, and the next restricted solve returns $X^{k+1}$ satisfying
+\begin{equation*}
+\begin{aligned}
+\Phi(X^{k+1})&\leq\Phi(X^k+t_kE_{e_k})+\xi_k,\\
+0\leq\xi_k&\leq\theta\frac{(\sigma_{e_k}^{X^k})^2}{2h_{e_k}(X^k)}
+\end{aligned}
+\end{equation*}
+for constants $H<\infty$ and $\theta\in[0,1)$.
+Then the safeguarded refinement terminates after at most
+\begin{equation}
+\label{eq:refinement-bound}
+N_{\mathrm{ref}}\leq\left\lceil\frac{2H(\Phi(X^0)-\Phi_{\inf})}{(1-\theta)\varepsilon_{\mathrm f}^2}\right\rceil
+\end{equation}
+nonterminal rounds and returns a coupling whose full projected-gradient residual is at most $\max\{\varepsilon_{\mathrm r},\varepsilon_{\mathrm f}\}$.
+\end{theorem}
+
+Each nonterminal round decreases the objective by at least $(1-\theta)\varepsilon_{\mathrm f}^2/(2H)$, and telescoping proves~\eqref{eq:refinement-bound}.
+The theorem isolates an implementable safeguard for inexact \subsolver calls.
+The practical variant uses \subsolver potentials for candidate ranking; primal-consistent scores or two-sided response corrections can be used for the safeguarded stopping test.
+The supplementary material will provide further details and explicit marginal bounds for $H$.
+
+Finally, let $s=|\mathcal A|$ denote the largest maintained active support.
+\subsolver stores edge flows and sparse incidence indices in $O(s)$ memory, while the hierarchy stores input features and node quantities in $O((m+n)d+m+n)$ memory.
+The tiled full-space scan uses the same persistent memory and performs $O(mn)$ arithmetic per pass.
+Consequently,
+\begin{equation}
+\label{eq:memory-complexity}
+\operatorname{Mem}(\ours)=O\bigl((m+n)d+m+n+s\bigr).
+\end{equation}
+Under the configured support budget $s\leq\beta(m+n)$ and fixed feature dimension,~\eqref{eq:memory-complexity} is linear in the number of input points.
+
+\bibliography{references}
+\bibliographystyle{icml2026}
+
+\newpage
+\appendix
+\onecolumn
+\section{Natural Extension to UOT with general Marginal Penaltys}
+\label{app:extension_penalty}
+% CN: 本附录预留 squared-L2 边际惩罚版本的定义、算法适配和理论说明。
+% EN: This appendix is reserved for the squared-L2 marginal-penalty variant, its algorithmic adaptation, and supporting analysis.
+
+\end{document}
