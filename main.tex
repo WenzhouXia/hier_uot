@@ -6,6 +6,7 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{xspace}
+\usepackage{xcolor}
 
 \newcommand{\theHalgorithm}{\arabic{algorithm}}
 
@@ -33,10 +34,12 @@
 \newcommand{\sinkhorn}{\texttt{Sinkhorn}\xspace}
 \newcommand{\KL}{\operatorname{KL}}
 \newcommand{\supp}{\operatorname{supp}}
+\newcommand{\xwz}[1]{{\color{red}#1}}
 
 \newtheorem{proposition}{Proposition}
 \newtheorem{theorem}{Theorem}
 \newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \theoremstyle{plain}
@@ -359,6 +362,41 @@ Practical control steps are detailed in Appendix~\ref{app:pduot-controls}.
 \subsection{UOT-Aware Hierarchy and Refinement}
 \label{sec:uot-hierarchy}
 
+\paragraph{Inter-level stability.}
+A coarse problem is useful if it retains information that can initialize a larger UOT solve.
+We therefore ask how changing the source instance affects the optimal response on a shared target side.
+For KL-UOT, the normalized target response
+\begin{equation}
+\label{eq:hierarchy-response-shape}
+p_j(\mathbf g)=\frac{b_j e^{-g_j/\rho_b}}{\sum_k b_k e^{-g_k/\rho_b}}
+\end{equation}
+separates the marginal shape from its total transported mass and is invariant under scalar translations of $\mathbf g$.
+The following result identifies a regime in which this shape can be inherited.
+
+\begin{proposition}[Shared-side response stability]
+\label{prop:uot-hierarchy-stability}
+Consider two unregularized KL-UOT instances with positive reference weights, finite costs, positive marginal penalties, and a common target reference $\mathbf b$ and target penalty $\rho_b$.
+Let $\mathbf p^0,\mathbf p^1$ be their normalized optimal target marginals, and define, over the union of the source sets,
+\begin{equation*}
+\Gamma=\max_{i,i',j,j'}|C_{ij}-C_{ij'}-C_{i'j}+C_{i'j'}|.
+\end{equation*}
+\begin{itemize}
+\item \textbf{Shape stability.}
+With $H^2(\mathbf p,\mathbf z)=\sum_j(\sqrt{p_j}-\sqrt{z_j})^2$,
+\begin{equation*}
+H^2(\mathbf p^0,\mathbf p^1)\leq 2\left[1-\operatorname{sech}\!\left(\frac{\Gamma}{4\rho_b}\right)\right]\leq \frac{\Gamma^2}{16\rho_b^2}.
+\end{equation*}
+\item \textbf{Exact inheritance for separable costs.}
+If $C_{ij}=u_i+v_j$, source subsampling and reweighting preserve the shape $p_j\propto b_j e^{-v_j/\rho_b}$.
+\end{itemize}
+\end{proposition}
+
+Proposition~\ref{prop:uot-hierarchy-stability} shows that a small cost interaction relative to $\rho_b$ limits shared-side shape changes, motivating the reuse of coarse dual information in finer solves.
+Appendix~\ref{app:uot-hierarchy-stability} proves the result and develops a sharper computable bound and a conditional response predictor.
+Guided by this stability, we use the nested random subsampling and dual propagation of \hello~\citep{xia2026dual}, changing one side at a time so that the other side's potential can be inherited.
+The bound applies to arbitrary source subsets; quantitative rates in the retained sample size require additional geometric assumptions.
+The next step adjusts the response totals after propagation.
+
 \paragraph{Potential propagation and calibration.}
 \build follows the nested construction of \hello: one fixed permutation is applied to each marginal, and each coarser level truncates the currently larger side~\citep{xia2026dual}.
 \init combines the potential propagation and calibration below with initial active-support construction.
@@ -537,12 +575,20 @@ We compare \subsolver with existing solvers on shared restricted UOT instances, 
 % CN: 待补充统一评测指标、基线配置以及运行时间与精度的对比结果。
 % EN: Add shared evaluation metrics, baseline configurations, and runtime--accuracy comparisons.
 
+\subsection{Hierarchy Ablation}
+\label{sec:hierarchy-experiments}
+
+\xwz{Add a comparison of measured inter-level response errors with the bounds and conditional predictor in Appendix~\ref{app:uot-hierarchy-stability}, reporting the penalty regimes where predictions deteriorate.
+Pair this mechanism validation with a hierarchy on/off ablation at matched stopping tolerances, reporting runtime and solver work.}
+
 \bibliography{references}
 \bibliographystyle{icml2026}
 
 \newpage
 \appendix
 \onecolumn
+\input{theory/inter_level_response_stability}
+
 \section{PDUOT Analysis and Control Steps}
 \label{app:pduot-details}
 

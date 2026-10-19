@@ -1,0 +1,158 @@
+% CN: 层间稳定性命题的证明，以及更精细的诊断与预测。
+% EN: Proof of inter-level stability and sharper diagnostics and prediction.
+\providecommand{\uotHierarchyH}{\mathcal H}
+\section{Inter-Level Response Stability for KL-UOT}
+\label{app:uot-hierarchy-stability}
+\subsection{Setting and the mass--shape decomposition}
+Consider $\Phi_a(X)=\langle C,X\rangle+\rho_a\operatorname{KL}(X\mathbf1\mid a)+\rho_b\operatorname{KL}(X^\top\mathbf1\mid b)$, where $a,b$ are strictly positive, the cost is finite, and $\rho_a,\rho_b>0$.
+The coupling itself is not entropy regularized.
+An inheritance step changes the source instance while keeping target locations and $b$ fixed.
+This includes a coarse-to-fine source augmentation; the opposite direction follows by exchanging the marginals.
+Let $q^\star$ be the finer optimal target marginal and $p^\star=q^\star/\|q^\star\|_1$.
+From a coarse target potential $g^0$, form $q^0_j=b_j\exp(-g^0_j/\rho_b)$, $M_0=\|q^0\|_1$, and $p=q^0/M_0$.
+The coarse potential need not be exactly optimal.
+We use $H^2(p,z)=\sum_j(\sqrt{p_j}-\sqrt{z_j})^2$ and $J(p,z)=\operatorname{KL}(p\mid z)+\operatorname{KL}(z\mid p)$ for probability vectors.
+
+\begin{lemma}[Mass and shape]
+The normalized optimal coupling minimizes $\Phi_a$ over unit-mass couplings.
+Consequently, if
+$$\uotHierarchyH_a(z)=\inf_{X\geq0,\ X^\top\mathbf1=z}\{\langle C,X\rangle+\rho_a\operatorname{KL}(X\mathbf1\mid a)\},$$
+then $p^\star$ minimizes $F_a(z)=\uotHierarchyH_a(z)+\rho_b\operatorname{KL}(z\mid b)$ over the probability simplex.
+\end{lemma}
+\begin{proof}
+For a unit-mass coupling $Z$, $\lambda>0$, and $K=\rho_a\|a\|_1+\rho_b\|b\|_1$,
+$$\Phi_a(\lambda Z)=\lambda\Phi_a(Z)+(\rho_a+\rho_b)\lambda\log\lambda+(1-\lambda)K.$$
+Its minimum over $\lambda$ is strictly increasing in $\Phi_a(Z)$.
+The marginal formulation follows by minimizing over couplings at fixed target shape.
+\end{proof}
+
+\subsection{An a priori interaction bound}
+For two source instances with a common target set, take their union as the source index set and define the rectangular cost oscillation
+$$\Gamma=\max_{i,i',j,j'}|C_{ij}-C_{ij'}-C_{i'j}+C_{i'j'}|.$$
+
+\begin{proposition}[Shape stability from cost interaction]\label{prop:uot-hierarchy-interaction}
+Let $p^0,p^1$ be the normalized optimal target marginals of any two such source instances with the same $b$ and $\rho_b$.
+Then
+$$H^2(p^0,p^1)\leq2\left[1-\operatorname{sech}\!\left(\frac{\Gamma}{4\rho_b}\right)\right]\leq\frac{\Gamma^2}{16\rho_b^2}.$$
+In particular, for squared Euclidean cost, $\Gamma\leq2\operatorname{diam}(S)\operatorname{diam}(T)$.
+For separable cost $C_{ij}=u_i+v_j$, the target-response shape is exactly $p_j\propto b_j e^{-v_j/\rho_b}$ and is unchanged by source subsampling or source reweighting.
+The first bound is sharp over pairs of source instances.
+\end{proposition}
+\begin{proof}[Proof of Proposition~\ref{prop:uot-hierarchy-stability} and the additional claims]
+Positive optimal target marginals imply $g_j=\min_i(C_{ij}-f_i)$.
+Thus each difference $g_j-g_{j'}$ lies between the minimum and maximum of $C_{ij}-C_{ij'}$ over the available source indices.
+Using the union of both source sets gives $\operatorname{osc}(g^1-g^0)\leq\Gamma$.
+The normalized log-likelihood ratio therefore has oscillation at most $D=\Gamma/\rho_b$.
+
+For completeness, let $x_j=\sqrt{p^1_j/p^0_j}\in[\alpha,\beta]$, with $\beta/\alpha\leq e^{D/2}$.
+Since $\mathbb E_{p^0}x^2=1$ and $(x-\alpha)(x-\beta)\leq0$,
+$$\mathbb E_{p^0}x\geq\frac{1+\alpha\beta}{\alpha+\beta}\geq\operatorname{sech}(D/4).$$
+The final inequality follows by minimizing over $\alpha$ at fixed $\beta/\alpha$.
+The affinity identity $H^2=2-2\mathbb E x$ proves the first bound.
+The inequality $2(1-\operatorname{sech} t)\leq t^2$ proves the second.
+For quadratic cost the rectangular difference is $-2(s_i-s_{i'})^\top(t_j-t_{j'})$.
+If $\Gamma=0$, the bound gives exact inheritance; the displayed separable response also follows directly from the optimality conditions.
+For sharpness, take two singleton source instances whose costs to two equally weighted targets are $(0,\Gamma/2)$ and $(\Gamma/2,0)$.
+Their normalized target responses attain $H^2=2[1-\operatorname{sech}(\Gamma/(4\rho_b))]$.
+\end{proof}
+
+This bound isolates source--target interaction and proves a quadratic dependence on $1/\rho_b$ without a sampling assumption.
+It is not a rate in sample size and can be conservative on large supports.
+It applies to optimal endpoint responses; inexact coarse potentials can instead be handled directly by the next result.
+
+\subsection{A computable inheritance bound}
+On the finer source instance, consider the auxiliary fixed-target problem defining $\uotHierarchyH_a(q^0)$.
+Let $Y$ have target marginal $q^0$ and let $(h,v)$ be auxiliary dual feasible, $h_i+v_j\leq C_{ij}$.
+Define its certified gap and scaled target residual by
+$$\eta=\langle C,Y\rangle+\rho_a\operatorname{KL}(Y\mathbf1\mid a)-\left[(q^0)^\top v+\rho_a\sum_i a_i(1-e^{-h_i/\rho_a})\right],\qquad d_j=\frac{v_j-g^0_j}{\rho_b},\qquad \epsilon=\frac{\eta}{\rho_bM_0}.$$
+The auxiliary problem may be solved on candidate edges: a restricted primal remains a valid witness, and setting $h_i=\min_j(C_{ij}-v_j)$ makes the dual globally feasible.
+The resulting $\eta$ includes any omitted-edge or numerical error.
+No finer optimal marginal is needed to compute these quantities.
+
+\begin{proposition}[Translation-invariant inheritance]\label{prop:uot-hierarchy-inheritance}
+For any such auxiliary primal--dual pair, define
+$$R(p,d)=\log\sum_jp_je^{-d_j}+\sum_jp_jd_j,$$
+and
+$$B(p,d)=\max_{z\in\Delta}\left\{H^2(z,p)-\tfrac12\big[J(z,p)+\langle d,z-p\rangle\big]\right\}.$$
+Then
+$$H^2(p,p^\star)\leq\min\{2,\ R(p,d)+\epsilon,\ B(p,d)+\tfrac12\epsilon\}.$$
+Both $R$ and $B$ are invariant under adding a scalar to $d$.
+The maximization defining $B$ is strictly concave, with an interior optimizer, and reduces to a scalar normalization multiplier.
+For an exact auxiliary solve and $d=\tau d_0$ with fixed $p,d_0$,
+$$R(p,\tau d_0)=\frac{\tau^2}{2}\operatorname{Var}_p(d_0)+O(\tau^3),\qquad B(p,\tau d_0)=\frac{\tau^2}{4}\operatorname{Var}_p(d_0)+O(\tau^3).$$
+\end{proposition}
+\begin{proof}
+The auxiliary dual gives an $\eta$-approximate supporting hyperplane for $\uotHierarchyH_a$ at $q^0$.
+After normalizing to unit mass, its error is $\eta/M_0$; its slope changes by $-\rho_a\log M_0$, which disappears on the simplex.
+The KL Bregman identity therefore gives
+$$F_a(z)\geq F_a(p)+\rho_b\langle d,z-p\rangle+\rho_b\operatorname{KL}(z\mid p)-\eta/M_0.$$
+Minimizing the right-hand side on the simplex and using KL strong convexity at $p^\star$ yields $\operatorname{KL}(p\mid p^\star)\leq R(p,d)+\epsilon$.
+Since $H^2\leq\operatorname{KL}$, this proves the $R$ bound.
+
+Combining the approximate support inequality for $\uotHierarchyH_a$ at $p$ with the exact support inequality at $p^\star$ gives
+$$J(p^\star,p)+\langle d,p^\star-p\rangle\leq\epsilon.$$
+Substituting this into the definition of $B$ proves the direct Hellinger bound.
+For $t=z_j/p_j$, the scalar integrand of $B$ is $(\sqrt t-1)^2-\frac12(t-1)\log t-\frac12d_j(t-1)$.
+Its second derivative is $-(t-\sqrt t+1)/(2t^2)<0$.
+Thus the constrained maximum is strictly concave and can be computed by a single scalar multiplier and coordinatewise monotone roots.
+Finally, expand about $z=p$: $H^2(z,p)=\frac14\sum_j(z_j-p_j)^2/p_j+O(\|z-p\|^3)$ and $J(z,p)=\sum_j(z_j-p_j)^2/p_j+O(\|z-p\|^3)$.
+Maximizing the resulting quadratic gives the stated expansion for $B$; the expansion of $R$ is the cumulant expansion of log-sum-exp.
+\end{proof}
+
+The direct Hellinger bound improves the local leading constant of the KL-based bound by a factor of two.
+For exact auxiliary solves, a simple additional bound is $R(p,d)\leq\operatorname{osc}(d)^2/8$ by Hoeffding's lemma.
+An explicit random-subsampling rate still requires control of the distribution of $d$ as a function of the retained sample size.
+
+\subsection{Response prediction on an auxiliary active graph}
+Assume now that the auxiliary problem is solved exactly.
+Let $E$ be the support of an auxiliary optimum, with connected bipartite components $(I_\alpha,J_\alpha)$.
+Write $r=Y\mathbf1$, $Q_\alpha=\sum_{j\in J_\alpha}q^0_j=\sum_{i\in I_\alpha}r_i$, $P_\alpha=Q_\alpha/M_0$, and $\theta=\rho_a/(\rho_a+\rho_b)$.
+Define
+$$A_\alpha=\frac{1}{Q_\alpha}\sum_{j\in J_\alpha}q^0_je^{-d_j},\qquad \gamma_\alpha=\frac{\rho_a\rho_b}{\rho_a+\rho_b}\log A_\alpha,$$
+$$\widehat r_i=r_iA_\alpha^{\rho_b/(\rho_a+\rho_b)},\quad\widehat q_j=q^0_je^{-d_j}A_\alpha^{-\theta},\quad\widehat f_i=h_i-\gamma_\alpha,\quad\widehat g_j=v_j+\gamma_\alpha.$$
+
+\begin{proposition}[Conditional exact response prediction]\label{prop:uot-hierarchy-prediction}
+Suppose $(\widehat f,\widehat g)$ is globally dual feasible and a nonnegative coupling with marginals $(\widehat r,\widehat q)$ exists on $E$.
+Then these potentials and that coupling satisfy the finer KL-UOT optimality conditions.
+In particular $q^\star=\widehat q$.
+Both conditions can be checked without computing the finer optimum: one dual scan and one transportation feasibility problem suffice.
+No forest, uniqueness of coupling, or strict complementarity assumption is required.
+\end{proposition}
+\begin{proof}
+The shifts preserve equality on every auxiliary active edge.
+The exponential response identities give $a_i e^{-\widehat f_i/\rho_a}=\widehat r_i$ and $b_j e^{-\widehat g_j/\rho_b}=\widehat q_j$.
+The choice of $\gamma_\alpha$ makes source and target mass equal within every component.
+The assumed feasible coupling and global dual feasibility therefore establish primal feasibility, response consistency, and complementarity.
+These are the sufficient convex KKT conditions.
+\end{proof}
+
+When the condition holds, normalizing $\widehat q$ gives an exact error prediction.
+Its small-perturbation expansion is
+$$H^2(p,p^\star)=\frac14\left[\sum_\alpha P_\alpha\operatorname{Var}_{p(\cdot\mid J_\alpha)}(d)+\left(\frac{\rho_b}{\rho_a+\rho_b}\right)^2\operatorname{Var}_{P}(\bar d_\alpha)\right]+O(\|d-\mathbb E_pd\|_\infty^3),$$
+where $\bar d_\alpha=\mathbb E_p[d\mid J_\alpha]$.
+This separates within-component deformation from changes in component masses.
+The latter are damped by the source marginal penalty.
+Outside the verified regime, the formula is a predictor whose accuracy must be measured empirically.
+
+\begin{corollary}[A certified interval for the prediction]
+Let $\widehat X$ be any finer coupling with target marginal $\widehat q$, let a globally feasible dual provide a gap certificate $G$, and write $\widehat p=\widehat q/\|\widehat q\|_1$.
+Then, with $e=H^2(p,\widehat p)$ and $r_G=\sqrt{G/(\rho_b\|\widehat q\|_1)}$,
+$$\max\{0,\sqrt e-r_G\}^2\leq H^2(p,p^\star)\leq\min\{2,(\sqrt e+r_G)^2\}.$$
+\end{corollary}
+\begin{proof}
+The primal objective difference from optimality is at least $\rho_b\operatorname{KL}(\widehat q\mid q^\star)$, and is bounded by $G$.
+KL mass decomposition gives $H^2(\widehat p,p^\star)\leq\operatorname{KL}(\widehat p\mid p^\star)\leq G/(\rho_b\|\widehat q\|_1)$.
+Apply the triangle and reverse triangle inequalities for Hellinger distance.
+\end{proof}
+
+\subsection{Why a uniform sampling-rate claim needs assumptions}
+Set $m=n$, $a=b=\mathbf1/m$, $C_{ii}=0$, and $C_{ij}=c>0$ for $i\ne j$.
+The fine optimum has normalized target response $p_j=1/m$.
+After retaining any fraction $\vartheta=k/m$ of source rows and assigning uniform coarse weights, symmetry and the response equations give
+$$p^S_j=\frac{1}{mZ}\ \ (j\in S),\qquad p^S_j=\frac{e^{-c/\rho_b}}{mZ}\ \ (j\notin S),\qquad Z=\vartheta+(1-\vartheta)e^{-c/\rho_b}.$$
+Hence
+$$H^2(p,p^S)=2-2\frac{\vartheta+(1-\vartheta)e^{-c/(2\rho_b)}}{\sqrt{\vartheta+(1-\vartheta)e^{-c/\rho_b}}}.$$
+For fixed $\vartheta,c,\rho_b$ this is independent of $m$ and strictly positive.
+The cost can be realized by squared distances between orthogonal points in a growing-dimensional space.
+Thus increasing sample size alone cannot yield a uniform vanishing bound over arbitrary geometries.
+This does not contradict rates under fixed covering dimension or other uniform geometric regularity.
