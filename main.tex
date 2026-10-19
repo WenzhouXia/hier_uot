@@ -20,7 +20,12 @@
 
 \newcommand{\ours}{\texttt{SHUTTLE}\xspace} 
 \newcommand{\subsolver}{\texttt{PDUOT}\xspace}
+\newcommand{\build}{\texttt{BuildHier}\xspace}
+\newcommand{\init}{\texttt{Init}\xspace}
+\newcommand{\pricing}{\texttt{Pricing}\xspace}
+\newcommand{\prune}{\texttt{Prune}\xspace}
 \newcommand{\mm}{\texttt{MM}\xspace}
+\newcommand{\hello}{\texttt{HELLO}\xspace}
 \newcommand{\sinkhorn}{\texttt{Sinkhorn}\xspace}
 \newcommand{\KL}{\operatorname{KL}}
 \newcommand{\supp}{\operatorname{supp}}
@@ -114,7 +119,7 @@ Scalability remains limited by quadratic coupling storage in standard \mm implem
 This leaves open how to solve the large scale unregularized UOT problem with linear memory and efficient GPU parallelism.
 
 We introduce \ours, a \textbf{S}parse \textbf{H}ierarchical solver for large-scale \textbf{U}nbalanced Optimal \textbf{T}ransport \textbf{T}hrough \textbf{L}inear-Memory \textbf{E}dge Localization.
-UOT admits sparse optimal couplings and, for convex marginal penalties, shares the dual constraints $f_i+g_j \leq C_{ij}$ of balanced OT, which motivates extending the dual-guided hierarchy of HELLO to the unbalanced setting~\citep{xia2026dual}.
+UOT admits sparse optimal couplings and, for convex marginal penalties, shares the dual constraints $f_i+g_j \leq C_{ij}$ of balanced OT, which motivates extending the dual-guided hierarchy of \hello to the unbalanced setting~\citep{xia2026dual}.
 The marginal penalties, however, turn the restricted transport linear programs into nonlinear convex problems.
 We therefore develop \subsolver, a GPU-friendly primal--dual solver for restricted UOT.
 Combining \subsolver with hierarchical edge localization and calibration of propagated dual potentials yields a GPU-friendly UOT solver with linear memory.
@@ -130,13 +135,21 @@ Our contributions are summarized as follows:
 \label{sec:method}
 
 
-\subsection{Dual Structure and Overall Framework}
+\subsection{Overall Framework}
 \label{sec:framework}
 
 Let $\mathcal S=\{s_i\}_{i=1}^m$ and $\mathcal D=\{d_j\}_{j=1}^n$ denote the source and target supports in~\eqref{eq:primal-uot}, with $C_{ij}=c(s_i,d_j)$.
 For any coupling $X$, let $r=X\mathbf 1_n$ and $q=X^\top\mathbf 1_m$ denote its transported marginals.
 With $r$ and $q$ fixed, the marginal penalties are constant and minimizing over $X$ reduces to balanced OT.
 Consequently, whenever an optimum exists, there is an optimal coupling with at most $m+n-1$ positive entries.
+This sparsity motivates optimizing over an active support $\mathcal{N}\subseteq[m]\times[n]$, with all other transport variables fixed to zero.
+The central task is to discover and refine this support without maintaining all $mn$ variables.
+
+The dual formulation~\eqref{eq:dual-uot} provides a pricing mechanism for this task.
+Each transport variable $X_{ij}$ corresponds to a linear dual inequality $f_i+g_j\leq C_{ij}$, so adding a primal variable amounts to enforcing an additional dual constraint.
+This correspondence allows us to extend the restricted-master and pricing strategy of LP column generation to UOT, with a nonlinear convex restricted master.
+To our knowledge, this form of column generation remains comparatively unexplored for unregularized KL-UOT.
+
 The KKT conditions for~\eqref{eq:primal-uot} and~\eqref{eq:dual-uot} are
 \begin{equation}
 \label{eq:uot-kkt}
@@ -147,65 +160,71 @@ X_{ij}(f_i+g_j-C_{ij})&=0.
 \end{aligned}
 \end{equation}
 
-Balanced OT and KL-UOT have different dual objectives but the same pairwise feasible region $f_i+g_j\leq C_{ij}$.
-We therefore retain the dual score
+An exact restricted solution satisfies these conditions on $\mathcal{N}$, together with the marginal-response equations on all nodes.
+It is therefore globally optimal whenever its potentials also satisfy every omitted dual inequality.
+We use the dual score
 \begin{equation}
 \label{eq:dual-score}
 \sigma_{ij}:=f_i+g_j-C_{ij}
 \end{equation}
-as the common signal for cross-level initialization and within-level refinement.
-The hierarchy, dual completion, candidate ranking, and streamed full-space scans of HELLO depend on these pairwise constraints and extend directly to KL-UOT~\citep{xia2026dual}.
-The marginal responses in~\eqref{eq:uot-kkt}, the restricted nonlinear problem, and the translation of propagated potentials require UOT-specific treatment.
+to price omitted edges: a positive score identifies a violated constraint and a candidate variable for the next restricted solve.
+The resulting refinement alternates restricted UOT solves with full-space pricing and edge insertion, while budgeted pruning controls the active-support size.
 
-Algorithm~\ref{alg:shuttle} summarizes the resulting framework.
+We organize this refinement in the dual-guided hierarchy introduced by \hello~\citep{xia2026dual}.
 The finest problem is indexed by $0$, and the coarsest problem is indexed by $L$.
 Adjacent levels change one marginal at a time, allowing the unchanged potential to be inherited directly.
+At each finer level, propagated and calibrated dual potentials guide the initial active support, which is then refined using the same dual scores.
+We write $\mathcal Z^{(\ell)}=(X^{(\ell)},f^{(\ell)},g^{(\ell)})$ for a level's primal--dual state and $\mathcal E^{(\ell)}$ for its complete edge set.
+Within a level, $\mathcal N$, $\mathcal B$, and $\mathcal Z$ denote the current active support, structural edges, and primal--dual state.
+Algorithm~\ref{alg:shuttle} summarizes the framework.
 
 \begin{algorithm}[t]
 \caption{\ours}
 \label{alg:shuttle}
 \begin{algorithmic}[1]
-\STATE \textbf{Input:} KL-UOT problem $\mathcal P^{(0)}$, support budgets $\kappa,\gamma,\beta$, and tolerances $\varepsilon_{\mathrm r},\varepsilon_{\mathrm f}$.
-\STATE Construct a hierarchy $\{\mathcal P^{(\ell)}\}_{\ell=0}^{L}$.
-\STATE Solve the coarsest problem $\mathcal P^{(L)}$ on its complete graph.
+\STATE \textbf{Input:} KL-UOT problem $\mathcal P^{(0)}$, support budgets $\kappa,\gamma,\beta$, and tolerance $\varepsilon$.
+\STATE \textbf{Output:} finest-level primal--dual state $\mathcal Z^{(0)}$.
+\medskip
+\STATE $\{\mathcal P^{(\ell)}\}_{\ell=0}^{L}\gets\build(\mathcal P^{(0)})$
+\STATE $\mathcal Z^{(L)}\gets\subsolver(\mathcal P^{(L)},\mathcal E^{(L)},\varnothing;\varepsilon)$
 \FOR{$\ell=L-1,\ldots,0$}
-    \STATE Propagate and calibrate the coarse dual potentials.
-    \STATE Construct $\mathcal A^{(\ell)}$ by bidirectional dual assignment and structural edges.
-    \REPEAT
-        \STATE Solve restricted KL-UOT on $\mathcal A^{(\ell)}$ with \subsolver.
-        \STATE Stream over the full edge space and select nodewise dual violators.
-        \IF{the restricted residual and full-space violation meet their tolerances}
+    \STATE $(\mathcal N,\mathcal B,\mathcal Z)\gets\init(\mathcal P^{(\ell)},\mathcal Z^{(\ell+1)};\kappa)$
+    \LOOP
+        \STATE $\mathcal Z\gets\subsolver(\mathcal P^{(\ell)},\mathcal N,\mathcal Z;\varepsilon)$
+        \STATE $(\mathcal V,\eta)\gets\pricing(\mathcal P^{(\ell)},\mathcal Z;\gamma)$
+        \IF{$\eta\leq\varepsilon$}
             \STATE \textbf{break}
         \ENDIF
-        \STATE Insert the selected edges and apply budgeted pruning.
-    \UNTIL{the refinement limit is reached}
+        \STATE $\mathcal N\gets\mathcal N\cup\mathcal V$
+        \STATE $\mathcal N\gets\prune(\mathcal N,\mathcal Z,\mathcal B,\mathcal V;\beta)$
+    \ENDLOOP
+    \STATE $\mathcal Z^{(\ell)}\gets\mathcal Z$
 \ENDFOR
-\STATE \textbf{Return:} the finest-level sparse coupling and dual potentials.
+\medskip
+\STATE \textbf{Return:} $\mathcal Z^{(0)}$.
 \end{algorithmic}
 \end{algorithm}
-
-The three UOT-specific components are developed next.
-\subsolver replaces the restricted OT linear program with a sparse nonlinear solver; analytic translation calibration aligns the propagated potentials with the KL marginal responses; and the outer loop combines restricted KKT residuals with full-space dual violations.
 
 \subsection{Restricted UOT with \subsolver}
 \label{sec:pduot}
 
-Let $\mathcal A\subseteq[m]\times[n]$ be an active support and let $x\in\mathbb R_+^{|\mathcal A|}$ collect its edge flows.
-The sparse incidence operators $P_{\mathcal A}$ and $Q_{\mathcal A}$ aggregate edge flows onto source and target nodes.
+Let $\mathcal{N}\subseteq[m]\times[n]$ be an active support and let $x\in\mathbb R_+^{|\mathcal{N}|}$ collect its edge flows.
+The call $\subsolver(\mathcal P,\mathcal N,\mathcal Z_{\mathrm{init}};\varepsilon)$ returns a primal--dual state $\mathcal Z$ satisfying the restricted stopping criterion to tolerance $\varepsilon$, using $\mathcal Z_{\mathrm{init}}$ as a warm start; $\varnothing$ selects the default initialization.
+The sparse incidence operators $P_{\mathcal{N}}$ and $Q_{\mathcal{N}}$ aggregate edge flows onto source and target nodes.
 The restricted problem is
 \begin{equation}
 \label{eq:restricted-uot}
-\min_{x\geq0}\;\langle c_{\mathcal A},x\rangle+\rho_a\KL(P_{\mathcal A}x\,|\,a)+\rho_b\KL(Q_{\mathcal A}x\,|\,b).
+\min_{x\geq0}\;\langle c_{\mathcal{N}},x\rangle+\rho_a\KL(P_{\mathcal{N}}x\,|\,a)+\rho_b\KL(Q_{\mathcal{N}}x\,|\,b).
 \end{equation}
-Define $K_{\mathcal A}x=(P_{\mathcal A}x,Q_{\mathcal A}x)$,
+Define $K_{\mathcal{N}}x=(P_{\mathcal{N}}x,Q_{\mathcal{N}}x)$,
 \begin{equation*}
-F(x)=\langle c_{\mathcal A},x\rangle+\iota_{\mathbb R_+^{|\mathcal A|}}(x),
+F(x)=\langle c_{\mathcal{N}},x\rangle+\iota_{\mathbb R_+^{|\mathcal{N}|}}(x),
 \end{equation*}
-and let $G(K_{\mathcal A}x)$ denote the two KL terms in~\eqref{eq:restricted-uot}.
+and let $G(K_{\mathcal{N}}x)$ denote the two KL terms in~\eqref{eq:restricted-uot}.
 The saddle formulation is
 \begin{equation}
 \label{eq:restricted-saddle}
-\min_x\max_y\;F(x)+\langle K_{\mathcal A}x,y\rangle-G^*(y),
+\min_x\max_y\;F(x)+\langle K_{\mathcal{N}}x,y\rangle-G^*(y),
 \end{equation}
 where $y=-(f,g)$ and
 \begin{equation*}
@@ -216,8 +235,8 @@ G^*(y)=\rho_a\sum_i a_i(e^{y_i/\rho_a}-1)+\rho_b\sum_j b_j(e^{y_{m+j}/\rho_b}-1)
 \begin{equation}
 \label{eq:pduot-map}
 \begin{aligned}
-\widehat x&=\left[x-\tau(c_{\mathcal A}+K_{\mathcal A}^\top y)\right]_+,\\
-\widehat y&=\operatorname{prox}_{\sigma G^*}\left(y+\sigma K_{\mathcal A}(2\widehat x-x)\right).
+\widehat x&=\left[x-\tau(c_{\mathcal{N}}+K_{\mathcal{N}}^\top y)\right]_+,\\
+\widehat y&=\operatorname{prox}_{\sigma G^*}\left(y+\sigma K_{\mathcal{N}}(2\widehat x-x)\right).
 \end{aligned}
 \end{equation}
 The dual proximal map separates over nodes.
@@ -226,7 +245,7 @@ For an input $u$, reference mass $a$, and marginal penalty $\rho$, each coordina
 z-u+\sigma a e^{z/\rho}=0.
 \end{equation*}
 We evaluate this scalar proximal map in the log domain to avoid overflow and cancellation.
-Applications of $K_{\mathcal A}$ and $K_{\mathcal A}^\top$ use source-CSR and transposed edge indices, so each \subsolver iteration costs $O(|\mathcal A|+m+n)$ time and memory.
+Applications of $K_{\mathcal{N}}$ and $K_{\mathcal{N}}^\top$ use source-CSR and transposed edge indices, so each \subsolver iteration costs $O(|\mathcal{N}|+m+n)$ time and memory.
 
 Let $T$ denote the fixed-step PDHG map in~\eqref{eq:pduot-map} and $R=2T-I$ its reflection.
 Within one restart epoch, \subsolver applies the Halpern iteration
@@ -242,7 +261,7 @@ The fixed-metric core admits a direct convergence statement.
 
 \begin{theorem}[Convergence of fixed-metric \subsolver]
 \label{thm:pduot-convergence}
-Assume that the restricted problem~\eqref{eq:restricted-uot} has a KKT point and that $\tau\sigma\|K_{\mathcal A}\|_2^2<1$.
+Assume that the restricted problem~\eqref{eq:restricted-uot} has a KKT point and that $\tau\sigma\|K_{\mathcal{N}}\|_2^2<1$.
 Then the unrestarted iteration~\eqref{eq:halpern} converges to a restricted KKT point and satisfies
 \begin{equation*}
 \|z^k-Tz^k\|_{P}\leq\frac{\operatorname{dist}_{P}(z^{\mathrm a},\operatorname{Fix}T)}{k+1},
@@ -266,7 +285,8 @@ The supplementary material will give the proof and distinguish the fixed-metric 
 \label{sec:uot-hierarchy}
 
 \paragraph{Potential propagation and calibration.}
-The hierarchy follows the nested construction of HELLO: one fixed permutation is applied to each marginal, and each coarser level truncates the currently larger side~\citep{xia2026dual}.
+\build follows the nested construction of \hello: one fixed permutation is applied to each marginal, and each coarser level truncates the currently larger side~\citep{xia2026dual}.
+\init combines the potential propagation and calibration below with initial active-support construction.
 Suppose the target side is shared by two adjacent levels.
 We inherit its potential $g$ and complete the finer source potential by the $c$-transform
 \begin{equation*}
@@ -295,30 +315,21 @@ Calibration retains every edge ranking while removing the global response mismat
 \paragraph{Initial active support.}
 For every source node, we retain the $\kappa$ target nodes with largest propagated dual scores and apply the symmetric selection for every target node.
 Their union gives the bidirectional dual assignment and covers both sides of the bipartite graph.
-We additionally include a northwest-corner skeleton constructed from the reference masses.
+We additionally include structural edges $\mathcal B$ given by a northwest-corner skeleton constructed from the reference masses.
 In KL-UOT, these structural edges provide persistent node coverage and improve the conditioning of repeated restricted solves; they do not enforce hard marginal equalities.
+\init returns the union $\mathcal N$ of dual-assigned and structural edges, the protected set $\mathcal B$, and an initial state $\mathcal Z$ with zero flows and the propagated, calibrated potentials.
 
 \paragraph{Refinement and stopping.}
 At a fixed hierarchy level, \subsolver first solves~\eqref{eq:restricted-uot} on the current active support.
-A tiled full-space scan then evaluates~\eqref{eq:dual-score} without materializing $C$ or the dense coupling.
-For each source and target node, the scan retains up to $\gamma$ largest positive dual scores and inserts their union into the active support.
-Budgeted pruning protects structural edges, numerically positive-flow edges, and newly inserted violators; remaining old edges are removed in increasing order of relevance to dual tightness.
+\pricing evaluates~\eqref{eq:dual-score} in tiles without materializing $C$ or the dense coupling.
+It returns a candidate set $\mathcal V$, formed by retaining up to $\gamma$ largest positive dual scores per source and target node, together with the full-space dual-violation residual $\eta$.
+After inserting $\mathcal V$, \prune protects structural edges $\mathcal B$, numerically positive-flow edges in $\mathcal Z$, and the new candidates $\mathcal V$; remaining old edges are removed in increasing order of relevance to dual tightness under budget factor $\beta$.
+Flows on retained edges and node potentials are warm-started in the next restricted solve, and new edges receive zero initial flow.
 
-The restricted stopping criterion combines the marginal-response residuals from~\eqref{eq:uot-kkt}, projected stationarity on $\mathcal A$, and a split primal--dual consistency measure.
-The outer refinement terminates when this restricted criterion and the full-space dual-violation criterion both meet their prescribed tolerances.
+The restricted stopping criterion combines the marginal-response residuals from~\eqref{eq:uot-kkt}, projected stationarity on $\mathcal{N}$, and a split primal--dual consistency measure.
+Both the restricted solve and the full-space dual-violation test use the same tolerance $\varepsilon$.
+Since \subsolver returns only after the restricted criterion is satisfied, the outer loop checks only $\eta\leq\varepsilon$.
 The full-space scan also produces the candidates for the next round, so stopping and support insertion share one streamed pass.
-
-\paragraph{Sparse entropic refinement.}
-The unregularized output optionally initializes an entropic approximation on a fixed sparse support.
-Given the final unregularized coupling $X^0$ and dual score $\sigma$, we form
-\begin{equation*}
-\mathcal A_b=\supp(X^0)\cup\operatorname{RowTopB}(\sigma)\cup\operatorname{ColTopB}(\sigma)
-\end{equation*}
-and solve
-\begin{equation*}
-\min_{X\geq0,\,\supp(X)\subseteq\mathcal A_b}\;\Phi(X)+\varepsilon\KL(X\,|\,a\otimes b).
-\end{equation*}
-Sparse Sinkhorn iterations cost $O(|\mathcal A_b|+m+n)$ per iteration and retain an explicitly sparse coupling for downstream computations.
 
 \subsection{Convergence and Complexity}
 \label{sec:analysis}
@@ -327,8 +338,8 @@ We first connect a restricted \subsolver solution to the full KL-UOT problem.
 
 \begin{proposition}[Restricted-to-full recovery]
 \label{prop:restricted-recovery}
-Let $(\widehat x,\widehat f,\widehat g)$ satisfy the KKT conditions of~\eqref{eq:restricted-uot} on $\mathcal A$.
-If $\widehat f_i+\widehat g_j\leq C_{ij}$ for every $(i,j)\in[m]\times[n]$, then extending $\widehat x$ by zero outside $\mathcal A$ yields a global primal solution of~\eqref{eq:primal-uot}, and $(\widehat f,\widehat g)$ is a global dual solution of~\eqref{eq:dual-uot}.
+Let $(\widehat x,\widehat f,\widehat g)$ satisfy the KKT conditions of~\eqref{eq:restricted-uot} on $\mathcal{N}$.
+If $\widehat f_i+\widehat g_j\leq C_{ij}$ for every $(i,j)\in[m]\times[n]$, then extending $\widehat x$ by zero outside $\mathcal{N}$ yields a global primal solution of~\eqref{eq:primal-uot}, and $(\widehat f,\widehat g)$ is a global dual solution of~\eqref{eq:dual-uot}.
 \end{proposition}
 
 Restricted KKT conditions already provide the marginal responses, active-edge feasibility, and complementarity.
@@ -357,8 +368,8 @@ The proposition follows from a second-order upper bound along the nonnegative co
 This direction is always primal feasible because KL-UOT penalizes its marginals rather than imposing hard marginal equalities.
 
 The following theorem states a finite-tolerance guarantee for a safeguarded refinement variant.
-At round $k$, let an inexact restricted oracle return $X^k$ on $\mathcal A_k$ with restricted projected-gradient residual at most $\varepsilon_{\mathrm r}$.
-If the largest inactive primal-consistent score exceeds $\varepsilon_{\mathrm f}$, the update selects such an edge $e_k$, forms the trial point from Proposition~\ref{prop:one-edge-descent}, and retains $\supp(X^k)\cup\{e_k\}$ in the next support.
+At round $k$, let an inexact restricted oracle return $X^k$ on $\mathcal{N}_k$ with restricted projected-gradient residual at most $\varepsilon$.
+If the largest inactive primal-consistent score exceeds $\varepsilon$, the update selects such an edge $e_k$, forms the trial point from Proposition~\ref{prop:one-edge-descent}, and retains $\supp(X^k)\cup\{e_k\}$ in the next support.
 
 \begin{theorem}[Finite-tolerance refinement]
 \label{thm:refinement}
@@ -373,17 +384,17 @@ for constants $H<\infty$ and $\theta\in[0,1)$.
 Then the safeguarded refinement terminates after at most
 \begin{equation}
 \label{eq:refinement-bound}
-N_{\mathrm{ref}}\leq\left\lceil\frac{2H(\Phi(X^0)-\Phi_{\inf})}{(1-\theta)\varepsilon_{\mathrm f}^2}\right\rceil
+N_{\mathrm{ref}}\leq\left\lceil\frac{2H(\Phi(X^0)-\Phi_{\inf})}{(1-\theta)\varepsilon^2}\right\rceil
 \end{equation}
-nonterminal rounds and returns a coupling whose full projected-gradient residual is at most $\max\{\varepsilon_{\mathrm r},\varepsilon_{\mathrm f}\}$.
+nonterminal rounds and returns a coupling whose full projected-gradient residual is at most $\varepsilon$.
 \end{theorem}
 
-Each nonterminal round decreases the objective by at least $(1-\theta)\varepsilon_{\mathrm f}^2/(2H)$, and telescoping proves~\eqref{eq:refinement-bound}.
+Each nonterminal round decreases the objective by at least $(1-\theta)\varepsilon^2/(2H)$, and telescoping proves~\eqref{eq:refinement-bound}.
 The theorem isolates an implementable safeguard for inexact \subsolver calls.
 The practical variant uses \subsolver potentials for candidate ranking; primal-consistent scores or two-sided response corrections can be used for the safeguarded stopping test.
 The supplementary material will provide further details and explicit marginal bounds for $H$.
 
-Finally, let $s=|\mathcal A|$ denote the largest maintained active support.
+Finally, let $s=|\mathcal{N}|$ denote the largest maintained active support.
 \subsolver stores edge flows and sparse incidence indices in $O(s)$ memory, while the hierarchy stores input features and node quantities in $O((m+n)d+m+n)$ memory.
 The tiled full-space scan uses the same persistent memory and performs $O(mn)$ arithmetic per pass.
 Consequently,
@@ -392,6 +403,54 @@ Consequently,
 \operatorname{Mem}(\ours)=O\bigl((m+n)d+m+n+s\bigr).
 \end{equation}
 Under the configured support budget $s\leq\beta(m+n)$ and fixed feature dimension,~\eqref{eq:memory-complexity} is linear in the number of input points.
+
+\section{Extensions}
+\label{sec:extensions}
+
+The sparse support and restricted UOT solver provided by \ours also support entropic refinement and transport between relational datasets.
+
+\subsection{Sparse Entropic Refinement}
+\label{sec:entropic-extension}
+
+Let $\Phi$ denote the unregularized objective in~\eqref{eq:primal-uot}, and let $\mathcal{N}_\star$ be the final active support returned by \ours.
+To approximate entropic UOT at a small regularization strength $\varepsilon>0$, we solve
+\begin{equation}
+\label{eq:sparse-entropic-extension}
+\min_{X\geq0,\,\supp(X)\subseteq\mathcal{N}_\star}\;\Phi(X)+\varepsilon\KL(X\,|\,a\otimes b).
+\end{equation}
+Generalized Sinkhorn updates on this fixed support cost $O(|\mathcal{N}_\star|+m+n)$ time and memory per iteration.
+Reusing the final active support avoids an additional support-construction scan and retains an explicitly sparse coupling for downstream tasks.
+The approximation comes from restricting the support of the full entropic problem; a small $\varepsilon$ motivates reusing edges localized by the unregularized solver, while its downstream accuracy is evaluated experimentally.
+Appendix~\ref{app:entropic-extension} describes the sparse updates and an optional support expansion.
+
+\subsection{Unbalanced Fused Gromov--Wasserstein}
+\label{sec:ufgw-extension}
+
+UFGW combines feature matching with alignment of within-dataset relations.
+Let $A\in\mathbb R^{m\times m}$ and $B\in\mathbb R^{n\times n}$ encode these relations, and let $M\in\mathbb R^{m\times n}$ be the feature cost.
+We use a two-coupling block-coordinate relaxation with tensorized KL marginal penalties~\citep{sejourne2023unbalanced}.
+% CN: 请作者补入原始 UGW relaxation 论文的引用；此处暂用现有综述引用，不修改 bibliography。
+% EN: Add the original UGW relaxation citation; the existing survey is cited provisionally without changing the bibliography.
+For nonnegative couplings $P,Q$, define
+\begin{equation*}
+\mathcal Q_{A,B}(P,Q)=\sum_{i,k,j,l}(A_{ik}-B_{jl})^2P_{ij}Q_{kl}
+\end{equation*}
+and $D_a(P,Q)=\KL((P\mathbf1)\otimes(Q\mathbf1)\,|\,a\otimes a)$, with $D_b$ defined analogously for target marginals.
+The relaxed objective is
+\begin{equation}
+\label{eq:ufgw-relaxation}
+\begin{aligned}
+\min_{P,Q\geq0}\quad &(1-\alpha)\mathcal Q_{A,B}(P,Q)\\
+&+\frac{\alpha}{2}\langle M,P+Q\rangle
++\rho_aD_a(P,Q)+\rho_bD_b(P,Q),
+\end{aligned}
+\end{equation}
+where $\alpha\in[0,1]$ controls feature matching and $\alpha=0$ gives the UGW relaxation.
+Fixing either coupling yields a KL-UOT subproblem whose marginal penalty coefficients are scaled by the mass of the fixed coupling.
+We alternate \ours solves for the two blocks, with mass-balancing rescaling after each block update; sparse entropic refinement provides an optional regularized variant.
+For the squared-Euclidean structural and feature costs used in our experiments, each block cost admits an exact squared-Euclidean embedding computed from sparse coupling moments.
+This representation allows \ours to scan the block costs without storing dense structural or cross-cost matrices.
+The block formulas, rescaling, and entropic variant are given in Appendix~\ref{app:ufgw-extension}.
 
 \bibliography{references}
 \bibliographystyle{icml2026}
@@ -403,5 +462,78 @@ Under the configured support budget $s\leq\beta(m+n)$ and fixed feature dimensio
 \label{app:extension_penalty}
 % CN: 本附录预留 squared-L2 边际惩罚版本的定义、算法适配和理论说明。
 % EN: This appendix is reserved for the squared-L2 marginal-penalty variant, its algorithmic adaptation, and supporting analysis.
+
+\section{Sparse Entropic Refinement}
+\label{app:entropic-extension}
+
+On a fixed support $\mathcal{N}$, define $K_{ij}=a_i b_j\exp(-C_{ij}/\varepsilon)$ for $(i,j)\in\mathcal{N}$ and zero otherwise.
+The supported coupling has the form $X_{ij}=u_iK_{ij}v_j$, with generalized scaling updates
+\begin{equation}
+u\leftarrow\left(\frac{a}{Kv}\right)^{\rho_a/(\rho_a+\varepsilon)},\qquad
+v\leftarrow\left(\frac{b}{K^\top u}\right)^{\rho_b/(\rho_b+\varepsilon)}.
+\end{equation}
+Our implementation evaluates the scaling iterations in the log domain using sparse row and column reductions on the GPU.
+The KL term in~\eqref{eq:sparse-entropic-extension} uses the full reference $a\otimes b$, including its constant contribution outside $\mathcal{N}$, when evaluating the objective.
+
+The default choice is $\mathcal{N}=\mathcal{N}_\star$.
+An optional expansion uses the positive-flow support of the unregularized solution $X^0$ and bidirectional top-$b_{\mathrm e}$ selection under its final dual scores:
+\begin{equation}
+\mathcal{N}_{b_{\mathrm e}}=\supp(X^0)\cup\operatorname{RowTop}_{b_{\mathrm e}}(\sigma)\cup\operatorname{ColTop}_{b_{\mathrm e}}(\sigma).
+\end{equation}
+Here, $b_{\mathrm e}$ denotes the per-node edge budget.
+Constructing this alternative support requires an additional full-space scan.
+
+\section{Two-Coupling UFGW Updates}
+\label{app:ufgw-extension}
+
+\paragraph{Reduction to KL-UOT.}
+Write $|Q|=\sum_{kl}Q_{kl}$ and $q_a=Q\mathbf1$, $q_b=Q^\top\mathbf1$.
+The tensorized marginal term satisfies
+\begin{equation}
+\KL(p\otimes q\,|\,a\otimes a)
+=|q|\KL(p\,|\,a)+|p|\sum_kq_k\log(q_k/a_k)+|a|(|a|-|q|).
+\end{equation}
+Consequently, fixing $Q$ in~\eqref{eq:ufgw-relaxation} yields, up to constants independent of $P$,
+\begin{equation}
+\label{eq:ufgw-block}
+\min_{P\geq0}\;\langle C^Q,P\rangle+\rho_a|Q|\KL(P\mathbf1\,|\,a)+\rho_b|Q|\KL(P^\top\mathbf1\,|\,b),
+\end{equation}
+where
+\begin{equation}
+\begin{aligned}
+C^Q_{ij}&=(1-\alpha)\sum_{kl}(A_{ik}-B_{jl})^2Q_{kl}+\frac{\alpha}{2}M_{ij}+\kappa_Q,\\
+\kappa_Q&=\rho_a\sum_k(q_a)_k\log((q_a)_k/a_k)+\rho_b\sum_l(q_b)_l\log((q_b)_l/b_l).
+\end{aligned}
+\end{equation}
+The $Q$ block is obtained symmetrically; our structural matrices are symmetric squared-Euclidean distances.
+The prototype initializes with the product coupling $a\otimes b$, stored implicitly, and alternates the two block solves.
+After solving the $P$ block, it applies $P\leftarrow\sqrt{|Q|/|P|}\,P$; after solving the $Q$ block, it applies the symmetric rescaling using the current $P$.
+These steps match the block-coordinate implementation used in the experiments.
+The outer procedure optimizes a nonconvex two-coupling relaxation; the restricted-solver convergence results do not imply global optimality of this relaxation or equality of the two returned couplings.
+
+\paragraph{Entropic blocks.}
+For normalized reference masses, the optional entropic objective adds $\varepsilon\KL(P\otimes Q\,|\,(a\otimes b)\otimes(a\otimes b))$ to~\eqref{eq:ufgw-relaxation}.
+With $Q$ fixed, the block therefore acquires $\varepsilon|Q|\KL(P\,|\,a\otimes b)$ and the scalar cost contribution $\varepsilon\sum_{kl}Q_{kl}\log(Q_{kl}/(a_kb_l))$.
+We solve its unregularized counterpart with \ours and apply sparse entropic refinement on the resulting support.
+The scalar cost translation can be absorbed into rescaled KL reference masses, retaining the same block minimizer without modifying the squared-distance solver.
+
+\paragraph{Implicit structural costs.}
+For squared-Euclidean structural matrices, write exact factorizations $A=U_AV_A^\top$ and $B=U_BV_B^\top$.
+The linearized structural cost is
+\begin{equation}
+L_Q=(A\odot A)q_a\mathbf1_n^\top+\mathbf1_m((B\odot B)q_b)^\top-2AQB^\top.
+\end{equation}
+Its cross term depends on the small moment matrix $V_A^\top QV_B$, and the two squared-distance terms can likewise be evaluated through small weighted moments.
+More explicitly, the matrix
+\begin{equation}
+H_Q=\begin{pmatrix}
+V_A^\top\operatorname{diag}(q_a)V_A&V_A^\top QV_B\\
+V_B^\top Q^\top V_A&V_B^\top\operatorname{diag}(q_b)V_B
+\end{pmatrix}
+\end{equation}
+is positive semidefinite because it is a sum of outer products weighted by $Q_{kl}$.
+Factoring $H_Q=FF^\top$ and setting $z_i=(U_{A,i},0)F$, $w_j=(0,U_{B,j})F$ gives $(L_Q)_{ij}=\|z_i-w_j\|_2^2$.
+Scaling these embeddings by $\sqrt{1-\alpha}$ and concatenating feature vectors scaled by $\sqrt{\alpha/2}$ represents the nonconstant block cost exactly.
+For fixed structural and feature dimensions, the embedding storage grows linearly with the number of points and the moment accumulation depends on the maintained coupling support.
 
 \end{document}
