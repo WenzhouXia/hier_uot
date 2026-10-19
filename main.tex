@@ -24,6 +24,10 @@
 \newcommand{\init}{\texttt{Init}\xspace}
 \newcommand{\pricing}{\texttt{Pricing}\xspace}
 \newcommand{\prune}{\texttt{Prune}\xspace}
+\newcommand{\pduotmap}{\ensuremath{T}\xspace}
+\newcommand{\checkstop}{\texttt{CheckStop}\xspace}
+\newcommand{\checkrestart}{\texttt{CheckRestart}\xspace}
+\newcommand{\updateweight}{\texttt{UpdateWeight}\xspace}
 \newcommand{\mm}{\texttt{MM}\xspace}
 \newcommand{\hello}{\texttt{HELLO}\xspace}
 \newcommand{\sinkhorn}{\texttt{Sinkhorn}\xspace}
@@ -33,6 +37,9 @@
 \newtheorem{proposition}{Proposition}
 \newtheorem{theorem}{Theorem}
 \newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{plain}
 
 \icmltitlerunning{\ours: Linear-Memory UOT via Edge Localization}
 
@@ -79,25 +86,23 @@ Optimal transport (OT) provides a geometric framework for comparing distribution
 % EN: Introduce single-cell applications first, followed by other fields and their motivations for marginal relaxation.
 This flexibility supports applications in single-cell genomics~\citep{schiebinger2019optimal,klein2025mapping}, domain adaptation~\citep{fatras2021unbalanced}, and point-cloud motion estimation~\citep{puy2020flot}, accommodating cell proliferation and death, mismatched class proportions, and occlusions.
 
-Let $a\in\mathbb R_{++}^m$ and $b\in\mathbb R_{++}^n$ be the reference masses of two discrete measures, and let $C\in\mathbb R^{m\times n}$ be their pairwise cost matrix.
-UOT minimizes transport cost plus divergence penalties on the deviations of the transported marginals from $a$ and $b$.
+Let $\mathbf{a}\in\mathbb R_{++}^m$ and $\mathbf{b}\in\mathbb R_{++}^n$ be the reference masses of two discrete measures, and let $\mathbf{C}\in\mathbb R^{m\times n}$ be their pairwise cost matrix.
+UOT minimizes transport cost plus divergence penalties on the deviations of the transported marginals from $\mathbf{a}$ and $\mathbf{b}$.
 We focus on KL marginal penalties, with other penalties discussed in Appendix~\ref{app:extension_penalty}:
 \begin{equation}
 \label{eq:primal-uot}
-\min_{X\geq 0}\quad \langle C,X\rangle+\rho_a\KL(X\mathbf 1_n\,|\,a)
-+\rho_b\KL(X^\top\mathbf 1_m\,|\,b),
+\min_{X\geq 0}\quad \langle \mathbf{C},\mathbf{X}\rangle+\rho_a\KL(\mathbf{X}\mathbf{1}_n\,|\,\mathbf{a})
++\rho_b\KL(\mathbf{X}^\top\mathbf{1}_m\,|\,\mathbf{b}),
 \end{equation}
-Here, $X\in\mathbb R_+^{m\times n}$ is the transport plan, $\rho_a,\rho_b>0$ control the marginal penalties, and $\KL(p\,|\,h)=\sum_k(p_k\log(p_k/h_k)-p_k+h_k)$.
+Here, $\mathbf{X}\in\mathbb R_+^{m\times n}$ is the transport plan, $\rho_a,\rho_b>0$ control the marginal penalties, and $\KL(\mathbf{p}\,|\,\mathbf{h})=\sum_k(p_k\log(p_k/\mathbf{h}_k)-p_k+\mathbf{h}_k)$.
 
-The dual of~\eqref{eq:primal-uot} optimizes potentials $f\in\mathbb R^m$ and $g\in\mathbb R^n$:
-\begin{equation}
+The dual of~\eqref{eq:primal-uot} optimizes potentials $\mathbf{f}\in\mathbb R^m$ and $\mathbf{g}\in\mathbb R^n$:
+\begin{equation} 
 \label{eq:dual-uot}
 \begin{aligned}
-\max_{f,g}\quad
-&\rho_a\sum_i a_i\bigl(1-e^{-f_i/\rho_a}\bigr)
-+\rho_b\sum_j b_j\bigl(1-e^{-g_j/\rho_b}\bigr),\\
-\text{s.t.}\quad
-&f_i+g_j\leq C_{ij},\qquad (i,j)\in[m]\times[n].
+&D(\mathbf{f},\mathbf{g}):=\rho_a\langle \mathbf{a},\mathbf{1}_m-e^{-\mathbf{f}/\rho_a}\rangle
++\rho_b\langle \mathbf{b},\mathbf{1}_n-e^{-\mathbf{g}/\rho_b}\rangle,\\
+&\max_{\mathbf{f},\mathbf{g}}D(\mathbf{f},\mathbf{g})\quad\text{s.t.}\quad f_i+g_j\leq C_{ij}\quad\forall i,j.
 \end{aligned}
 \end{equation}
 The primal formulation has one transport variable for each of the $mn$ source--target pairs; the dual has only $m+n$ potentials but still imposes $mn$ constraints.
@@ -118,6 +123,7 @@ Another approach exploits coupling sparsity through a network-simplex framework 
 Scalability remains limited by quadratic coupling storage in standard \mm implementations, the cost of marginal estimation or sequential balanced OT subproblems in reduction methods, and sequential tree updates in network simplex that hinder GPU parallelization.
 This leaves open how to solve the large scale unregularized UOT problem with linear memory and efficient GPU parallelism.
 
+\paragraph{Our approach.}
 We introduce \ours, a \textbf{S}parse \textbf{H}ierarchical solver for large-scale \textbf{U}nbalanced Optimal \textbf{T}ransport \textbf{T}hrough \textbf{L}inear-Memory \textbf{E}dge Localization.
 UOT admits sparse optimal couplings and, for convex marginal penalties, shares the dual constraints $f_i+g_j \leq C_{ij}$ of balanced OT, which motivates extending the dual-guided hierarchy of \hello to the unbalanced setting~\citep{xia2026dual}.
 The marginal penalties, however, turn the restricted transport linear programs into nonlinear convex problems.
@@ -138,9 +144,8 @@ Our contributions are summarized as follows:
 \subsection{Overall Framework}
 \label{sec:framework}
 
-Let $\mathcal S=\{s_i\}_{i=1}^m$ and $\mathcal D=\{d_j\}_{j=1}^n$ denote the source and target supports in~\eqref{eq:primal-uot}, with $C_{ij}=c(s_i,d_j)$.
-For any coupling $X$, let $r=X\mathbf 1_n$ and $q=X^\top\mathbf 1_m$ denote its transported marginals.
-With $r$ and $q$ fixed, the marginal penalties are constant and minimizing over $X$ reduces to balanced OT.
+Let $\mathcal S=\{\mathbf{s}_i\}_{i=1}^m$ and $\mathcal D=\{\mathbf{d}_j\}_{j=1}^n$ denote the source and target supports in~\eqref{eq:primal-uot}, with $C_{ij}=c(\mathbf{s}_i,\mathbf{d}_j)$.
+With the transported marginals $\mathbf{X}\mathbf{1}_n$ and $\mathbf{X}^\top\mathbf{1}_m$ fixed, the marginal penalties are constant and minimizing over $\mathbf{X}$ reduces to balanced OT.
 Consequently, whenever an optimum exists, there is an optimal coupling with at most $m+n-1$ positive entries.
 This sparsity motivates optimizing over an active support $\mathcal{N}\subseteq[m]\times[n]$, with all other transport variables fixed to zero.
 The central task is to discover and refine this support without maintaining all $mn$ variables.
@@ -151,14 +156,13 @@ This correspondence allows us to extend the restricted-master and pricing strate
 To our knowledge, this form of column generation remains comparatively unexplored for unregularized KL-UOT.
 
 The KKT conditions for~\eqref{eq:primal-uot} and~\eqref{eq:dual-uot} are
-\begin{equation}
-\label{eq:uot-kkt}
+\begin{equation*}
 \begin{aligned}
-r&=a\odot e^{-f/\rho_a},\qquad q=b\odot e^{-g/\rho_b},\\
+\mathbf{X}\mathbf{1}_n&=\mathbf{a}\odot e^{-\mathbf{f}/\rho_a},\, \mathbf{X}^\top\mathbf{1}_m=\mathbf{b}\odot e^{-\mathbf{g}/\rho_b},\\
 f_i+g_j&\leq C_{ij},\\
 X_{ij}(f_i+g_j-C_{ij})&=0.
 \end{aligned}
-\end{equation}
+\end{equation*}
 
 An exact restricted solution satisfies these conditions on $\mathcal{N}$, together with the marginal-response equations on all nodes.
 It is therefore globally optimal whenever its potentials also satisfy every omitted dual inequality.
@@ -174,13 +178,13 @@ We organize this refinement in the dual-guided hierarchy introduced by \hello~\c
 The finest problem is indexed by $0$, and the coarsest problem is indexed by $L$.
 Adjacent levels change one marginal at a time, allowing the unchanged potential to be inherited directly.
 At each finer level, propagated and calibrated dual potentials guide the initial active support, which is then refined using the same dual scores.
-We write $\mathcal Z^{(\ell)}=(X^{(\ell)},f^{(\ell)},g^{(\ell)})$ for a level's primal--dual state and $\mathcal E^{(\ell)}$ for its complete edge set.
+We write $\mathcal Z^{(\ell)}=(\mathbf{X}^{(\ell)},\mathbf{f}^{(\ell)},\mathbf{g}^{(\ell)})$ for a level's primal--dual state and $\mathcal E^{(\ell)}$ for its complete edge set.
 Within a level, $\mathcal N$, $\mathcal B$, and $\mathcal Z$ denote the current active support, structural edges, and primal--dual state.
-Algorithm~\ref{alg:shuttle} summarizes the framework.
+Algorithm~\ref{alg:ours} summarizes the framework.
 
 \begin{algorithm}[t]
 \caption{\ours}
-\label{alg:shuttle}
+\label{alg:ours}
 \begin{algorithmic}[1]
 \STATE \textbf{Input:} KL-UOT problem $\mathcal P^{(0)}$, support budgets $\kappa,\gamma,\beta$, and tolerance $\varepsilon$.
 \STATE \textbf{Output:} finest-level primal--dual state $\mathcal Z^{(0)}$.
@@ -208,93 +212,164 @@ Algorithm~\ref{alg:shuttle} summarizes the framework.
 \subsection{Restricted UOT with \subsolver}
 \label{sec:pduot}
 
-Let $\mathcal{N}\subseteq[m]\times[n]$ be an active support and let $x\in\mathbb R_+^{|\mathcal{N}|}$ collect its edge flows.
-The call $\subsolver(\mathcal P,\mathcal N,\mathcal Z_{\mathrm{init}};\varepsilon)$ returns a primal--dual state $\mathcal Z$ satisfying the restricted stopping criterion to tolerance $\varepsilon$, using $\mathcal Z_{\mathrm{init}}$ as a warm start; $\varnothing$ selects the default initialization.
-The sparse incidence operators $P_{\mathcal{N}}$ and $Q_{\mathcal{N}}$ aggregate edge flows onto source and target nodes.
-The restricted problem is
+Algorithm~\ref{alg:ours} repeatedly solves UOT on the current active support, giving rise to the following restricted problem.
+For columnwise vectorization of $\mathbf{X}$, the marginal-sum matrix is
 \begin{equation}
-\label{eq:restricted-uot}
-\min_{x\geq0}\;\langle c_{\mathcal{N}},x\rangle+\rho_a\KL(P_{\mathcal{N}}x\,|\,a)+\rho_b\KL(Q_{\mathcal{N}}x\,|\,b).
+\label{eq:transport-incidence}
+\mathbf{A}=\begin{pmatrix}\mathbf{1}_n^\top\otimes \mathbf{I}_m\\\mathbf{I}_n\otimes\mathbf{1}_m^\top\end{pmatrix}\in\mathbb R^{(m+n)\times mn}.
 \end{equation}
-Define $K_{\mathcal{N}}x=(P_{\mathcal{N}}x,Q_{\mathcal{N}}x)$,
+Thus $\mathbf{A}\operatorname{vec}(\mathbf{X})=(\mathbf{X}\mathbf{1}_n,\mathbf{X}^\top\mathbf{1}_m)$, with the two vectors stacked vertically.
+Let $\mathbf{A}_{\mathcal N}$ retain the columns indexed by $\mathcal N$, and let $\mathbf{c}_{\mathcal N}$ retain the corresponding entries of $\operatorname{vec}(\mathbf{C})$.
+Define $G(\mathbf{r},\mathbf{q})=\rho_a\KL(\mathbf{r}\,|\,\mathbf{a})+\rho_b\KL(\mathbf{q}\,|\,\mathbf{b})$ for $\mathbf{r}\in\mathbb R^m$ and $\mathbf{q}\in\mathbb R^n$.
+
+\begin{definition}[Restricted UOT]
+\label{def:restricted-uot}
+For an active support $\mathcal N\subseteq[m]\times[n]$, restricted UOT is~\eqref{eq:primal-uot} with $X_{ij}=0$ for every $(i,j)\notin\mathcal N$.
+Let $\mathbf{x}\in\mathbb R^{|\mathcal N|}$ collect the transport variables indexed by $\mathcal N$; the primal and dual problems are
+\begin{align}
+\label{eq:restricted-uot}
+&\min_{\mathbf{x}\geq0}\;\langle \mathbf{c}_{\mathcal{N}},\mathbf{x}\rangle+G(\mathbf{A}_{\mathcal N}\mathbf{x}),\\
+\label{eq:restricted-dual-uot}
+&\max_{\mathbf{f},\mathbf{g}}\;D(\mathbf{f},\mathbf{g})\quad\text{s.t. }f_i+g_j\leq C_{ij},\ (i,j)\in\mathcal N.
+\end{align}
+The dual objective is unchanged from~\eqref{eq:dual-uot}, while only the inequalities indexed by $\mathcal N$ are retained.
+\end{definition}
+
+These repeated solves must efficiently produce high-accuracy primal--dual solutions satisfying the unregularized restricted KKT conditions.
+Adapting existing UOT algorithms to active supports presents challenges in jointly achieving this accuracy and computational efficiency (see Section~\ref{sec:restricted-experiments}).
+We therefore develop \subsolver, a practical GPU-efficient restricted UOT solver based on primal--dual hybrid gradient (PDHG)~\citep{esser2010general,chambolle2011first}.
+The interface $\subsolver(\mathcal P,\mathcal N,\mathcal Z_{\mathrm{init}};\varepsilon)$ accepts an initial primal--dual state and returns a state satisfying the restricted stopping criterion; $\varnothing$ selects the default initialization.
+
+The linear transport cost and separable marginal penalties lead to a saddle formulation with simple primal and dual updates.
+With
 \begin{equation*}
-F(x)=\langle c_{\mathcal{N}},x\rangle+\iota_{\mathbb R_+^{|\mathcal{N}|}}(x),
+F(\mathbf{x})=\langle \mathbf{c}_{\mathcal{N}},\mathbf{x}\rangle+\iota_{\mathbb R_+^{|\mathcal{N}|}}(\mathbf{x}),
 \end{equation*}
-and let $G(K_{\mathcal{N}}x)$ denote the two KL terms in~\eqref{eq:restricted-uot}.
-The saddle formulation is
+the saddle formulation is
 \begin{equation}
 \label{eq:restricted-saddle}
-\min_x\max_y\;F(x)+\langle K_{\mathcal{N}}x,y\rangle-G^*(y),
+\min_{\mathbf{x}}\max_{\mathbf{y}}\;F(\mathbf{x})+\langle \mathbf{A}_{\mathcal N}\mathbf{x},\mathbf{y}\rangle-G^*(\mathbf{y}),
 \end{equation}
-where $y=-(f,g)$ and
+where $\mathbf{y}=-(\mathbf{f},\mathbf{g})$ and
 \begin{equation*}
-G^*(y)=\rho_a\sum_i a_i(e^{y_i/\rho_a}-1)+\rho_b\sum_j b_j(e^{y_{m+j}/\rho_b}-1).
+G^*(\mathbf{y})=\rho_a\sum_i a_i(e^{y_i/\rho_a}-1)+\rho_b\sum_j b_j(e^{y_{m+j}/\rho_b}-1).
 \end{equation*}
 
-\subsolver applies a primal-first PDHG map to~\eqref{eq:restricted-saddle}~\citep{esser2010general,chambolle2011first}:
+Let $\mathbf{D}_x$ and $\mathbf{D}_y$ be positive diagonal step matrices.
+\subsolver uses the primal-first PDHG map $\pduotmap(\mathbf{x},\mathbf{y})=(\widehat{\mathbf{x}},\widehat{\mathbf{y}})$:
 \begin{equation}
 \label{eq:pduot-map}
 \begin{aligned}
-\widehat x&=\left[x-\tau(c_{\mathcal{N}}+K_{\mathcal{N}}^\top y)\right]_+,\\
-\widehat y&=\operatorname{prox}_{\sigma G^*}\left(y+\sigma K_{\mathcal{N}}(2\widehat x-x)\right).
+\widehat{\mathbf{x}}&=\left[\mathbf{x}-\mathbf{D}_x(\mathbf{c}_{\mathcal{N}}+\mathbf{A}_{\mathcal N}^\top \mathbf{y})\right]_+,\\
+\widehat{\mathbf{y}}&=\operatorname{prox}_{G^*}^{\mathbf{D}_y^{-1}}\left(\mathbf{y}+\mathbf{D}_y\mathbf{A}_{\mathcal N}(2\widehat{\mathbf{x}}-\mathbf{x})\right).
 \end{aligned}
-\end{equation}
-The dual proximal map separates over nodes.
-For an input $u$, reference mass $a$, and marginal penalty $\rho$, each coordinate solves
+\end{equation} 
+Here, $\operatorname{prox}_{G^*}^{\mathbf{D}_y^{-1}}(\mathbf{u})=\arg\min_v\{G^*(\mathbf{v})+\tfrac12\|\mathbf{v}-\mathbf{u}\|_{\mathbf{D}_y^{-1}}^2\}$.
+The primal step is a nonnegative projection driven by the dual scores, while the dual proximal map separates over nodes.
+For an input $u$, reference mass $h>0$, penalty $\rho$, and diagonal dual step $\mathbf{s}>0$, each coordinate solves
 \begin{equation*}
-z-u+\sigma a e^{z/\rho}=0.
+v-u+\mathbf{s} h e^{v/\rho}=0.
 \end{equation*}
-We evaluate this scalar proximal map in the log domain to avoid overflow and cancellation.
-Applications of $K_{\mathcal{N}}$ and $K_{\mathcal{N}}^\top$ use source-CSR and transposed edge indices, so each \subsolver iteration costs $O(|\mathcal{N}|+m+n)$ time and memory.
+We solve this equation in the log domain to avoid overflow; Appendix~\ref{app:pduot-details} gives the scalar formulation.
 
-Let $T$ denote the fixed-step PDHG map in~\eqref{eq:pduot-map} and $R=2T-I$ its reflection.
-Within one restart epoch, \subsolver applies the Halpern iteration
+We combine this PDHG map with the following practical components, following restarted primal--dual methods~\citep{lu2407restarted,lin2025practical}.
+\begin{itemize}
+\item \textit{Reflected Halpern iteration.}
+Within each restart epoch, we apply
 \begin{equation}
 \label{eq:halpern}
-z^{k+1}=\frac{1}{k+2}z^{\mathrm a}+\frac{k+1}{k+2}R(z^k),
+\mathbf{z}^{k+1}=\frac{1}{k+2}\mathbf{z}^{\mathrm a}+\frac{k+1}{k+2}(2\pduotmap \mathbf{z}^k-\mathbf{z}^k),
 \end{equation}
-where $z^{\mathrm a}$ is the epoch anchor.
-Restarts update the anchor and rebalance the primal and dual step sizes, following restarted primal--dual methods for large-scale linear and conic optimization~\citep{lu2407restarted,lin2025practical}.
-When the active support changes, existing flows and node potentials are warm-started, newly inserted flows are initialized to zero, and the restart epoch is reset.
+where $\mathbf{z}=(\mathbf{x},\mathbf{y})$, $\mathbf{z}^{\mathrm a}$ is the fixed epoch anchor, and $k$ counts iterations within the epoch.
+We use the mapped point $\widehat{\mathbf{z}}=\pduotmap \mathbf{z}^k$ for stopping and output, since its coupling is nonnegative.
 
-The fixed-metric core admits a direct convergence statement.
+\item \textit{Diagonal preconditioning.}
+We set $\mathbf{D}_x=w\overline{\mathbf{D}}_x$ and $\mathbf{D}_y=\overline{\mathbf{D}}_y/w$, where $w>0$ balances primal and dual steps.
+For node-covering supports, the base steps adapt to the active node degrees $d_v$:
+\begin{equation}
+\label{eq:pduot-metric}
+(\overline{\mathbf{D}}_x)_{ee}=\frac{\zeta}{2},\qquad
+(\overline{\mathbf{D}}_y)_{vv}=\frac{\zeta}{d_v},\qquad 0<\zeta<1.
+\end{equation}
+This choice ensures $\|\mathbf{D}_y^{1/2}\mathbf{A}_{\mathcal N}\mathbf{D}_x^{1/2}\|_2<1$.
 
-\begin{theorem}[Convergence of fixed-metric \subsolver]
-\label{thm:pduot-convergence}
-Assume that the restricted problem~\eqref{eq:restricted-uot} has a KKT point and that $\tau\sigma\|K_{\mathcal{N}}\|_2^2<1$.
-Then the unrestarted iteration~\eqref{eq:halpern} converges to a restricted KKT point and satisfies
-\begin{equation*}
-\|z^k-Tz^k\|_{P}\leq\frac{\operatorname{dist}_{P}(z^{\mathrm a},\operatorname{Fix}T)}{k+1},
-\end{equation*}
-where $P$ is the canonical PDHG metric.
-\end{theorem}
+\item \textit{Adaptive restart.}
+We monitor the fixed-point residual and restart after sufficient reduction, moderate reduction followed by deterioration, or an epoch-length threshold.
+Each restart resets the anchor to the mapped point and the epoch counter to zero.
 
-Theorem~\ref{thm:pduot-convergence} follows from the firm nonexpansiveness of the preconditioned PDHG resolvent and reflected Halpern fixed-point theory.
-The KL-UOT geometry gives a stronger local statement.
+\item \textit{Primal-weight adjustment.}
+At restart boundaries, a bounded log-domain proportional--integral controller adjusts $w$ using primal and dual displacements measured in the base metrics.
+The base preconditioners remain fixed throughout the solve.
+\end{itemize}
+Algorithm~\ref{alg:pduot} summarizes the solver; Appendix~\ref{app:pduot-details} gives the practical control rules.
+At the mapped point, \checkstop evaluates marginal consistency $\delta_{\mathrm m}$, stationarity $\delta_{\mathrm s}$, and relative gap $\delta_{\mathrm g}$ in the original problem coordinates, returning when
+\begin{equation}
+\label{eq:pduot-stopping}
+\max\{\delta_{\mathrm m},\delta_{\mathrm s},\delta_{\mathrm g}\}\leq\varepsilon.
+\end{equation}
+Appendix~\ref{app:stopping-criterion} defines these measures and explains their relation to the restricted KKT conditions and the balanced-OT limit.
 
-\begin{proposition}[Local sharpness]
-\label{prop:pduot-sharpness}
-Suppose a restricted KKT point satisfies strict complementarity and the incidence matrix restricted to its positive-flow support has full column rank.
-Then the \subsolver fixed-point residual obeys a local error bound around that solution.
-In particular, a positive-flow forest satisfies the rank condition, and fixed-frequency or residual-based restarts yield tail linear convergence once the iterates enter this neighborhood.
+\begin{algorithm}[t]
+\caption{\subsolver for restricted UOT}
+\label{alg:pduot}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} UOT problem $\mathcal P$, active support $\mathcal N$, initial state $\mathbf{z}^0$, tolerance $\varepsilon$.
+\STATE \textbf{Output:} restricted primal--dual solution $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$.
+\STATE Choose $\overline{\mathbf{D}}_x,\overline{\mathbf{D}}_y,w$; set $\mathbf{z}^{\mathrm a}\gets \mathbf{z}^0$.
+\LOOP
+    \STATE $\mathbf{D}_x\gets w\overline{\mathbf{D}}_x$, $\mathbf{D}_y\gets\overline{\mathbf{D}}_y/w$
+    \STATE $\mathbf{z}\gets \mathbf{z}^{\mathrm a}$, $k\gets0$
+    \LOOP
+        \STATE $\widehat{\mathbf{z}}\gets\pduotmap \mathbf{z}$ by~\eqref{eq:pduot-map}; retain $\boldsymbol{\lambda}$.
+        \IF{$\checkstop(\widehat{\mathbf{z}},\boldsymbol{\lambda};\varepsilon)$}
+            \STATE $(\widehat{\mathbf{f}},\widehat{\mathbf{g}})\gets-\widehat{\mathbf{y}}$
+            \STATE \textbf{Return:} $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$.
+        \ENDIF
+        \IF{$\checkrestart(\mathbf{z},\widehat{\mathbf{z}},\mathbf{z}^{\mathrm a},k)$}
+            \STATE \textbf{break}
+        \ENDIF
+        \STATE $\mathbf{z}\gets\dfrac{\mathbf{z}^{\mathrm a}}{k+2}+\dfrac{k+1}{k+2}(2\widehat{\mathbf{z}}-\mathbf{z})$
+        \STATE $k\gets k+1$
+    \ENDLOOP
+    \STATE $w\gets\updateweight(\widehat{\mathbf{z}},\mathbf{z}^{\mathrm a},w)$
+    \STATE $\mathbf{z}^{\mathrm a}\gets\widehat{\mathbf{z}}$
+\ENDLOOP
+\end{algorithmic}
+\end{algorithm}
+
+The following proposition gives convergence guarantees for the exact, fixed-metric core of \subsolver.
+
+\begin{proposition}[Convergence of \subsolver]
+\label{prop:pduot-convergence}
+Fix an active support covering all nodes, and suppose $\mathbf a,\mathbf b>0$, $\rho_a,\rho_b>0$, and all active costs are finite.
+Let the positive diagonal steps be fixed and satisfy $\|\mathbf D_y^{1/2}\mathbf A_{\mathcal N}\mathbf D_x^{1/2}\|_2<1$, and assume exact proximal evaluations.
+Then the following statements hold:
+\begin{itemize}
+\item \textbf{Global convergence.}
+The unrestarted iteration~\eqref{eq:halpern} and its mapped points converge to a restricted KKT point from any initial anchor.
+\item \textbf{Local linear convergence.}
+Initialized sufficiently near any restricted KKT point, the restart anchors converge linearly to the restricted KKT solution set under either a sufficiently long fixed restart period or the residual-reduction rule in Appendix~\ref{app:pduot-restart}.
+Each restart sets the new anchor to the mapped point.
+\end{itemize}
 \end{proposition}
 
-The supplementary material will give the proof and distinguish the fixed-metric core from the practical step-size controller.
+Appendices~\ref{app:pduot-global}--\ref{app:pduot-restart} give the proof and precise restart rules.
+Practical control steps are detailed in Appendix~\ref{app:pduot-controls}.
 
-\subsection{UOT-Aware Hierarchy and Active-Support Refinement}
+\subsection{UOT-Aware Hierarchy and Refinement}
 \label{sec:uot-hierarchy}
 
 \paragraph{Potential propagation and calibration.}
 \build follows the nested construction of \hello: one fixed permutation is applied to each marginal, and each coarser level truncates the currently larger side~\citep{xia2026dual}.
 \init combines the potential propagation and calibration below with initial active-support construction.
 Suppose the target side is shared by two adjacent levels.
-We inherit its potential $g$ and complete the finer source potential by the $c$-transform
+We inherit its potential $\mathbf{g}$ and complete the finer source potential by the $\mathbf{c}$-transform
 \begin{equation*}
 f_i=\min_j\{C_{ij}-g_j\}.
 \end{equation*}
 This completion is feasible for every pairwise dual constraint at the finer level.
 
-The transformation $f\leftarrow f+t\mathbf 1_m$ and $g\leftarrow g-t\mathbf 1_n$ preserves all dual scores, while the KL-UOT dual objective varies with $t$.
+The transformation $\mathbf{f}\leftarrow \mathbf{f}+t\mathbf{1}_m$ and $\mathbf{g}\leftarrow \mathbf{g}-t\mathbf{1}_n$ preserves all dual scores, while the KL-UOT dual objective varies with $t$.
 Define
 \begin{equation*}
 Z_a=\sum_i a_i e^{-f_i/\rho_a},\qquad Z_b=\sum_j b_j e^{-g_j/\rho_b}.
@@ -321,12 +396,12 @@ In KL-UOT, these structural edges provide persistent node coverage and improve t
 
 \paragraph{Refinement and stopping.}
 At a fixed hierarchy level, \subsolver first solves~\eqref{eq:restricted-uot} on the current active support.
-\pricing evaluates~\eqref{eq:dual-score} in tiles without materializing $C$ or the dense coupling.
+\pricing evaluates~\eqref{eq:dual-score} in tiles without materializing $\mathbf{C}$ or the dense coupling.
 It returns a candidate set $\mathcal V$, formed by retaining up to $\gamma$ largest positive dual scores per source and target node, together with the full-space dual-violation residual $\eta$.
 After inserting $\mathcal V$, \prune protects structural edges $\mathcal B$, numerically positive-flow edges in $\mathcal Z$, and the new candidates $\mathcal V$; remaining old edges are removed in increasing order of relevance to dual tightness under budget factor $\beta$.
 Flows on retained edges and node potentials are warm-started in the next restricted solve, and new edges receive zero initial flow.
 
-The restricted stopping criterion combines the marginal-response residuals from~\eqref{eq:uot-kkt}, projected stationarity on $\mathcal{N}$, and a split primal--dual consistency measure.
+The restricted stopping criterion combines the marginal-response and stationarity residuals in~\eqref{eq:pduot-residuals} with the gap in~\eqref{eq:pduot-split-gap}.
 Both the restricted solve and the full-space dual-violation test use the same tolerance $\varepsilon$.
 Since \subsolver returns only after the restricted criterion is satisfied, the outer loop checks only $\eta\leq\varepsilon$.
 The full-space scan also produces the candidates for the next round, so stopping and support insertion share one streamed pass.
@@ -338,53 +413,53 @@ We first connect a restricted \subsolver solution to the full KL-UOT problem.
 
 \begin{proposition}[Restricted-to-full recovery]
 \label{prop:restricted-recovery}
-Let $(\widehat x,\widehat f,\widehat g)$ satisfy the KKT conditions of~\eqref{eq:restricted-uot} on $\mathcal{N}$.
-If $\widehat f_i+\widehat g_j\leq C_{ij}$ for every $(i,j)\in[m]\times[n]$, then extending $\widehat x$ by zero outside $\mathcal{N}$ yields a global primal solution of~\eqref{eq:primal-uot}, and $(\widehat f,\widehat g)$ is a global dual solution of~\eqref{eq:dual-uot}.
+Let $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ satisfy the KKT conditions of~\eqref{eq:restricted-uot} on $\mathcal{N}$.
+If $\widehat f_i+\widehat g_j\leq C_{ij}$ for every $(i,j)\in[m]\times[n]$, then extending $\widehat{\mathbf{x}}$ by zero outside $\mathcal{N}$ yields a global primal solution of~\eqref{eq:primal-uot}, and $(\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ is a global dual solution of~\eqref{eq:dual-uot}.
 \end{proposition}
 
 Restricted KKT conditions already provide the marginal responses, active-edge feasibility, and complementarity.
 The full-space inequalities supply the only missing KKT conditions.
 
 Finite-tolerance refinement requires accounting for inexact restricted solves.
-For a coupling $X$ with positive transported marginals, define primal-consistent potentials and scores by
+For a coupling $\mathbf{X}$ with positive transported marginals, define primal-consistent potentials and scores by
 \begin{equation*}
 \begin{aligned}
-f_i^X&=-\rho_a\log(r_i/a_i),\quad g_j^X=-\rho_b\log(q_j/b_j),\\
-\sigma_{ij}^X&=f_i^X+g_j^X-C_{ij}.
+f_i^\mathbf{X}&=-\rho_a\log(r_i/a_i),\quad g_j^\mathbf{X}=-\rho_b\log(q_j/b_j),\\
+\sigma_{ij}^\mathbf{X}&=f_i^\mathbf{X}+g_j^\mathbf{X}-C_{ij}.
 \end{aligned}
 \end{equation*}
-The coordinate derivative satisfies $\nabla_{ij}\Phi(X)=-\sigma_{ij}^X$.
+The coordinate derivative satisfies $\nabla_{ij}\Phi(\mathbf{X})=-\sigma_{ij}^\mathbf{X}$.
 
 \begin{proposition}[One-edge descent]
 \label{prop:one-edge-descent}
-Let $h_{ij}(X)=\rho_a/r_i+\rho_b/q_j$.
-If $\sigma_{ij}^X>0$, then $t=\sigma_{ij}^X/h_{ij}(X)$ satisfies
+Let $h_{ij}(\mathbf{X})=\rho_a/r_i+\rho_b/q_j$.
+If $\sigma_{ij}^\mathbf{X}>0$, then $t=\sigma_{ij}^\mathbf{X}/h_{ij}(\mathbf{X})$ satisfies
 \begin{equation*}
-\Phi(X+tE_{ij})\leq\Phi(X)-\frac{(\sigma_{ij}^X)^2}{2h_{ij}(X)}.
+\Phi(\mathbf{X}+t\mathbf{E}_{ij})\leq\Phi(\mathbf{X})-\frac{(\sigma_{ij}^\mathbf{X})^2}{2h_{ij}(\mathbf{X})}.
 \end{equation*}
 \end{proposition}
 
-The proposition follows from a second-order upper bound along the nonnegative coordinate direction $E_{ij}$.
+The proposition follows from a second-order upper bound along the nonnegative coordinate direction $\mathbf{E}_{ij}$.
 This direction is always primal feasible because KL-UOT penalizes its marginals rather than imposing hard marginal equalities.
 
 The following theorem states a finite-tolerance guarantee for a safeguarded refinement variant.
-At round $k$, let an inexact restricted oracle return $X^k$ on $\mathcal{N}_k$ with restricted projected-gradient residual at most $\varepsilon$.
-If the largest inactive primal-consistent score exceeds $\varepsilon$, the update selects such an edge $e_k$, forms the trial point from Proposition~\ref{prop:one-edge-descent}, and retains $\supp(X^k)\cup\{e_k\}$ in the next support.
+At round $k$, let an inexact restricted oracle return $\mathbf{X}^k$ on $\mathcal{N}_k$ with restricted projected-gradient residual at most $\varepsilon$.
+If the largest inactive primal-consistent score exceeds $\varepsilon$, the update selects such an edge $e_k$, forms the trial point from Proposition~\ref{prop:one-edge-descent}, and retains $\supp(\mathbf{X}^k)\cup\{e_k\}$ in the next support.
 
 \begin{theorem}[Finite-tolerance refinement]
 \label{thm:refinement}
-Assume that $\Phi$ is bounded below by $\Phi_{\inf}$, $h_{e_k}(X^k)\leq H$, and the next restricted solve returns $X^{k+1}$ satisfying
+Assume that $\Phi$ is bounded below by $\Phi_{\inf}$, $h_{e_k}(\mathbf{X}^k)\leq H$, and the next restricted solve returns $\mathbf{X}^{k+1}$ satisfying
 \begin{equation*}
 \begin{aligned}
-\Phi(X^{k+1})&\leq\Phi(X^k+t_kE_{e_k})+\xi_k,\\
-0\leq\xi_k&\leq\theta\frac{(\sigma_{e_k}^{X^k})^2}{2h_{e_k}(X^k)}
+\Phi(\mathbf{X}^{k+1})&\leq\Phi(\mathbf{X}^k+t_k\mathbf{E}_{e_k})+\xi_k,\\
+0\leq\xi_k&\leq\theta\frac{(\sigma_{e_k}^{\mathbf{X}^k})^2}{2h_{e_k}(\mathbf{X}^k)}
 \end{aligned}
 \end{equation*}
 for constants $H<\infty$ and $\theta\in[0,1)$.
 Then the safeguarded refinement terminates after at most
 \begin{equation}
 \label{eq:refinement-bound}
-N_{\mathrm{ref}}\leq\left\lceil\frac{2H(\Phi(X^0)-\Phi_{\inf})}{(1-\theta)\varepsilon^2}\right\rceil
+N_{\mathrm{ref}}\leq\left\lceil\frac{2H(\Phi(\mathbf{X}^0)-\Phi_{\inf})}{(1-\theta)\varepsilon^2}\right\rceil
 \end{equation}
 nonterminal rounds and returns a coupling whose full projected-gradient residual is at most $\varepsilon$.
 \end{theorem}
@@ -394,15 +469,15 @@ The theorem isolates an implementable safeguard for inexact \subsolver calls.
 The practical variant uses \subsolver potentials for candidate ranking; primal-consistent scores or two-sided response corrections can be used for the safeguarded stopping test.
 The supplementary material will provide further details and explicit marginal bounds for $H$.
 
-Finally, let $s=|\mathcal{N}|$ denote the largest maintained active support.
-\subsolver stores edge flows and sparse incidence indices in $O(s)$ memory, while the hierarchy stores input features and node quantities in $O((m+n)d+m+n)$ memory.
+Finally, let $\mathbf{s}=|\mathcal{N}|$ denote the largest maintained active support.
+\subsolver stores edge flows and sparse incidence indices in $O(\mathbf{s})$ memory, while the hierarchy stores input features and node quantities in $O((m+n)d+m+n)$ memory.
 The tiled full-space scan uses the same persistent memory and performs $O(mn)$ arithmetic per pass.
 Consequently,
 \begin{equation}
 \label{eq:memory-complexity}
-\operatorname{Mem}(\ours)=O\bigl((m+n)d+m+n+s\bigr).
+\operatorname{Mem}(\ours)=O\bigl((m+n)d+m+n+\mathbf{s}\bigr).
 \end{equation}
-Under the configured support budget $s\leq\beta(m+n)$ and fixed feature dimension,~\eqref{eq:memory-complexity} is linear in the number of input points.
+Under the configured support budget $\mathbf{s}\leq\beta(m+n)$ and fixed feature dimension,~\eqref{eq:memory-complexity} is linear in the number of input points.
 
 \section{Extensions}
 \label{sec:extensions}
@@ -416,7 +491,7 @@ Let $\Phi$ denote the unregularized objective in~\eqref{eq:primal-uot}, and let 
 To approximate entropic UOT at a small regularization strength $\varepsilon>0$, we solve
 \begin{equation}
 \label{eq:sparse-entropic-extension}
-\min_{X\geq0,\,\supp(X)\subseteq\mathcal{N}_\star}\;\Phi(X)+\varepsilon\KL(X\,|\,a\otimes b).
+\min_{X\geq0,\,\supp(X)\subseteq\mathcal{N}_\star}\;\Phi(\mathbf{X})+\varepsilon\KL(\mathbf{X}\,|\,\mathbf{a}\otimes \mathbf{b}).
 \end{equation}
 Generalized Sinkhorn updates on this fixed support cost $O(|\mathcal{N}_\star|+m+n)$ time and memory per iteration.
 Reusing the final active support avoids an additional support-construction scan and retains an explicitly sparse coupling for downstream tasks.
@@ -427,22 +502,22 @@ Appendix~\ref{app:entropic-extension} describes the sparse updates and an option
 \label{sec:ufgw-extension}
 
 UFGW combines feature matching with alignment of within-dataset relations.
-Let $A\in\mathbb R^{m\times m}$ and $B\in\mathbb R^{n\times n}$ encode these relations, and let $M\in\mathbb R^{m\times n}$ be the feature cost.
+Let $\mathbf{A}\in\mathbb R^{m\times m}$ and $\mathbf{B}\in\mathbb R^{n\times n}$ encode these relations, and let $\mathbf{M}\in\mathbb R^{m\times n}$ be the feature cost.
 We use a two-coupling block-coordinate relaxation with tensorized KL marginal penalties~\citep{sejourne2023unbalanced}.
 % CN: 请作者补入原始 UGW relaxation 论文的引用；此处暂用现有综述引用，不修改 bibliography。
 % EN: Add the original UGW relaxation citation; the existing survey is cited provisionally without changing the bibliography.
-For nonnegative couplings $P,Q$, define
+For nonnegative couplings $\mathbf{P},\mathbf{Q}$, define
 \begin{equation*}
-\mathcal Q_{A,B}(P,Q)=\sum_{i,k,j,l}(A_{ik}-B_{jl})^2P_{ij}Q_{kl}
+\mathcal Q_{A,B}(\mathbf{P},\mathbf{Q})=\sum_{i,k,j,l}(A_{ik}-B_{jl})^2P_{ij}Q_{kl}
 \end{equation*}
-and $D_a(P,Q)=\KL((P\mathbf1)\otimes(Q\mathbf1)\,|\,a\otimes a)$, with $D_b$ defined analogously for target marginals.
+and $D_a(\mathbf{P},\mathbf{Q})=\KL((\mathbf{P}\mathbf{1})\otimes(\mathbf{Q}\mathbf{1})\,|\,\mathbf{a}\otimes \mathbf{a})$, with $D_b$ defined analogously for target marginals.
 The relaxed objective is
 \begin{equation}
 \label{eq:ufgw-relaxation}
 \begin{aligned}
-\min_{P,Q\geq0}\quad &(1-\alpha)\mathcal Q_{A,B}(P,Q)\\
-&+\frac{\alpha}{2}\langle M,P+Q\rangle
-+\rho_aD_a(P,Q)+\rho_bD_b(P,Q),
+\min_{P,Q\geq0}\quad &(1-\alpha)\mathcal Q_{A,B}(\mathbf{P},\mathbf{Q})\\
+&+\frac{\alpha}{2}\langle \mathbf{M},\mathbf{P}+\mathbf{Q}\rangle
++\rho_aD_a(\mathbf{P},\mathbf{Q})+\rho_bD_b(\mathbf{P},\mathbf{Q}),
 \end{aligned}
 \end{equation}
 where $\alpha\in[0,1]$ controls feature matching and $\alpha=0$ gives the UGW relaxation.
@@ -452,12 +527,336 @@ For the squared-Euclidean structural and feature costs used in our experiments, 
 This representation allows \ours to scan the block costs without storing dense structural or cross-cost matrices.
 The block formulas, rescaling, and entropic variant are given in Appendix~\ref{app:ufgw-extension}.
 
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Restricted UOT Solvers}
+\label{sec:restricted-experiments}
+
+We compare \subsolver with existing solvers on shared restricted UOT instances, evaluating runtime and primal--dual accuracy across support sizes and marginal penalty parameters.
+% CN: 待补充统一评测指标、基线配置以及运行时间与精度的对比结果。
+% EN: Add shared evaluation metrics, baseline configurations, and runtime--accuracy comparisons.
+
 \bibliography{references}
 \bibliographystyle{icml2026}
 
 \newpage
 \appendix
 \onecolumn
+\section{PDUOT Analysis and Control Steps}
+\label{app:pduot-details}
+
+\paragraph{KL proximal evaluation.}
+For dual input $u$, reference mass $h>0$, penalty $\rho>0$, and step $\mathbf{s}>0$, the coordinate proximal problem is
+\begin{equation*}
+\min_v\;\rho h(e^{v/\rho}-1)+\frac{(v-u)^2}{2\mathbf{s}}.
+\end{equation*}
+Its optimality equation $v-u+\mathbf{s} h e^{v/\rho}=0$ has the unique solution $v=u-\rho W((\mathbf{s} h/\rho)e^{u/\rho})$, where $W$ is the principal Lambert--$W$ function.
+To avoid forming the exponential, let $\ell=\log(\mathbf{s} h/\rho)+u/\rho$ and solve $e^q+q=\ell$ for $q$.
+Then $e^q=W(e^\ell)$ and $v=u-\rho e^q$; equivalently, $v=\rho(q-\log(\mathbf{s} h/\rho))$.
+This log-domain formulation supports scalar evaluation without explicitly constructing $e^{u/\rho}$.
+
+\subsection{Fixed-Metric Convergence}
+\label{app:pduot-global}
+
+We establish convergence guarantees for the fixed-metric core of \subsolver\ by verifying the error-bound conditions of restricted KL-UOT and combining them with existing Halpern and restart theory~\citep{yuan2020discerning,wittmann1992approximation,lieder2021convergence,lu2407restarted}.
+The argument below proves Proposition~\ref{prop:pduot-convergence}; local sharpness is the intermediate property used to obtain the restart rate.
+Fix $\mathcal N$, $\mathbf{D}_x$, and $\mathbf{D}_y$, and abbreviate $\mathbf{c}=\mathbf{c}_{\mathcal N}$ within this appendix.
+All proximal operations in the proofs are exact.
+For a positive definite matrix $\mathbf{P}$, write $\|\mathbf{z}\|_\mathbf{P}=(\mathbf{z}^\top \mathbf{P}\mathbf{z})^{1/2}$ and $\operatorname{dist}_\mathbf{P}(\mathbf{z},S)=\inf_{u\in S}\|\mathbf{z}-\mathbf{u}\|_\mathbf{P}$.
+Define the restricted KKT mapping
+\begin{equation}
+\label{eq:pduot-kkt-map}
+\mathcal M(\mathbf{x},\mathbf{y})=\begin{pmatrix}\mathbf{c}+\mathbf{A}_{\mathcal N}^\top \mathbf{y}+N_{\mathbb R_+^{|\mathcal N|}}(\mathbf{x})\\ \nabla G^*(\mathbf{y})-\mathbf{A}_{\mathcal N}\mathbf{x}\end{pmatrix},
+\end{equation}
+where $N_{\mathbb R_+^{|\mathcal N|}}$ is the convex normal-cone mapping.
+The zeros of $\mathcal M$ are precisely the restricted KKT points, with $\mathbf{y}=-(\mathbf{f},\mathbf{g})$.
+The mapping $\mathcal M$ is maximally monotone: $\partial F\times\partial G^*$ is maximally monotone, and the remaining linear map $(\mathbf{x},\mathbf{y})\mapsto(\mathbf{A}_{\mathcal N}^\top \mathbf{y},-\mathbf{A}_{\mathcal N}\mathbf{x})$ is skew-symmetric and defined everywhere.
+
+For fixed positive diagonal steps, define the PDHG metric
+\begin{equation*}
+\mathbf{P}=\begin{pmatrix}\mathbf{D}_x^{-1}&-\mathbf{A}_{\mathcal N}^\top\\-\mathbf{A}_{\mathcal N}&\mathbf{D}_y^{-1}\end{pmatrix}.
+\end{equation*}
+
+\begin{proof}[Proof of the unrestarted statement in Proposition~\ref{prop:pduot-convergence}]
+The restricted primal objective is continuous on the nonnegative orthant and coercive: both transported marginal totals equal $\|\mathbf x\|_1$, so the KL penalties grow superlinearly in $\|\mathbf x\|_1$, whereas the finite transport costs contribute a linear term.
+It therefore attains a minimum $\mathbf x^\star$.
+Node coverage makes its transported marginals strictly positive, as shown in Appendix~\ref{app:pduot-sharpness}.
+Setting $\mathbf y^\star=\nabla G(\mathbf A_{\mathcal N}\mathbf x^\star)$, the primal first-order optimality condition and conjugacy give $0\in\mathcal M(\mathbf x^\star,\mathbf y^\star)$, so the restricted KKT solution set is nonempty.
+The step-size condition makes $\mathbf P$ positive definite by the Schur complement.
+For $\widehat{\mathbf{z}}=T\mathbf{z}$, the two proximal optimality conditions in~\eqref{eq:pduot-map} are
+\begin{equation*}
+\mathbf{D}_x^{-1}(\mathbf{x}-\widehat{\mathbf{x}})-\mathbf{A}_{\mathcal N}^\top \mathbf{y}\in\partial F(\widehat{\mathbf{x}}),\qquad
+\mathbf{D}_y^{-1}(\mathbf{y}-\widehat{\mathbf{y}})+\mathbf{A}_{\mathcal N}(2\widehat{\mathbf{x}}-\mathbf{x})=\nabla G^*(\widehat{\mathbf{y}}).
+\end{equation*}
+Rearranging gives
+\begin{equation}
+\label{eq:pduot-resolvent}
+\mathbf{P}(\mathbf{z}-T\mathbf{z})\in\mathcal M(T\mathbf{z}),\qquad T=(\mathbf{P}+\mathcal M)^{-1}\mathbf{P}.
+\end{equation}
+Monotonicity applied to the images of two points $\mathbf{z},\mathbf{u}$ yields
+\begin{equation*}
+\|T\mathbf{z}-T\mathbf{u}\|_\mathbf{P}^2\leq\langle T\mathbf{z}-T\mathbf{u},\mathbf{z}-\mathbf{u}\rangle_\mathbf{P}.
+\end{equation*}
+Thus $T$ is firmly nonexpansive, $R:=2T-\mathbf{I}$ is nonexpansive, and $\operatorname{Fix}R=\operatorname{Fix}T=\mathcal M^{-1}(0)$.
+Equation~\eqref{eq:halpern}, initialized at $\mathbf{z}^0=\mathbf{z}^{\mathrm a}$, is the Halpern iteration for $R$ with coefficients $1/(k+2)$.
+The Halpern convergence theorem~\citep{wittmann1992approximation} and the residual estimate of \citet[Theorem~2.1]{lieder2021convergence}, applied to $R$ in the $\mathbf P$ inner product, give convergence to a fixed point and
+\begin{equation*}
+\|\mathbf{z}^k-R\mathbf{z}^k\|_\mathbf{P}\leq\frac{2\operatorname{dist}_\mathbf{P}(\mathbf{z}^{\mathrm a},\operatorname{Fix}R)}{k+1}.
+\end{equation*}
+Since $\mathbf{z}^k-R\mathbf{z}^k=2(\mathbf{z}^k-T\mathbf{z}^k)$, we obtain
+\begin{equation}
+\label{eq:pduot-halpern-bound}
+\|\mathbf z^k-T\mathbf z^k\|_{\mathbf P}\leq\frac{\operatorname{dist}_{\mathbf P}(\mathbf z^{\mathrm a},\operatorname{Fix}T)}{k+1}.
+\end{equation}
+Continuity of $T$ also gives convergence of the mapped points to the same KKT point.
+\end{proof}
+
+The degree-based steps in~\eqref{eq:pduot-metric} satisfy the required norm condition without estimating a spectral norm.
+Indeed, Cauchy--Schwarz at each node gives, for any edge vector $\mathbf{h}$,
+\begin{equation*}
+\|\overline{\mathbf{D}}_y^{1/2}\mathbf{A}_{\mathcal N}\overline{\mathbf{D}}_x^{1/2}\mathbf{h}\|_2^2
+=\frac{\zeta^2}{2}\sum_v\frac{1}{d_v}\left(\sum_{e\ni v}\mathbf{h}_e\right)^2
+\leq\frac{\zeta^2}{2}\sum_v\sum_{e\ni v}\mathbf{h}_e^2
+=\zeta^2\|\mathbf{h}\|_2^2.
+\end{equation*}
+Each edge has two endpoints, and the reciprocal factors $w$ in $\mathbf{D}_x$ and $\mathbf{D}_y$ cancel in the scaled incidence matrix.
+Hence its norm is at most $\zeta<1$ for every fixed $w>0$.
+
+\subsection{Positive Marginals and Local Sharpness}
+\label{app:pduot-sharpness}
+
+We first justify positivity of the transported marginals under the node-coverage assumption in Proposition~\ref{prop:pduot-convergence}.
+Let $\mathbf{x}^\star$ be a restricted optimum and suppose its source marginal $r_i^\star$ is zero.
+Choose an incident active edge $e=(i,j)$ and add flow $t>0$ on that edge.
+The source KL change divided by $t$ is $\rho_a(\log(t/a_i)-1)$, which tends to $-\infty$ as $t\downarrow0$.
+The cost quotient is finite, while the target KL quotient tends either to the finite value $\rho_b\log(q_j^\star/b_j)$ if $q_j^\star>0$, or to $-\infty$ otherwise.
+The total quotient is therefore negative for sufficiently small $t$, contradicting optimality.
+The target argument is symmetric, so $\mathbf{r}^\star,\mathbf{q}^\star>0$.
+
+\paragraph{KKT error bound.}
+Introduce the transported marginal vector $\mathbf m=(\mathbf r,\mathbf q)$ and write the restricted problem as
+\begin{equation}
+\label{eq:pduot-lifted-primal}
+\min_{\mathbf m,\mathbf x}\;G(\mathbf m)+F(\mathbf x)\quad\text{s.t.}\quad\mathbf A_{\mathcal N}\mathbf x-\mathbf m=0.
+\end{equation}
+This problem satisfies the structured polyhedricity assumption of \citet[Assumptions~1.2--1.3]{yuan2020discerning}.
+Indeed, the extended-valued KL function $G$ is proper, closed, and convex, is differentiable on the positive orthant, and has
+\begin{equation*}
+\nabla^2G(\mathbf m)=\operatorname{diag}(\rho_a/\mathbf r,\rho_b/\mathbf q)\succ0.
+\end{equation*}
+Thus $G$ is strongly convex on every compact convex subset of its subdifferential domain, its gradient is locally Lipschitz on the positive orthant, and the gradient norm diverges when approaching a finite boundary point.
+In the notation of that assumption, take the smooth representation matrix to be the identity and the additional linear term to be zero.
+The function $F$ is convex piecewise linear-quadratic, since it is a linear function plus the indicator of the nonnegative orthant.
+Consequently, \citet[Theorem~59]{yuan2020discerning} gives metric subregularity of the lifted KKT mapping at every lifted KKT point, without rank or strict-complementarity assumptions.
+
+To transfer this bound to~\eqref{eq:pduot-kkt-map}, define, for $\mathbf m>0$,
+\begin{equation*}
+\mathcal K(\mathbf m,\mathbf x,\mathbf y)=\begin{pmatrix}\nabla G(\mathbf m)-\mathbf y\\ \mathbf c+\mathbf A_{\mathcal N}^{\top}\mathbf y+N_{\mathbb R_+^{|\mathcal N|}}(\mathbf x)\\ \mathbf m-\mathbf A_{\mathcal N}\mathbf x\end{pmatrix}.
+\end{equation*}
+Up to signs and ordering of the residual blocks, this is the KKT mapping in the cited theorem.
+Write $\mathcal S=\mathcal M^{-1}(0)$ and $\widetilde{\mathcal S}=\mathcal K^{-1}(0)$, and fix $\mathbf z^\star=(\mathbf x^\star,\mathbf y^\star)\in\mathcal S$.
+The projection of $\widetilde{\mathcal S}$ onto $(\mathbf x,\mathbf y)$ is exactly $\mathcal S$.
+For $\mathbf z=(\mathbf x,\mathbf y)$ near $\mathbf z^\star$, set $\mathbf m(\mathbf y)=\nabla G^*(\mathbf y)$.
+This positive vector depends continuously on $\mathbf y$, and $\nabla G(\mathbf m(\mathbf y))=\mathbf y$.
+The lifted error bound therefore yields, for some $\kappa>0$ and a neighborhood $\mathbf U$ of $\mathbf z^\star$,
+\begin{equation}
+\label{eq:pduot-kkt-error-bound}
+\begin{aligned}
+\operatorname{dist}_2(\mathbf z,\mathcal S)&\leq\operatorname{dist}_2((\mathbf m(\mathbf y),\mathbf x,\mathbf y),\widetilde{\mathcal S})\\
+&\leq\kappa\operatorname{dist}_2(0,\mathcal K(\mathbf m(\mathbf y),\mathbf x,\mathbf y))\\
+&=\kappa\operatorname{dist}_2(0,\mathcal M(\mathbf z)),\qquad \mathbf z\in\mathbf U.
+\end{aligned}
+\end{equation}
+This bound measures distance to the entire solution set and allows nonunique optimal couplings, cycles in the positive-flow support, and edges with both zero flow and zero slack.
+
+\paragraph{Fixed-point sharpness.}
+Let $p_{\max}$ be the largest eigenvalue of $\mathbf P$.
+For $\mathbf z$ sufficiently near $\mathbf z^\star$, continuity gives $T\mathbf z\in\mathbf U$.
+Combining~\eqref{eq:pduot-kkt-error-bound} with~\eqref{eq:pduot-resolvent} and $\|\mathbf P\mathbf h\|_2\leq\sqrt{p_{\max}}\|\mathbf h\|_{\mathbf P}$ gives
+\begin{equation*}
+\operatorname{dist}_{\mathbf P}(T\mathbf z,\mathcal S)\leq\sqrt{p_{\max}}\kappa\|\mathbf P(\mathbf z-T\mathbf z)\|_2\leq\kappa p_{\max}\|\mathbf z-T\mathbf z\|_{\mathbf P}.
+\end{equation*}
+The triangle inequality then yields the local sharpness estimate
+\begin{equation}
+\label{eq:pduot-local-sharpness}
+\alpha\operatorname{dist}_{\mathbf P}(\mathbf z,\mathcal S)\leq\|\mathbf z-T\mathbf z\|_{\mathbf P},\qquad \alpha=(1+\kappa p_{\max})^{-1}>0.
+\end{equation}
+
+\subsection{Local Linear Convergence with Restart}
+\label{app:pduot-restart}
+
+The following argument completes the restart statement in Proposition~\ref{prop:pduot-convergence}.
+It combines~\eqref{eq:pduot-local-sharpness} with the sharpness--restart argument of \citet[Theorems~1--2 and Corollary~1]{lu2407restarted}, localized to a neighborhood of a restricted KKT point.
+It uses the same fixed $\mathbf{P}$ across all epochs.
+Write $\mathcal S=\operatorname{Fix}T$ and $\mathcal R(\mathbf{z})=\|\mathbf{z}-T\mathbf{z}\|_\mathbf{P}$.
+Choose a closed $\mathbf{P}$-ball centered at $\mathbf{z}^\star$ contained in the sharpness neighborhood, and initialize the first anchor inside that ball.
+Both $T$ and $2T-\mathbf{I}$ fix $\mathbf{z}^\star$ and are nonexpansive, so their images and the Halpern convex combinations remain in the ball.
+Restarting at a mapped point preserves this property at every epoch.
+
+For any epoch anchor $\mathbf{z}^{\mathrm a}$, equation~\eqref{eq:pduot-halpern-bound} and nonexpansiveness of $T$ give
+\begin{equation}
+\label{eq:pduot-epoch-bound}
+\mathcal R(\mathbf{z}^k)\leq\frac{\operatorname{dist}_\mathbf{P}(\mathbf{z}^{\mathrm a},\mathcal S)}{k+1},\qquad
+\mathcal R(T\mathbf{z}^k)\leq\mathcal R(\mathbf{z}^k).
+\end{equation}
+Applying sharpness at the next anchor $T\mathbf{z}^k$ yields
+\begin{equation*}
+\operatorname{dist}_\mathbf{P}(T\mathbf{z}^k,\mathcal S)\leq\frac{\operatorname{dist}_\mathbf{P}(\mathbf{z}^{\mathrm a},\mathcal S)}{\alpha(k+1)}.
+\end{equation*}
+For a fixed period of $L$ PDHG evaluations, take the next anchor to be $T\mathbf{z}^{L-1}$.
+Any integer $L\geq e/\alpha$ therefore gives
+\begin{equation*}
+\operatorname{dist}_\mathbf{P}(\mathbf{z}^{\mathrm a}_{\ell+1},\mathcal S)\leq e^{-1}\operatorname{dist}_\mathbf{P}(\mathbf{z}^{\mathrm a}_{\ell},\mathcal S),
+\end{equation*}
+where $\ell$ indexes epochs.
+
+Alternatively, fix $\vartheta\in(0,1)$ and restart at $T\mathbf{z}^k$ at the first index satisfying
+\begin{equation}
+\label{eq:pduot-proved-restart}
+\mathcal R(\mathbf{z}^k)\leq\vartheta\mathcal R(\mathbf{z}^{\mathrm a}_{\ell}).
+\end{equation}
+If the anchor residual is zero, the anchor is already a KKT point.
+Otherwise, sharpness at the anchor and~\eqref{eq:pduot-epoch-bound} show that this test passes once $k+1\geq1/(\alpha\vartheta)$.
+Every epoch thus has at most $\lceil1/(\alpha\vartheta)\rceil$ PDHG evaluations, and
+\begin{equation*}
+\mathcal R(\mathbf{z}^{\mathrm a}_{\ell})\leq\vartheta^\ell\mathcal R(\mathbf{z}^{\mathrm a}_0),\qquad
+\operatorname{dist}_\mathbf{P}(\mathbf{z}^{\mathrm a}_{\ell},\mathcal S)\leq\alpha^{-1}\vartheta^\ell\mathcal R(\mathbf{z}^{\mathrm a}_0).
+\end{equation*}
+These estimates prove linear convergence across restart epochs and, with the uniformly bounded epoch lengths, a geometric bound in total PDHG evaluations for the restart anchors.
+
+The proofs establish a local rate once an anchor lies in the stated neighborhood; they do not assert that every practical restarted run enters it.
+Changing $w$ changes $\mathbf{P}$, and the practical restart tests need not enforce~\eqref{eq:pduot-proved-restart}.
+The full controller and finite-precision proximal evaluations are therefore outside these fixed-metric, exact-proximal guarantees.
+
+\subsection{Practical Control Steps}
+\label{app:pduot-controls}
+\checkrestart tests fixed-point residual reduction relative to the epoch anchor, deterioration relative to the previous check after moderate reduction, and the epoch-length threshold described in the main text.
+The practical reduction factors are $0.2$ and $0.5$, and the epoch-length threshold is $0.36$ times the total iteration count; the first restart check also starts a new epoch.
+At a restart, let $d_x=\|\widehat{\mathbf{x}}-\mathbf{x}^{\mathrm a}\|_{\overline{\mathbf{D}}_x^{-1}}$ and $d_y=\|\widehat{\mathbf{y}}-\mathbf{y}^{\mathrm a}\|_{\overline{\mathbf{D}}_y^{-1}}$.
+For valid, nonnegligible displacements, \updateweight forms $e=\log(d_x/d_y)-\log w$, updates an integral state $I\leftarrow\nu I+e$, and sets
+\begin{equation*}
+w^+ = \operatorname{clip}\bigl(\exp(\log w+k_pe+k_iI),w_{\min},w_{\max}\bigr).
+\end{equation*}
+When these displacement or residual checks are invalid, the implementation falls back to a previously retained weight with better primal--dual residual balance and resets the integral state.
+Changing the metric starts a new epoch; the implementation refreshes the mapped point and residual baseline under that metric.
+Algorithm~\ref{alg:pduot} presents the control structure with one outer iteration per restart epoch.
+For clarity, its stopping and restart tests are shown at each iteration; the implementation evaluates them periodically, reusing the last residual between checks.
+
+\section{Stopping Criterion}
+\label{app:stopping-criterion}
+
+This section defines the three measures used in~\eqref{eq:pduot-stopping}, then analyzes the gap and its balanced-OT limit.
+All stopping measures are evaluated in the original problem coordinates on a fixed active support $\mathcal N$.
+
+\subsection{Residuals and Termination}
+
+For a PDHG input $\mathbf{z}=(\mathbf{x},\mathbf{y})$ and its mapped point $\widehat{\mathbf{z}}=(\widehat{\mathbf{x}},\widehat{\mathbf{y}})=T\mathbf{z}$, write $(\mathbf{r},\mathbf{q})=\mathbf{A}_{\mathcal N}\widehat{\mathbf{x}}$ and $(\mathbf{f},\mathbf{g})=-\widehat{\mathbf{y}}$.
+The marginal responses are $\widehat{\mathbf{r}}=\mathbf{a}\odot e^{-\mathbf{f}/\rho_a}$ and $\widehat{\mathbf{q}}=\mathbf{b}\odot e^{-\mathbf{g}/\rho_b}$, and the restricted dual slack is $\mathbf{s}_{\mathcal N}=\mathbf{c}_{\mathcal N}-\mathbf{A}_{\mathcal N}^\top(\mathbf{f},\mathbf{g})$.
+We define the marginal-consistency and stationarity residuals by
+\begin{equation}
+\label{eq:pduot-residuals}
+\begin{aligned}
+\delta_{\mathrm m}&=\frac{\|(\mathbf{r}-\widehat{\mathbf{r}},\mathbf{q}-\widehat{\mathbf{q}})\|}{1+\|(\mathbf{a},\mathbf{b})\|},\\
+\delta_{\mathrm s}&=\frac{\|\mathbf{s}_{\mathcal N}-\boldsymbol{\lambda}\|}{1+\|\mathbf{c}_{\mathcal N}\|},
+\end{aligned}
+\end{equation}
+where $\boldsymbol{\lambda}=\mathbf{D}_x^{-1}(\widehat{\mathbf{x}}-\mathbf{x})+\mathbf{c}_{\mathcal N}+\mathbf{A}_{\mathcal N}^\top \mathbf{y}$ is the bound multiplier supplied by the primal projection.
+The projection ensures $\widehat{\mathbf{x}}\geq0$, $\boldsymbol{\lambda}\geq0$, and $\lambda_e\widehat x_e=0$.
+Consequently, zero stationarity residual implies restricted dual feasibility and complementarity, while zero marginal-consistency residual gives the KL marginal optimality relations.
+Together these conditions imply the restricted KKT conditions.
+
+Let $t=\langle \mathbf{c}_{\mathcal N},\widehat{\mathbf{x}}\rangle$ and $d=\langle \mathbf{f},\widehat{\mathbf{r}}\rangle+\langle \mathbf{g},\widehat{\mathbf{q}}\rangle$.
+The relative gap is
+\begin{equation}
+\label{eq:pduot-split-gap}
+\delta_{\mathrm g}=\frac{|t-d|}{1+|t|+|d|}.
+\end{equation}
+\checkstop returns the mapped point only when all three measures satisfy~\eqref{eq:pduot-stopping}.
+The residual norms are $\ell_2$ by default, with an $\ell_\infty$ option at the finest hierarchy level.
+These tests concern the restricted problem; Algorithm~\ref{alg:ours} separately checks dual violations outside the active support through full-space pricing.
+
+\subsection{Gap Criterion and the Balanced Limit}
+\label{app:gap-criterion}
+
+For the following analysis, $\mathbf{x}$ denotes a generic nonnegative evaluation point, including the mapped coupling used above.
+Let $\Phi_{\mathcal N}(\mathbf{x})$ be the restricted primal objective, and let $D(\mathbf{f},\mathbf{g})$ be the dual objective in~\eqref{eq:dual-uot} evaluated at the current potentials.
+Write $(\mathbf{r},\mathbf{q})=\mathbf{A}_{\mathcal N}\mathbf{x}$, $\widehat{\mathbf{r}}=\mathbf{a}\odot e^{-\mathbf{f}/\rho_a}$, and $\widehat{\mathbf{q}}=\mathbf{b}\odot e^{-\mathbf{g}/\rho_b}$.
+
+\paragraph{Original objective gap.}
+The generalized-KL identity
+\begin{equation}
+\rho_a\KL(\mathbf{r}\,|\,\mathbf{a})+\rho_a\sum_i a_i(e^{-f_i/\rho_a}-1)
+=-\langle \mathbf{f},\mathbf{r}\rangle+\rho_a\KL(\mathbf{r}\,|\,\widehat{\mathbf{r}})
+\end{equation}
+and its target counterpart give the exact decomposition
+\begin{equation}
+\label{eq:original-gap-decomposition}
+\Phi_{\mathcal N}(\mathbf{x})-D(\mathbf{f},\mathbf{g})
+=\langle \mathbf{c}_{\mathcal N},\mathbf{x}\rangle-\langle \mathbf{f},\mathbf{r}\rangle-\langle \mathbf{g},\mathbf{q}\rangle
++\rho_a\KL(\mathbf{r}\,|\,\widehat{\mathbf{r}})+\rho_b\KL(\mathbf{q}\,|\,\widehat{\mathbf{q}}).
+\end{equation}
+When the potentials are dual feasible on $\mathcal N$, the first three terms form a nonnegative complementarity term, and the entire expression is a primal--dual gap bounding restricted objective suboptimality.
+At arbitrary infeasible dual iterates, it remains an objective difference without this bound.
+The divergence terms weight marginal-response errors by the penalty coefficients.
+For positive $\widehat{\mathbf{r}}$ and $\mathbf{r}$ near $\widehat{\mathbf{r}}$, for example,
+\begin{equation}
+\rho_a\KL(\mathbf{r}\,|\,\widehat{\mathbf{r}})
+=\frac{\rho_a}{2}\sum_i\frac{(r_i-\widehat r_i)^2}{\widehat r_i}
++o(\|\mathbf{r}-\widehat{\mathbf{r}}\|_2^2),
+\end{equation}
+where the expansion holds for fixed $\rho_a$ and $\widehat{\mathbf{r}}$.
+Thus a prescribed marginal residual tolerance does not give a penalty-independent bound on the original objective gap.
+
+\paragraph{Gap for the split optimality system.}
+Introducing independent transported marginals yields the equivalent split formulation
+\begin{equation}
+\min_{\mathbf{x},\mathbf{r},\mathbf{q}\geq0}\;\langle \mathbf{c}_{\mathcal N},\mathbf{x}\rangle+\rho_a\KL(\mathbf{r}\,|\,\mathbf{a})+\rho_b\KL(\mathbf{q}\,|\,\mathbf{b})
+\quad\text{s.t.}\quad \mathbf{A}_{\mathcal N}\mathbf{x}=(\mathbf{r},\mathbf{q}).
+\end{equation}
+Its marginal responses are the minimizers of the marginal Lagrangian terms for given $(\mathbf{f},\mathbf{g})$.
+At these responses, $\nabla(\rho_a\KL)(\widehat{\mathbf{r}}\,|\,\mathbf{a})=-\mathbf{f}$ and $\nabla(\rho_b\KL)(\widehat{\mathbf{q}}\,|\,\mathbf{b})=-\mathbf{g}$.
+Pairing the stationarity relations with primal variables motivates the signed consistency quantity
+\begin{equation}
+H=\langle \mathbf{c}_{\mathcal N},\mathbf{x}\rangle-\langle \mathbf{f},\widehat{\mathbf{r}}\rangle-\langle \mathbf{g},\widehat{\mathbf{q}}\rangle,
+\qquad
+\delta_{\mathrm g}=\frac{|H|}{1+|\langle \mathbf{c}_{\mathcal N},\mathbf{x}\rangle|+|\langle \mathbf{f},\widehat{\mathbf{r}}\rangle+\langle \mathbf{g},\widehat{\mathbf{q}}\rangle|}.
+\end{equation}
+This is the gap in~\eqref{eq:pduot-split-gap}, expressed at a generic evaluation point.
+Its exact relation to the original objective difference is
+\begin{equation}
+\Phi_{\mathcal N}(\mathbf{x})-D(\mathbf{f},\mathbf{g})
+=H-\langle \mathbf{f},\mathbf{r}-\widehat{\mathbf{r}}\rangle-\langle \mathbf{g},\mathbf{q}-\widehat{\mathbf{q}}\rangle
++\rho_a\KL(\mathbf{r}\,|\,\widehat{\mathbf{r}})+\rho_b\KL(\mathbf{q}\,|\,\widehat{\mathbf{q}}).
+\end{equation}
+At exact marginal consistency, $H$ equals the original objective difference.
+At finite tolerance, $\delta_{\mathrm g}$ measures consistency of the split system and is combined with $\delta_{\mathrm m}$ and $\delta_{\mathrm s}$.
+In particular, exact marginal consistency and stationarity with a nonnegative complementary bound multiplier imply the restricted KKT conditions and global restricted optimality.
+The scalar $\delta_{\mathrm g}$ alone does not bound original-objective suboptimality.
+
+\paragraph{Compatibility with balanced OT.}
+Consider equal-total-mass references and a support admitting a balanced transport plan.
+For fixed bounded potentials, as $\rho_a,\rho_b\to\infty$ the marginal responses approach $\mathbf{a}$ and $\mathbf{b}$, respectively.
+Consequently, the gap expression tends to
+\begin{equation}
+\frac{|\langle \mathbf{c}_{\mathcal N},\mathbf{x}\rangle-\langle \mathbf{a},\mathbf{f}\rangle-\langle \mathbf{b},\mathbf{g}\rangle|}
+{1+|\langle \mathbf{c}_{\mathcal N},\mathbf{x}\rangle|+|\langle \mathbf{a},\mathbf{f}\rangle+\langle \mathbf{b},\mathbf{g}\rangle|},
+\end{equation}
+and the marginal-response residual becomes the balanced marginal-feasibility residual.
+These are the corresponding balanced-OT stopping quantities.
+The original dual objective also has the balanced limit at bounded potentials; the distinction is the nonuniform penalty weighting of marginal errors in~\eqref{eq:original-gap-decomposition} along approximately feasible primal iterates.
+
+For a concrete example, take one edge with $a=b=1$, $c=f=g=0$, $x=1+\delta>0$, and equal penalties $\rho$.
+Then $\widehat r=\widehat q=1$, $\delta_{\mathrm g}=\delta_{\mathrm s}=0$, and $\delta_{\mathrm m}=\sqrt{2}|\delta|/(1+\sqrt{2})$ under the $\ell_2$ policy.
+Meanwhile,
+\begin{equation}
+\Phi_{\mathcal N}(x)-D(f,g)=2\rho\bigl((1+\delta)\log(1+\delta)-\delta\bigr),
+\end{equation}
+which is asymptotic to $\rho\delta^2$ for small $\delta$.
+For any fixed nonzero $\delta$, the usual relative original-objective gap tends to one as $\rho\to\infty$, even though the marginal residual remains at a fixed small scale.
+Thus imposing a small original-objective gap can require increasingly accurate marginals as the penalties grow.
+\subsolver instead applies a common tolerance to the three split optimality measures, preserving the balanced-OT stopping scale; original-objective gaps are evaluated separately when required for numerical comparisons.
+
 \section{Natural Extension to UOT with general Marginal Penaltys}
 \label{app:extension_penalty}
 % CN: 本附录预留 squared-L2 边际惩罚版本的定义、算法适配和理论说明。
@@ -469,16 +868,16 @@ The block formulas, rescaling, and entropic variant are given in Appendix~\ref{a
 On a fixed support $\mathcal{N}$, define $K_{ij}=a_i b_j\exp(-C_{ij}/\varepsilon)$ for $(i,j)\in\mathcal{N}$ and zero otherwise.
 The supported coupling has the form $X_{ij}=u_iK_{ij}v_j$, with generalized scaling updates
 \begin{equation}
-u\leftarrow\left(\frac{a}{Kv}\right)^{\rho_a/(\rho_a+\varepsilon)},\qquad
-v\leftarrow\left(\frac{b}{K^\top u}\right)^{\rho_b/(\rho_b+\varepsilon)}.
+\mathbf{u}\leftarrow\left(\frac{\mathbf{a}}{\mathbf{K}\mathbf{v}}\right)^{\rho_a/(\rho_a+\varepsilon)},\qquad
+\mathbf{v}\leftarrow\left(\frac{\mathbf{b}}{\mathbf{K}^\top \mathbf{u}}\right)^{\rho_b/(\rho_b+\varepsilon)}.
 \end{equation}
 Our implementation evaluates the scaling iterations in the log domain using sparse row and column reductions on the GPU.
-The KL term in~\eqref{eq:sparse-entropic-extension} uses the full reference $a\otimes b$, including its constant contribution outside $\mathcal{N}$, when evaluating the objective.
+The KL term in~\eqref{eq:sparse-entropic-extension} uses the full reference $\mathbf{a}\otimes \mathbf{b}$, including its constant contribution outside $\mathcal{N}$, when evaluating the objective.
 
 The default choice is $\mathcal{N}=\mathcal{N}_\star$.
-An optional expansion uses the positive-flow support of the unregularized solution $X^0$ and bidirectional top-$b_{\mathrm e}$ selection under its final dual scores:
+An optional expansion uses the positive-flow support of the unregularized solution $\mathbf{X}^0$ and bidirectional top-$b_{\mathrm e}$ selection under its final dual scores:
 \begin{equation}
-\mathcal{N}_{b_{\mathrm e}}=\supp(X^0)\cup\operatorname{RowTop}_{b_{\mathrm e}}(\sigma)\cup\operatorname{ColTop}_{b_{\mathrm e}}(\sigma).
+\mathcal{N}_{b_{\mathrm e}}=\supp(\mathbf{X}^0)\cup\operatorname{RowTop}_{b_{\mathrm e}}(\boldsymbol{\sigma})\cup\operatorname{ColTop}_{b_{\mathrm e}}(\boldsymbol{\sigma}).
 \end{equation}
 Here, $b_{\mathrm e}$ denotes the per-node edge budget.
 Constructing this alternative support requires an additional full-space scan.
@@ -487,52 +886,52 @@ Constructing this alternative support requires an additional full-space scan.
 \label{app:ufgw-extension}
 
 \paragraph{Reduction to KL-UOT.}
-Write $|Q|=\sum_{kl}Q_{kl}$ and $q_a=Q\mathbf1$, $q_b=Q^\top\mathbf1$.
+Write $|\mathbf{Q}|=\sum_{kl}Q_{kl}$ and $\mathbf{q}_a=\mathbf{Q}\mathbf{1}$, $\mathbf{q}_b=\mathbf{Q}^\top\mathbf{1}$.
 The tensorized marginal term satisfies
 \begin{equation}
-\KL(p\otimes q\,|\,a\otimes a)
-=|q|\KL(p\,|\,a)+|p|\sum_kq_k\log(q_k/a_k)+|a|(|a|-|q|).
+\KL(\mathbf{p}\otimes \mathbf{q}\,|\,\mathbf{a}\otimes \mathbf{a})
+=|\mathbf{q}|\KL(\mathbf{p}\,|\,\mathbf{a})+|\mathbf{p}|\sum_kq_k\log(q_k/a_k)+|\mathbf{a}|(|\mathbf{a}|-|\mathbf{q}|).
 \end{equation}
-Consequently, fixing $Q$ in~\eqref{eq:ufgw-relaxation} yields, up to constants independent of $P$,
+Consequently, fixing $\mathbf{Q}$ in~\eqref{eq:ufgw-relaxation} yields, up to constants independent of $\mathbf{P}$,
 \begin{equation}
 \label{eq:ufgw-block}
-\min_{P\geq0}\;\langle C^Q,P\rangle+\rho_a|Q|\KL(P\mathbf1\,|\,a)+\rho_b|Q|\KL(P^\top\mathbf1\,|\,b),
+\min_{P\geq0}\;\langle \mathbf{C}^\mathbf{Q},\mathbf{P}\rangle+\rho_a|\mathbf{Q}|\KL(\mathbf{P}\mathbf{1}\,|\,\mathbf{a})+\rho_b|\mathbf{Q}|\KL(\mathbf{P}^\top\mathbf{1}\,|\,\mathbf{b}),
 \end{equation}
 where
 \begin{equation}
 \begin{aligned}
-C^Q_{ij}&=(1-\alpha)\sum_{kl}(A_{ik}-B_{jl})^2Q_{kl}+\frac{\alpha}{2}M_{ij}+\kappa_Q,\\
-\kappa_Q&=\rho_a\sum_k(q_a)_k\log((q_a)_k/a_k)+\rho_b\sum_l(q_b)_l\log((q_b)_l/b_l).
+\mathbf{C}^Q_{ij}&=(1-\alpha)\sum_{kl}(A_{ik}-B_{jl})^2Q_{kl}+\frac{\alpha}{2}M_{ij}+\kappa_Q,\\
+\kappa_Q&=\rho_a\sum_k(\mathbf{q}_a)_k\log((\mathbf{q}_a)_k/a_k)+\rho_b\sum_l(\mathbf{q}_b)_l\log((\mathbf{q}_b)_l/b_l).
 \end{aligned}
 \end{equation}
-The $Q$ block is obtained symmetrically; our structural matrices are symmetric squared-Euclidean distances.
-The prototype initializes with the product coupling $a\otimes b$, stored implicitly, and alternates the two block solves.
-After solving the $P$ block, it applies $P\leftarrow\sqrt{|Q|/|P|}\,P$; after solving the $Q$ block, it applies the symmetric rescaling using the current $P$.
+The $\mathbf{Q}$ block is obtained symmetrically; our structural matrices are symmetric squared-Euclidean distances.
+The prototype initializes with the product coupling $\mathbf{a}\otimes \mathbf{b}$, stored implicitly, and alternates the two block solves.
+After solving the $\mathbf{P}$ block, it applies $\mathbf{P}\leftarrow\sqrt{|\mathbf{Q}|/|\mathbf{P}|}\,\mathbf{P}$; after solving the $\mathbf{Q}$ block, it applies the symmetric rescaling using the current $\mathbf{P}$.
 These steps match the block-coordinate implementation used in the experiments.
 The outer procedure optimizes a nonconvex two-coupling relaxation; the restricted-solver convergence results do not imply global optimality of this relaxation or equality of the two returned couplings.
 
 \paragraph{Entropic blocks.}
-For normalized reference masses, the optional entropic objective adds $\varepsilon\KL(P\otimes Q\,|\,(a\otimes b)\otimes(a\otimes b))$ to~\eqref{eq:ufgw-relaxation}.
-With $Q$ fixed, the block therefore acquires $\varepsilon|Q|\KL(P\,|\,a\otimes b)$ and the scalar cost contribution $\varepsilon\sum_{kl}Q_{kl}\log(Q_{kl}/(a_kb_l))$.
+For normalized reference masses, the optional entropic objective adds $\varepsilon\KL(\mathbf{P}\otimes \mathbf{Q}\,|\,(\mathbf{a}\otimes \mathbf{b})\otimes(\mathbf{a}\otimes \mathbf{b}))$ to~\eqref{eq:ufgw-relaxation}.
+With $\mathbf{Q}$ fixed, the block therefore acquires $\varepsilon|\mathbf{Q}|\KL(\mathbf{P}\,|\,\mathbf{a}\otimes \mathbf{b})$ and the scalar cost contribution $\varepsilon\sum_{kl}Q_{kl}\log(Q_{kl}/(a_kb_l))$.
 We solve its unregularized counterpart with \ours and apply sparse entropic refinement on the resulting support.
 The scalar cost translation can be absorbed into rescaled KL reference masses, retaining the same block minimizer without modifying the squared-distance solver.
 
 \paragraph{Implicit structural costs.}
-For squared-Euclidean structural matrices, write exact factorizations $A=U_AV_A^\top$ and $B=U_BV_B^\top$.
+For squared-Euclidean structural matrices, write exact factorizations $\mathbf{A}=\mathbf{U}_A\mathbf{V}_A^\top$ and $\mathbf{B}=\mathbf{U}_B\mathbf{V}_B^\top$.
 The linearized structural cost is
 \begin{equation}
-L_Q=(A\odot A)q_a\mathbf1_n^\top+\mathbf1_m((B\odot B)q_b)^\top-2AQB^\top.
+L_Q=(\mathbf{A}\odot \mathbf{A})\mathbf{q}_a\mathbf{1}_n^\top+\mathbf{1}_m((\mathbf{B}\odot \mathbf{B})\mathbf{q}_b)^\top-2\mathbf{A}\mathbf{Q}\mathbf{B}^\top.
 \end{equation}
-Its cross term depends on the small moment matrix $V_A^\top QV_B$, and the two squared-distance terms can likewise be evaluated through small weighted moments.
+Its cross term depends on the small moment matrix $\mathbf{V}_A^\top \mathbf{Q}\mathbf{V}_B$, and the two squared-distance terms can likewise be evaluated through small weighted moments.
 More explicitly, the matrix
 \begin{equation}
-H_Q=\begin{pmatrix}
-V_A^\top\operatorname{diag}(q_a)V_A&V_A^\top QV_B\\
-V_B^\top Q^\top V_A&V_B^\top\operatorname{diag}(q_b)V_B
+\mathbf{H}_Q=\begin{pmatrix}
+\mathbf{V}_A^\top\operatorname{diag}(\mathbf{q}_a)\mathbf{V}_A&\mathbf{V}_A^\top \mathbf{Q}\mathbf{V}_B\\
+\mathbf{V}_B^\top \mathbf{Q}^\top \mathbf{V}_A&\mathbf{V}_B^\top\operatorname{diag}(\mathbf{q}_b)\mathbf{V}_B
 \end{pmatrix}
 \end{equation}
 is positive semidefinite because it is a sum of outer products weighted by $Q_{kl}$.
-Factoring $H_Q=FF^\top$ and setting $z_i=(U_{A,i},0)F$, $w_j=(0,U_{B,j})F$ gives $(L_Q)_{ij}=\|z_i-w_j\|_2^2$.
+Factoring $\mathbf{H}_Q=\mathbf{F}\mathbf{F}^\top$ and setting $z_i=(\mathbf{U}_{A,i},0)\mathbf{F}$, $\mathbf{w}_j=(0,\mathbf{U}_{B,j})\mathbf{F}$ gives $(L_Q)_{ij}=\|z_i-\mathbf{w}_j\|_2^2$.
 Scaling these embeddings by $\sqrt{1-\alpha}$ and concatenating feature vectors scaled by $\sqrt{\alpha/2}$ represents the nonconstant block cost exactly.
 For fixed structural and feature dimensions, the embedding storage grows linearly with the number of points and the moment accumulation depends on the maintained coupling support.
 
