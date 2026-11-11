@@ -1,0 +1,220 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,hyperref}
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\supp}{\operatorname{supp}}
+\title{Inexact KL-UOT Refinement Without Objective Acceptance Tests}
+\author{Working theory note}
+\date{October 19, 2026}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We derive a refinement guarantee that does not require comparing consecutive primal objective values or accepting a prescribed one-edge trial objective.
+The proof tracks restricted optimal values, which need not coincide with the objectives of the computed iterates.
+A computable restricted suboptimality bound follows from the marginal-response and complementary stationarity residuals already used by PDUOT, together with a restricted dual-feasibility repair.
+The refinement theorem permits inexact solves and controlled deletion of positive flows.
+The results are exact-arithmetic statements for KL marginal penalties, not a convergence theorem for the unchanged production solver.
+Their novelty relative to existing optimization literature has not been established.
+\end{abstract}
+
+\section{Problem and error quantities}
+Let $a_i,b_j,\rho_a,\rho_b>0$ and $0\leq c_{ij}\leq C_{\max}<\infty$.
+Write $r=X\mathbf1$, $q=X^\top\mathbf1$ and
+$$\Phi(X)=\langle c,X\rangle+\rho_a\KL(r\mid a)+\rho_b\KL(q\mid b),\qquad X\geq0.$$
+For a node-covering support $\mathcal A$, define
+$$v(\mathcal A)=\min_{X\geq0,\ \supp(X)\subseteq\mathcal A}\Phi(X).$$
+The zero coupling is feasible and the KL penalties are coercive in transported mass, so the minimum exists.
+Let $A_0=\sum_i a_i$, $B_0=\sum_j b_j$, and $B_{\mathrm z}=\Phi(0)=\rho_aA_0+\rho_bB_0$.
+Then $0\leq v(\mathcal A)\leq B_{\mathrm z}$ for every support.
+
+For a feasible computed $X$ and arbitrary finite potentials $(f,g)$, let
+$$\widehat r_i=a_i e^{-f_i/\rho_a},\qquad \widehat q_j=b_j e^{-g_j/\rho_b},\qquad d_{ij}=c_{ij}-f_i-g_j.$$
+Let $s\geq0$ satisfy $s_{ij}X_{ij}=0$ on $\mathcal A$ and set
+$$w=d-s,\qquad \omega=\|w\|_\infty,\qquad \nu=\max_{(i,j)\in\mathcal A}(-d_{ij})_+.$$
+These are the absolute complementary stationarity quantities used in the PDUOT stationarity mode; in particular $\nu\leq\omega$.
+The relative native tolerance must be converted using its actual normalization before applying the statements below.
+
+\section{From PDUOT residuals to restricted suboptimality}
+\begin{proposition}[Computable objective-error bound]\label{prop:gap}
+Set $f'=f-\rho_a\nu/(\rho_a+\rho_b)$ and $g'=g-\rho_b\nu/(\rho_a+\rho_b)$ and let $D$ denote the KL-UOT dual objective.
+The pair $(f',g')$ is feasible on $\mathcal A$, and
+$$0\leq\Phi(X)-v(\mathcal A)\leq\Phi(X)-D(f',g')\leq E,$$
+where
+$$E=\rho_a\KL(r\mid\widehat r)+\rho_b\KL(q\mid\widehat q)+|X|\omega+J(\nu),$$
+$$J(\nu)=(\rho_a|\widehat r|+\rho_b|\widehat q|)\big(e^{\nu/(\rho_a+\rho_b)}-1\big).$$
+Here $|X|=\sum_{ij}X_{ij}$ and $|u|=\sum_i u_i$ for nonnegative vectors.
+\end{proposition}
+\begin{proof}
+The two downward shifts sum to $\nu$ and remove every restricted dual violation.
+The Fenchel identity, valid also for infeasible potentials, is
+$$\Phi(X)-D(f,g)=\rho_a\KL(r\mid\widehat r)+\rho_b\KL(q\mid\widehat q)+\langle d,X\rangle.$$
+Complementarity gives $\langle d,X\rangle=\langle w,X\rangle\leq |X|\omega$.
+Direct substitution gives $D(f,g)-D(f',g')=J(\nu)$.
+Weak duality on $\mathcal A$ proves the result.
+\end{proof}
+
+All terms can be evaluated in $O(|\mathcal A|+m+n)$ operations without a full-space scan.
+The nonnegative bound $E$ avoids relying on the signed split-model gap as an objective-error bound.
+It is generally conservative; evaluating the repaired feasible-dual gap directly gives a tighter alternative in exact arithmetic.
+If $\widehat r_i\geq\ell_a>0$ and $\widehat q_j\geq\ell_b>0$, then
+$$E\leq\frac{\rho_a}{\ell_a}\|r-\widehat r\|_2^2+\frac{\rho_b}{\ell_b}\|q-\widehat q\|_2^2+|X|\omega+J(\omega).$$
+Indeed, $\KL(u\mid v)\leq\sum_i(u_i-v_i)^2/v_i$ follows from $\log t\leq t-1$.
+For bounded responses, this gives $E=O(\|r-\widehat r\|_2^2+\|q-\widehat q\|_2^2+\omega)$ as the residuals vanish.
+Small transported marginals can make the bound weak, so a fixed relative native tolerance alone is not a uniform error guarantee across instances.
+
+\paragraph{Primal stationarity and score uncertainty.}
+When $r,q>0$, define $f_i^X=-\rho_a\log(r_i/a_i)$, $g_j^X=-\rho_b\log(q_j/b_j)$ and
+$$\eta_a=\|f-f^X\|_\infty,\qquad\eta_b=\|g-g^X\|_\infty,\qquad\eta=\eta_a+\eta_b.$$
+Then $|\sigma_{ij}-\sigma_{ij}^X|\leq\eta$, where $\sigma=f+g-c$.
+For any fixed $\gamma>0$, the restricted projected-gradient residual obeys
+$$R_{\mathcal A}^{\gamma}(X):=\gamma^{-1}\|X-[X-\gamma\nabla_{\mathcal A}\Phi(X)]_+\|_\infty\leq\omega+\eta.$$
+To see this, use $\nabla_{\mathcal A}\Phi=s+w+(f-f^X)+(g-g^X)$ and $X=[X-\gamma s]_+$, followed by nonexpansiveness of the projection.
+This explicitly links the primal stopping measure to the production stationarity residual and log marginal-response mismatch.
+
+\section{Pruning loss without preserving every positive flow}
+Let $\overline X=X-Z\geq0$ be the retained coupling after deleting edges, and define $z_a=Z\mathbf1$, $z_b=Z^\top\mathbf1$.
+Assume the selected new edge is retained.
+For a trial $Y=X+tE_{ij}$, the corresponding retained trial is $\overline Y=\overline X+tE_{ij}$.
+\begin{proposition}[Entropy modulus for deletion]\label{prop:prune}
+For nonnegative costs,
+$$\Phi(\overline Y)-\Phi(Y)\leq L(Z):=\rho_a\sum_i z_{a,i}\big[1+\log(a_i/z_{a,i})\big]_++\rho_b\sum_j z_{b,j}\big[1+\log(b_j/z_{b,j})\big]_+,$$
+with the summand interpreted as zero at zero deletion mass.
+\end{proposition}
+\begin{proof}
+For $h_a(u)=u\log(u/a)-u+a$ and $u\geq z>0$, the function $h_a(u-z)-h_a(u)$ decreases with $u$, because its derivative is $\log((u-z)/u)<0$ for $u>z$.
+Its maximum is therefore $h_a(0)-h_a(z)=z(1+\log(a/z))$.
+Replacing this maximum by its positive part and summing proves the KL bound.
+The deleted transport cost is nonpositive, since $c\geq0$.
+\end{proof}
+Unlike a gradient bound, this estimate remains finite when deletion produces a zero marginal.
+It quantifies positive-flow pruning through deleted node masses rather than requiring exact support preservation.
+An edgewise threshold alone does not bound total deletion independently of the number and degrees of deleted edges.
+
+\section{Finite refinement from inner accuracy, without objective acceptance}
+Suppose the oracle output $X^k$ has positive marginals and satisfies
+$$0\leq\Phi(X^k)-v(\mathcal A_k)\leq\delta_k,\qquad R_{\mathcal A_k}^{\gamma}(X^k)\leq\varepsilon_r.$$
+If the maximum inactive primal-consistent score is at most $\varepsilon_f$, stop.
+Otherwise select an inactive edge $e_k$ with score $\sigma_{e_k}^{X^k}>\varepsilon_f$, and define
+$$h_k=\rho_a/r_i^k+\rho_b/q_j^k,\qquad t_k=\sigma_{e_k}^{X^k}/h_k,\qquad G_k=(\sigma_{e_k}^{X^k})^2/(2h_k).$$
+The next support may delete old edges but contains $\supp(\overline X^k)\cup\{e_k\}$, where $\overline X^k=X^k-Z^k$.
+The trial is a proof device and need not be formed or used as the next warm start.
+
+\begin{theorem}[Inexact refinement with controlled pruning]\label{thm:refine}
+Suppose every nonterminal round satisfies
+$$\delta_k+L(Z^k)\leq\theta G_k,\qquad 0\leq\theta<1.$$
+Then the restricted optimal values satisfy
+$$v(\mathcal A_{k+1})\leq v(\mathcal A_k)-(1-\theta)G_k.$$
+If $h_k\leq H<\infty$, the number of nonterminal rounds is at most
+$$N\leq\left\lfloor\frac{2H\,v(\mathcal A_0)}{(1-\theta)\varepsilon_f^2}\right\rfloor+1,$$
+and the output satisfies $R_{\mathcal E}^{\gamma}(X)\leq\max\{\varepsilon_r,\varepsilon_f\}$.
+No comparison of $\Phi(X^{k+1})$ with $\Phi(X^k)$ or a trial objective is assumed.
+\end{theorem}
+\begin{proof}
+The one-edge Taylor bound gives $\Phi(Y^k)\leq\Phi(X^k)-G_k$.
+The retained trial is feasible on $\mathcal A_{k+1}$, so
+$$v(\mathcal A_{k+1})\leq\Phi(\overline Y^k)\leq\Phi(X^k)-G_k+L(Z^k)\leq v(\mathcal A_k)+\delta_k-G_k+L(Z^k).$$
+This proves the descent inequality for restricted optimal values.
+Each nonterminal round decreases these nonnegative values by more than $(1-\theta)\varepsilon_f^2/(2H)$.
+Summing proves the stated conservative finite bound.
+At termination, splitting active and inactive coordinates gives $R_{\mathcal E}^{\gamma}(X)=\max\{R_{\mathcal A}^{\gamma}(X),\max_{e\notin\mathcal A}(\sigma_e^X)_+\}$.
+\end{proof}
+
+This theorem tolerates nonmonotone computed objectives: the decreasing sequence is $v(\mathcal A_k)$, not necessarily $\Phi(X^k)$.
+The current oracle error $\delta_k$ replaces the previous theorem's acceptance condition on the next objective.
+It does not eliminate the need to relate inner accuracy to the desired outer accuracy.
+Proposition~\ref{prop:gap} supplies the computable choice $\delta_k=E_k$.
+
+\subsection{Summable errors: no per-round decrease requirement}
+The preceding relative forcing rule is not necessary.
+Let $e_k=\delta_k+L(Z^k)$ and assume only that the accumulated error is finite.
+\begin{theorem}[Finite tolerance with summable errors]\label{thm:summable}
+Assume every oracle output satisfies the restricted residual bound, has positive marginals, and every nonterminal round selects an inactive edge with primal-consistent score greater than $\varepsilon_f$.
+Suppose $h_k\leq H$ and
+$$\sum_{k\geq0}\big(\delta_k+L(Z^k)\big)\leq S<\infty.$$
+Then refinement reaches full projected-gradient residual at most $\max\{\varepsilon_r,\varepsilon_f\}$ after at most
+$$N\leq\left\lfloor\frac{2H\big(v(\mathcal A_0)+S\big)}{\varepsilon_f^2}\right\rfloor+1$$
+nonterminal rounds.
+Neither a per-round objective acceptance test nor a per-round condition $e_k<G_k$ is required.
+\end{theorem}
+\begin{proof}
+The proof of Theorem~\ref{thm:refine}, before its relative-error assumption is used, gives
+$$v(\mathcal A_{k+1})\leq v(\mathcal A_k)+e_k-G_k.$$
+Hence, after $N$ nonterminal rounds,
+$$\sum_{k=0}^{N-1}G_k\leq v(\mathcal A_0)-v(\mathcal A_N)+\sum_{k=0}^{N-1}e_k\leq v(\mathcal A_0)+S.$$
+Every such round has $G_k>\varepsilon_f^2/(2H)$, which proves finite termination and the stated conservative bound.
+The final stationarity estimate follows as in Theorem~\ref{thm:refine}.
+\end{proof}
+
+An explicit sufficient schedule is $E_k\leq d_0/(k+1)^2$ and $L(Z^k)\leq l_0/(k+1)^2$, giving $S\leq(d_0+l_0)\pi^2/6$.
+This schedule is independent of the unknown restricted optimal values and of the one-edge objective trial.
+It allows some rounds to make no objective progress, or even increase the restricted optimal value after pruning.
+The fixed-metric PDUOT convergence result makes every positive inner error budget attainable on a fixed node-covering support, provided the restricted residual is also driven below its target.
+The pruning budget may be realized trivially by deleting no positive flow; compatibility with a prescribed linear support budget is a separate issue.
+
+\begin{corollary}[Asymptotic full-space stationarity]
+Consider an infinite run that always selects a maximizer of the positive inactive primal-consistent score, and takes $G_k=0$ when no positive inactive score exists.
+Suppose the objective errors and pruning losses are summable, the selected curvatures are uniformly bounded, and $R_{\mathcal A_k}^{\gamma}(X^k)\to0$.
+Then $R_{\mathcal E}^{\gamma}(X^k)\to0$.
+If every support covers all nodes, boundedness of the objectives and active residuals gives uniformly positive marginals; every accumulation point is a global KL-UOT optimum.
+\end{corollary}
+\begin{proof}
+The telescoping inequality gives $\sum_kG_k<\infty$, hence $G_k\to0$.
+The maximal inactive violation obeys $V_{\mathcal A_k}(X^k)\leq\sqrt{2HG_k}$ and therefore vanishes.
+Splitting the projected-gradient residual proves the first conclusion.
+Coercivity bounds the couplings, and the node-coverage marginal bounds below keep every accumulation point in the differentiability domain.
+Continuity and the convex first-order optimality condition prove the final statement.
+\end{proof}
+
+\begin{corollary}[Fixed inner-accuracy regime]
+Assume $h_k\leq H$ and choose fixed bounds $\delta_k\leq\overline\delta$, $L(Z^k)\leq\overline L$ such that
+$$\overline\delta+\overline L\leq\theta\varepsilon_f^2/(2H),\qquad\theta<1.$$
+Then the finite-termination conclusion holds without per-round objective acceptance or adaptive trial comparisons.
+\end{corollary}
+For fixed errors with $\overline\delta+\overline L>0$, this sufficient condition gives an outer tolerance above $\sqrt{2H(\overline\delta+\overline L)/\theta}$.
+It explains why a finite inner tolerance cannot automatically support arbitrarily small outer tolerances.
+
+\paragraph{An explicit uniform curvature bound.}
+Uniform curvature need not be a separate assumption when the supports cover all nodes, $R_{\mathcal A_k}^{\gamma}(X^k)\leq\varepsilon_r$, and $\delta_k\leq\overline\delta<\infty$.
+Indeed, $\Phi(X^k)\leq B:=B_{\mathrm z}+\overline\delta$ even if the computed objectives are not monotone.
+Let $M(s,u)\geq s$ solve $M\log(M/s)-M+s=u$ and define
+$$U_a=\max_i M(a_i,B/\rho_a)/a_i,\qquad U_b=\max_j M(b_j,B/\rho_b)/b_j.$$
+Active stationarity gives $\nabla_e\Phi(X^k)\geq-\varepsilon_r$.
+Using a covering edge at each node yields
+$$r_i^k\geq a_i\exp\big((-\varepsilon_r-C_{\max}-\rho_b\log U_b)/\rho_a\big),$$
+$$q_j^k\geq b_j\exp\big((-\varepsilon_r-C_{\max}-\rho_a\log U_a)/\rho_b\big).$$
+Substitution provides a finite data-dependent $H$ valid for every accepted oracle output.
+The constants may be exponentially conservative, especially for small penalties or masses.
+
+\paragraph{Using the actual dual-guided scan.}
+The theorem also holds if a selected edge has $\sigma_{e_k}-\eta_k>\varepsilon_f$, replacing $G_k$ by $(\sigma_{e_k}-\eta_k)^2/(2h_k)$.
+A scan stopping bound $\max_{e\notin\mathcal A}\sigma_e+\eta_k\leq\varepsilon_f$ guarantees the required inactive condition.
+When these lower and upper tests leave an ambiguity region, one must tighten the inner solve or scan with primal-consistent potentials.
+Small marginal-response errors in an aggregate relative norm do not by themselves remove this ambiguity.
+
+\section{Direct full-problem objective guarantee}
+Replacing $\nu$ in Proposition~\ref{prop:gap} by the maximum dual violation over the complete graph produces a feasible full dual and therefore an upper bound on $\Phi(X)-\Phi^*$.
+Only the repair term changes; response defects and active complementarity are unchanged.
+Thus the same diagnostics can support both an inner objective-error budget and a final full-problem objective-error bound, with different pricing domains.
+
+\section{Implications and remaining implementation gap}
+The new results remove the assumption that each computed objective must pass a previous-trial acceptance test and permit positive-flow pruning with an explicit loss budget.
+The summable-error theorem additionally removes any per-round requirement to retain a fixed fraction of the one-edge gain.
+They remain conditional convergence results; the inner error and pruning budgets must be met.
+They do not establish that the default production tolerance automatically meets those budgets.
+The production code already has the relevant primal and dual arrays, responses, complementary slack and full-scan reductions, but does not evaluate $E_k$, log-response score uncertainty, or pruning loss budgets for refinement control.
+No source-code modifications are made by this note.
+
+For a fixed node-covering support, the proved fixed-metric PDUOT core converges to a restricted KKT point with positive marginals.
+Consequently $E_k$ and $\omega+\eta$ can be made arbitrarily small by continuing that core, in exact arithmetic.
+This establishes realizability of a positive inner error budget without requiring a primal trial-objective acceptance test.
+It does not supply a practical cost bound for the PID-controlled restarted implementation.
+
+Preserving all positive flows sets $L=0$ but can conflict with a hard support budget.
+Allowing controlled deletion quantifies that trade-off but does not prove a uniform linear support bound compatible with arbitrary requested accuracy.
+A finite-precision theorem also needs certified cost/scan error bounds and conservative evaluation of the scalar error estimates.
+The next empirical question is whether native outputs already satisfy useful ratios $(E_k+L_k)/G_k$, or whether these sufficient bounds are too conservative.
+\end{document}

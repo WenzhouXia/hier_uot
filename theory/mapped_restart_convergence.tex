@@ -1,0 +1,372 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,microtype}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newcommand{\R}{\mathbb R}
+\newcommand{\Fix}{\operatorname{Fix}}
+\newcommand{\dist}{\operatorname{dist}}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\prox}{\operatorname{prox}}
+\newcommand{\np}[1]{\lVert#1\rVert_{\mathbf P}}
+\newcommand{\dd}[1]{\operatorname{dist}_{\mathbf P}(#1,\mathcal S)}
+\newcommand{\res}{\mathcal R}
+
+\title{Mapped-Point Restarts for Restricted KL-UOT\\\large Global Convergence and Tail Linear Rates}
+\author{}
+\date{November 11, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+For a fixed positive definite PDHG metric and exact proximal evaluations, reflected Halpern iteration converges globally when every restart uses the PDHG mapped point, irrespective of the restart times.
+Under local fixed-point sharpness, the restart anchors converge linearly per epoch.
+If the sufficient-residual-reduction restart test is checked with bounded gaps, epoch lengths are eventually bounded, giving a tail linear rate in the number of primary PDHG evaluations.
+Thus the sufficient, necessary, and artificial restart triggers used by PDUOT can be covered together when the primal weight is fixed.
+The unconstrained adaptive primal-weight controller remains outside these results.
+This standalone note is for review and is not included in the paper.
+\end{abstract}
+
+\section{Problem, metric, and restart convention}
+
+Fix a node-covering active support $\mathcal N\subseteq[m]\times[n]$, positive reference masses $\mathbf a,\mathbf b$, positive penalties $\rho_a,\rho_b$, and finite nonnegative active costs $\mathbf c$.
+Let $\mathbf A=\mathbf A_{\mathcal N}$ be the unsigned bipartite incidence matrix, so $\mathbf A\mathbf x=(\mathbf r,\mathbf q)$ contains the transported source and target marginals.
+Define
+\begin{equation}
+F(\mathbf x)=\langle\mathbf c,\mathbf x\rangle+\iota_{\R_+^{|\mathcal N|}}(\mathbf x),\qquad G(\mathbf r,\mathbf q)=\rho_a\KL(\mathbf r\mid\mathbf a)+\rho_b\KL(\mathbf q\mid\mathbf b).
+\end{equation}
+Here $\KL(\mathbf r\mid\mathbf a)=\sum_i(r_i\log(r_i/a_i)-r_i+a_i)$ for $\mathbf r\geq0$, with $0\log0=0$, and the value is $+\infty$ outside the nonnegative orthant.
+Restricted KL-UOT is $\min_{\mathbf x}F(\mathbf x)+G(\mathbf A\mathbf x)$.
+Its KKT mapping is
+\begin{equation}
+\mathcal M(\mathbf x,\mathbf y)=\begin{pmatrix}\mathbf c+\mathbf A^\top\mathbf y+N_{\R_+^{|\mathcal N|}}(\mathbf x)\\ \nabla G^*(\mathbf y)-\mathbf A\mathbf x\end{pmatrix},\qquad \mathbf y=-(\mathbf f,\mathbf g),\qquad \mathcal S=\mathcal M^{-1}(0).
+\label{eq:kkt}
+\end{equation}
+Fix positive diagonal steps satisfying $\|\mathbf D_y^{1/2}\mathbf A\mathbf D_x^{1/2}\|_2<1$ and define
+\begin{equation}
+\mathbf P=\begin{pmatrix}\mathbf D_x^{-1}&-\mathbf A^\top\\-\mathbf A&\mathbf D_y^{-1}\end{pmatrix}\succ0,\qquad \np{\mathbf z}^2=\mathbf z^\top\mathbf P\mathbf z.
+\label{eq:metric}
+\end{equation}
+The exact PDHG map $T$ is
+\begin{equation}
+\widehat{\mathbf x}=\prox_F^{\mathbf D_x^{-1}}(\mathbf x-\mathbf D_x\mathbf A^\top\mathbf y),\qquad \widehat{\mathbf y}=\prox_{G^*}^{\mathbf D_y^{-1}}(\mathbf y+\mathbf D_y\mathbf A(2\widehat{\mathbf x}-\mathbf x)),\qquad T\mathbf z=(\widehat{\mathbf x},\widehat{\mathbf y}).
+\label{eq:map}
+\end{equation}
+Every norm below uses this same $\mathbf P$ unless explicitly stated otherwise.
+
+In epoch $j$, start from anchor $\mathbf z_j^{\mathrm a}$ and use
+\begin{equation}
+\mathbf z^{j,0}=\mathbf z_j^{\mathrm a},\qquad \widehat{\mathbf z}^{j,k}=T\mathbf z^{j,k},\qquad \mathbf z^{j,k+1}=\frac{1}{k+2}\mathbf z_j^{\mathrm a}+\frac{k+1}{k+2}(2T-I)\mathbf z^{j,k}.
+\label{eq:epoch}
+\end{equation}
+An epoch with $L_j\geq1$ primary PDHG evaluations ends at the mapped point from index $L_j-1$:
+\begin{equation}
+\mathbf z_{j+1}^{\mathrm a}=\widehat{\mathbf z}^{j,L_j-1}=T\mathbf z^{j,L_j-1},\qquad N_j=\sum_{i=0}^{j-1}L_i.
+\label{eq:restart}
+\end{equation}
+The Halpern update at the last index may be computed and discarded, as in the implementation; it does not change the next anchor.
+Restart decisions can depend on all previously computed quantities.
+An epoch may instead continue forever, in which case there are only finitely many restarts.
+The count $N_j$ excludes extra diagnostic map evaluations.
+
+\paragraph{Implementation correspondence.}
+PDUOT copies the mapped primal and dual vectors into the next anchor and resets the epoch counter.
+Its fixed-point error uses the pre-update differences $T\mathbf z^{j,k}-\mathbf z^{j,k}$, and the restart baseline is refreshed by evaluating $T$ at the new anchor.
+This is the mapped-point restart convention in the official cuPDLPx algorithm description~\cite{cupdlpxdocs}.
+The results below apply to the original two-sided formulation, including its algebraically equivalent \texttt{original\_plus} execution, with the primal weight and base steps fixed.
+They do not require the three practical restart triggers to coincide with the specific restart rule analyzed in the existing paper.
+
+\section{Operator facts and estimates within an epoch}
+
+\begin{lemma}[Existence and firm nonexpansiveness]
+\label{lem:firm}
+The set $\mathcal S$ is nonempty, closed, and convex.
+The map $T$ is firmly nonexpansive in the $\mathbf P$ inner product, $\Fix T=\mathcal S$, and $2T-I$ is nonexpansive.
+In particular, for every $\mathbf s\in\mathcal S$,
+\begin{equation}
+\np{T\mathbf z-\mathbf s}^2+\np{\mathbf z-T\mathbf z}^2\leq\np{\mathbf z-\mathbf s}^2.
+\label{eq:firm}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The primal objective is lower semicontinuous and coercive on the nonnegative orthant: the marginal totals both equal $\|\mathbf x\|_1$, and the KL terms grow superlinearly in that total.
+It therefore attains a minimum.
+Every optimal transported marginal is positive.
+Indeed, if a source marginal were zero, node coverage would provide an incident edge along which adding flow $t>0$ contributes $\rho_a t\log t+O(t)$; the target contribution is either $O(t)$ or another negative $t\log t$ term.
+This decreases the objective for sufficiently small $t$.
+The target case is symmetric.
+For an optimal $\mathbf x^\star$, set $\mathbf y^\star=\nabla G(\mathbf A\mathbf x^\star)$.
+Primal optimality and conjugacy give $0\in\mathcal M(\mathbf x^\star,\mathbf y^\star)$.
+
+The map $\mathcal M$ is maximally monotone, being the sum of $\partial F\times\partial G^*$ and an everywhere-defined skew-symmetric linear map.
+The proximal optimality conditions in~\eqref{eq:map} give
+\begin{equation}
+\mathbf P(\mathbf z-T\mathbf z)\in\mathcal M(T\mathbf z),\qquad T=(\mathbf P+\mathcal M)^{-1}\mathbf P.
+\label{eq:resolvent}
+\end{equation}
+Applying monotonicity to two such inclusions yields firm nonexpansiveness.
+The fixed points of $T$ are the zeros of $\mathcal M$; hence they form a closed convex set.
+The reflection of a firmly nonexpansive map is nonexpansive, and~\eqref{eq:firm} is the firm nonexpansiveness inequality with one argument in $\mathcal S$.
+\end{proof}
+
+Write $\res(\mathbf z)=\np{\mathbf z-T\mathbf z}$ and $d_j=\dd{\mathbf z_j^{\mathrm a}}$.
+
+\begin{lemma}[Epoch bounds]
+\label{lem:epoch}
+For every $\mathbf s\in\mathcal S$ and every computed epoch index $k$,
+\begin{equation}
+\np{\mathbf z^{j,k}-\mathbf s}\leq\np{\mathbf z_j^{\mathrm a}-\mathbf s},\qquad \np{T\mathbf z^{j,k}-\mathbf s}\leq\np{\mathbf z_j^{\mathrm a}-\mathbf s}.
+\label{eq:ball}
+\end{equation}
+Moreover,
+\begin{equation}
+\res(T\mathbf z)\leq\res(\mathbf z),\qquad \res(\mathbf z^{j,k})\leq\frac{d_j}{k+1}.
+\label{eq:residual}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Both $2T-I$ and $T$ fix $\mathbf s$ and are nonexpansive, so induction in~\eqref{eq:epoch} proves~\eqref{eq:ball}.
+Nonexpansiveness of $T$ gives $\np{T\mathbf z-T^2\mathbf z}\leq\np{\mathbf z-T\mathbf z}$.
+Lieder's Halpern residual estimate~\cite[Theorem~2.1]{lieder2021}, applied to $2T-I$, gives $\np{\mathbf z^{j,k}-(2T-I)\mathbf z^{j,k}}\leq2d_j/(k+1)$.
+Dividing by two proves the second inequality in~\eqref{eq:residual}.
+If an epoch never ends, the Halpern convergence theorem~\cite{wittmann1992} also gives convergence of its iterates and mapped points to a member of $\mathcal S$.
+\end{proof}
+
+\section{Global convergence for arbitrary mapped-point restarts}
+
+\begin{theorem}[Global convergence]
+\label{thm:global}
+Under the assumptions of Section~1, the iteration~\eqref{eq:epoch}--\eqref{eq:restart} converges to a single restricted KKT point for arbitrary restart times.
+This includes the anchors, all computed Halpern iterates, and all mapped points in chronological order.
+For infinitely many restarts, define $\mathbf t_j=\mathbf z^{j,L_j-1}$ and $e_j=\res(\mathbf t_j)$.
+Then, for every $\mathbf s\in\mathcal S$,
+\begin{equation}
+\np{\mathbf z_{j+1}^{\mathrm a}-\mathbf s}^2+e_j^2\leq\np{\mathbf z_j^{\mathrm a}-\mathbf s}^2,\qquad \sum_{j=0}^{\infty}e_j^2\leq\np{\mathbf z_0^{\mathrm a}-\mathbf s}^2.
+\label{eq:descent}
+\end{equation}
+No sharpness assumption, residual-reduction trigger, or bound on epoch lengths is needed for this conclusion.
+\end{theorem}
+
+\begin{proof}
+First suppose there are infinitely many restarts.
+Applying~\eqref{eq:firm} to $\mathbf t_j$ and then~\eqref{eq:ball} gives
+\begin{equation}
+\np{\mathbf z_{j+1}^{\mathrm a}-\mathbf s}^2+e_j^2\leq\np{\mathbf t_j-\mathbf s}^2\leq\np{\mathbf z_j^{\mathrm a}-\mathbf s}^2.
+\end{equation}
+Telescoping proves~\eqref{eq:descent} and $e_j\to0$.
+The anchors are bounded and Fej\'er monotone with respect to $\mathcal S$.
+By~\eqref{eq:residual}, $\res(\mathbf z_{j+1}^{\mathrm a})=\res(T\mathbf t_j)\leq e_j\to0$.
+Finite dimensionality provides a convergent subsequence of anchors, and continuity of $I-T$ puts its limit $\mathbf z^\infty$ in $\mathcal S$.
+Fej\'er monotonicity with respect to this particular point implies that the whole anchor sequence converges to $\mathbf z^\infty$.
+Finally,~\eqref{eq:ball} with $\mathbf s=\mathbf z^\infty$ gives
+\begin{equation}
+\sup_k\max\{\np{\mathbf z^{j,k}-\mathbf z^\infty},\np{T\mathbf z^{j,k}-\mathbf z^\infty}\}\leq\np{\mathbf z_j^{\mathrm a}-\mathbf z^\infty}\longrightarrow0.
+\label{eq:whole}
+\end{equation}
+Each completed epoch has finitely many indices, so this proves chronological convergence of all iterates.
+If there are only finitely many restarts, the final epoch is an unrestarted Halpern sequence, and Lemma~\ref{lem:epoch} gives the conclusion.
+\end{proof}
+
+\begin{remark}[Why the mapped point matters]
+The term $e_j^2$ in~\eqref{eq:descent} comes from the final application of the firmly nonexpansive map $T$.
+Restarting directly at a Halpern iterate or its average does not provide this term by the same argument.
+The theorem does not assert that those alternative restart conventions fail; they require a different analysis.
+\end{remark}
+
+\section{Local sharpness for restricted KL-UOT}
+
+\begin{proposition}[Local error bound]
+\label{prop:sharpness}
+At every $\mathbf z^\star\in\mathcal S$, there are a neighborhood $\mathcal U$, a constant $C_{\mathrm K}>0$, and $\alpha>0$ such that
+\begin{equation}
+\dist_2(\mathbf z,\mathcal S)\leq C_{\mathrm K}\dist_2(0,\mathcal M(\mathbf z)),\qquad \alpha\dd{\mathbf z}\leq\res(\mathbf z),\qquad \mathbf z\in\mathcal U.
+\label{eq:sharpness}
+\end{equation}
+No strict complementarity, uniqueness of the optimal coupling, or rank condition on the positive-flow support is imposed.
+\end{proposition}
+
+\begin{proof}
+Consider the lifted problem $\min_{\mathbf m,\mathbf x}G(\mathbf m)+F(\mathbf x)$ subject to $\mathbf m-\mathbf A\mathbf x=0$.
+The function $F$ is convex piecewise linear-quadratic.
+The extended-valued function $G$ is proper, closed, and convex, with subdifferential domain equal to the positive orthant.
+On this orthant,
+\begin{equation}
+\nabla^2G(\mathbf m)=\operatorname{diag}(\rho_a/r_i,\rho_b/q_j)\succ0.
+\end{equation}
+Thus $G$ is strongly convex on every compact convex subset of its subdifferential domain, its gradient is locally Lipschitz, and the gradient norm diverges on approach to any finite boundary point of the positive orthant.
+Taking the smooth representation matrix to be the identity verifies Assumptions~1.2--1.3 of Yuan, Zeng, and Zhang~\cite{yuan2020}.
+Their Theorem~59 therefore gives metric subregularity of the lifted KKT mapping
+\begin{equation}
+\mathcal K(\mathbf m,\mathbf x,\mathbf y)=\begin{pmatrix}\nabla G(\mathbf m)-\mathbf y\\ \mathbf c+\mathbf A^\top\mathbf y+N_{\R_+^{|\mathcal N|}}(\mathbf x)\\ \mathbf m-\mathbf A\mathbf x\end{pmatrix}
+\end{equation}
+at each lifted KKT point.
+All optimal transported marginals are positive by Lemma~\ref{lem:firm}, so the lifted points lie in this smooth domain.
+Set $\mathbf m(\mathbf y)=\nabla G^*(\mathbf y)$, which is positive and continuous and satisfies $\nabla G(\mathbf m(\mathbf y))=\mathbf y$.
+The projection of $\mathcal K^{-1}(0)$ onto $(\mathbf x,\mathbf y)$ is $\mathcal S$.
+Applying the lifted error bound at $(\mathbf m(\mathbf y),\mathbf x,\mathbf y)$ yields, after shrinking the neighborhood,
+\begin{equation}
+\dist_2(\mathbf z,\mathcal S)\leq\dist_2((\mathbf m(\mathbf y),\mathbf x,\mathbf y),\mathcal K^{-1}(0))\leq C_{\mathrm K}\dist_2(0,\mathcal M(\mathbf z)).
+\end{equation}
+Let $p_{\max}$ be the largest eigenvalue of $\mathbf P$.
+Using~\eqref{eq:resolvent} and applying this error bound at $T\mathbf z$ gives
+\begin{equation}
+\dd{T\mathbf z}\leq\sqrt{p_{\max}}C_{\mathrm K}\|\mathbf P(\mathbf z-T\mathbf z)\|_2\leq C_{\mathrm K}p_{\max}\res(\mathbf z).
+\end{equation}
+The triangle inequality gives $\dd{\mathbf z}\leq(1+C_{\mathrm K}p_{\max})\res(\mathbf z)$.
+Continuity of $T$ allows the neighborhood to be chosen so the preceding estimates all apply, proving~\eqref{eq:sharpness} with $\alpha=(1+C_{\mathrm K}p_{\max})^{-1}$.
+\end{proof}
+
+\section{Linear rates: epochs and primary PDHG evaluations}
+
+\begin{theorem}[Tail linear convergence per epoch]
+\label{thm:epochlinear}
+Suppose there are infinitely many mapped-point restarts and local sharpness~\eqref{eq:sharpness} holds at the limit $\mathbf z^\infty$ from Theorem~\ref{thm:global}.
+Then, for all sufficiently large $j$,
+\begin{equation}
+d_{j+1}\leq qd_j,\qquad q=(1+\alpha^2)^{-1/2}<1.
+\label{eq:qlinear}
+\end{equation}
+The anchors and all epoch iterates converge R-linearly to $\mathbf z^\infty$ when indexed by epoch.
+More precisely, there is an index $J$ such that
+\begin{equation}
+\np{\mathbf z_j^{\mathrm a}-\mathbf z^\infty}\leq\frac{2d_J}{1-q}q^{j-J},\qquad \sup_k\max\{\np{\mathbf z^{j,k}-\mathbf z^\infty},\np{T\mathbf z^{j,k}-\mathbf z^\infty}\}\leq\frac{2d_J}{1-q}q^{j-J}.
+\label{eq:iterate-linear}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Global convergence places all sufficiently late anchors and mapped points inside the sharpness neighborhood.
+Taking $\mathbf s$ to be a nearest solution to $\mathbf z_j^{\mathrm a}$ in~\eqref{eq:descent} gives $d_{j+1}^2+e_j^2\leq d_j^2$.
+Sharpness at the new anchor and~\eqref{eq:residual} give $\alpha d_{j+1}\leq\res(T\mathbf t_j)\leq e_j$.
+Consequently, $(1+\alpha^2)d_{j+1}^2\leq d_j^2$, proving~\eqref{eq:qlinear}.
+For a nearest solution $\mathbf s_j$ to $\mathbf z_j^{\mathrm a}$, Fej\'er monotonicity also gives
+\begin{equation}
+\np{\mathbf z_{j+1}^{\mathrm a}-\mathbf z_j^{\mathrm a}}\leq\np{\mathbf z_{j+1}^{\mathrm a}-\mathbf s_j}+\np{\mathbf z_j^{\mathrm a}-\mathbf s_j}\leq2d_j.
+\end{equation}
+Summing the geometric bound on these increments from $j$ to infinity proves the first inequality in~\eqref{eq:iterate-linear}.
+The second follows from~\eqref{eq:ball} with $\mathbf s=\mathbf z^\infty$.
+\end{proof}
+
+\begin{theorem}[Practical restart triggers give a tail linear rate in work]
+\label{thm:worklinear}
+In addition to the sufficient-reduction trigger, allow arbitrary extra restart triggers, including necessary reduction with local deterioration and the artificial epoch-length trigger.
+Suppose that, in every epoch, the sufficient-reduction condition
+\begin{equation}
+\res(\mathbf z^{j,k})\leq\theta\res(\mathbf z_j^{\mathrm a}),\qquad 0<\theta<1,
+\label{eq:sufficient}
+\end{equation}
+is tested with gaps of at most $h\geq1$ primary PDHG evaluations and causes a mapped-point restart when satisfied.
+The first check in each epoch must also occur within $h$ primary evaluations.
+Then, unless a solution is reached and the iteration stops, all sufficiently late epochs have lengths bounded by
+\begin{equation}
+L_j\leq H,\qquad H=\left\lceil\frac{1}{\alpha\theta}\right\rceil+h.
+\label{eq:H}
+\end{equation}
+For $N$ primary evaluations after the start of a sufficiently late epoch, all chronological iterates and mapped points satisfy a bound of the form
+\begin{equation}
+\|\mathbf z_N-\mathbf z^\infty\|_{\mathbf P}\leq Cq^{\lfloor N/H\rfloor},\qquad C<\infty,
+\label{eq:worklinear}
+\end{equation}
+with the same $q$ as in Theorem~\ref{thm:epochlinear}.
+Here $\mathbf z_N$ denotes either the current Halpern iterate or the latest mapped point, with evaluation indices assigned to the epoch that generated them.
+\end{theorem}
+
+\begin{proof}
+Theorem~\ref{thm:global} gives global convergence without requiring infinitely many restarts.
+After entering the sharpness neighborhood, if an epoch starts from a nonsolution, Lemma~\ref{lem:epoch} and sharpness at its anchor give
+\begin{equation}
+\res(\mathbf z^{j,k})\leq\frac{d_j}{k+1}\leq\frac{\res(\mathbf z_j^{\mathrm a})}{\alpha(k+1)}.
+\end{equation}
+Thus~\eqref{eq:sufficient} holds whenever $k+1\geq1/(\alpha\theta)$.
+A check occurs within at most $h$ further primary evaluations, giving~\eqref{eq:H}; any extra trigger can only end the epoch earlier.
+An infinite final epoch from a nonsolution is impossible because its residual tends to zero and~\eqref{eq:sufficient} would eventually trigger a restart.
+If an anchor is already a solution, all subsequent iterates equal it.
+Otherwise there are infinitely many restarts and Theorem~\ref{thm:epochlinear} applies.
+By time $N$, at least $\lfloor N/H\rfloor$ late epochs have completed, and~\eqref{eq:iterate-linear} proves~\eqref{eq:worklinear}, with harmless changes to $C$ for endpoint indexing.
+\end{proof}
+
+\paragraph{Application to the PDUOT restart rules.}
+With weight updates disabled, the sufficient trigger uses $\theta=0.2$ and the stored baseline is the residual of the epoch anchor.
+The necessary trigger with threshold $0.5$, the artificial trigger with threshold $0.36$, and the mandatory first restart are permitted extra triggers in Theorem~\ref{thm:worklinear}.
+Periodic checks at global iteration multiples of the fixed check interval satisfy the bounded-gap requirement, even when they are not aligned with epoch starts.
+The theoretical bound $H$ need not be used by the algorithm.
+If a bounded number of diagnostic map evaluations is added per primary evaluation and per restart, the same R-linear conclusion holds in total map evaluations after rescaling $H$ by a constant.
+
+\begin{remark}[Why arbitrary restarts alone do not give a linear rate in work]
+Let $T=\tfrac12 I$ on $\R$, so $2T-I=0$, $\mathcal S=\{0\}$, and local sharpness holds globally.
+Within an epoch with anchor $a_j$, the exact formulas are $z^{j,k}=a_j/(k+1)$ and $Tz^{j,k}=a_j/(2(k+1))$.
+If the epoch never ends, convergence is only $O(1/k)$.
+Even with infinitely many restarts, choosing $L_j=2^j$ gives $a_j=2^{-j(j+1)/2}a_0$ while $N_j=2^j-1$, which is not R-linear in $N_j$.
+The bounded epoch lengths in Theorem~\ref{thm:worklinear} therefore add a substantive condition; they follow from the actual sufficient-reduction trigger and local sharpness.
+\end{remark}
+
+\section{Consequences for the refinement safeguard and remaining scope}
+
+\begin{corollary}[Convergent output and projection multiplier]
+\label{cor:multiplier}
+Under Theorem~\ref{thm:global}, the mapped primal--dual vectors and their primal projection multipliers converge to a restricted KKT point and its nonnegative bound multiplier.
+Under Theorem~\ref{thm:worklinear}, this convergence is R-linear in the number of primary evaluations after a finite initial phase.
+\end{corollary}
+
+\begin{proof}
+For $\mathbf z=(\mathbf x,\mathbf y)$ and $T\mathbf z=(\widehat{\mathbf x},\widehat{\mathbf y})$, the projection multiplier is
+\begin{equation}
+\boldsymbol\lambda=\mathbf c+\mathbf A^\top\mathbf y-\mathbf D_x^{-1}(\mathbf x-\widehat{\mathbf x})\geq0,\qquad \langle\boldsymbol\lambda,\widehat{\mathbf x}\rangle=0.
+\end{equation}
+This is a continuous affine expression in the input and mapped vectors.
+At their common limit $\mathbf z^\infty=(\mathbf x^\infty,\mathbf y^\infty)$, it converges to $\boldsymbol\lambda^\infty=\mathbf c+\mathbf A^\top\mathbf y^\infty$.
+The rate assertion follows from the same expression and~\eqref{eq:worklinear}.
+\end{proof}
+
+\paragraph{Connection to the existing safeguard argument.}
+The manuscript's subsection ``Attainability under a convergent inner core'' assumes convergence of the mapped vectors and their projection multipliers to a finite restricted KKT point.
+Corollary~\ref{cor:multiplier} supplies that assumption for the fixed-weight solver with the complete practical restart policy.
+Consequently, the existing safeguard-attainability argument applies to this version without assuming convergence of its restart controller separately.
+The comparison coupling used by the safeguard remains the warm-start coupling of the whole restricted call; it must not be replaced by each new Halpern restart anchor.
+The remaining hypotheses of that argument, including a valid coordinate gain, retention of the trial coordinate, and exact-arithmetic decrease bounds, are unchanged.
+
+\paragraph{Adaptive primal weight.}
+When $\mathbf D_x=w_j\overline{\mathbf D}_x$ and $\mathbf D_y=\overline{\mathbf D}_y/w_j$ change at restarts, the metric becomes $\mathbf P_j$.
+The descent inequality is then valid in the current metric, but its telescoping proof no longer follows across epochs.
+Bounds $0<w_{\min}\leq w_j\leq w_{\max}<\infty$ alone do not supply the cross-epoch comparison used here.
+This note does not prove convergence of the unmodified PI controller.
+As an immediate covered variant, any finite number of weight changes followed by a permanently fixed weight leaves a tail to which all the preceding results apply, provided the final steps satisfy~\eqref{eq:metric}.
+No finite-precision proximal error or finite iteration/time cap is included in the convergence theorems.
+
+\begin{thebibliography}{9}
+
+\bibitem{lieder2021}
+F.~Lieder.
+On the convergence rate of the Halpern-iteration.
+\emph{Optimization Letters}, 15:405--418, 2021.
+\url{https://doi.org/10.1007/s11590-020-01617-9}.
+
+\bibitem{wittmann1992}
+R.~Wittmann.
+Approximation of fixed points of nonexpansive mappings.
+\emph{Archiv der Mathematik}, 58:486--491, 1992.
+
+\bibitem{yuan2020}
+X.~Yuan, S.~Zeng, and J.~Zhang.
+Discerning the linear convergence of ADMM for structured convex optimization through the lens of variational analysis.
+\emph{Journal of Machine Learning Research}, 21(83):1--75, 2020.
+\url{https://jmlr.org/papers/v21/18-562.html}.
+
+\bibitem{cupdlpxdocs}
+MIT Lu Lab.
+cuPDLPx: Algorithm, restarted reflected Halpern PDHG.
+Algorithm~1, restart step; accessed November 11, 2026.
+\url{https://mit-lu-lab.github.io/cuPDLPx/algorithm/index.html}.
+
+\end{thebibliography}
+\end{document}

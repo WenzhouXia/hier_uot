@@ -1,0 +1,146 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,microtype}
+\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newcommand{\dist}{\operatorname{dist}}
+\newcommand{\np}[2]{\lVert#1\rVert_{#2}}
+\title{A Summable Budget for Adaptive Primal Weights\\\large Companion to the Mapped-Point Restart Proof}
+\author{}
+\date{November 11, 2026}
+\begin{document}
+\maketitle
+
+This standalone review note concerns the experimental weight clip, not the unchanged production controller.
+It uses the restricted KL-UOT KKT mapping $\mathcal M$ and solution set $\mathcal S$ from \texttt{mapped\_restart\_convergence.tex}.
+That note establishes existence of a KKT point, firm nonexpansiveness of each fixed-metric PDHG map, the Halpern epoch estimates, and the local KKT error bound.
+All proximal evaluations and inequalities below are in exact arithmetic.
+
+\section{Weight proposal and metric comparison}
+
+Let $\overline{\mathbf D}_x,\overline{\mathbf D}_y$ be fixed positive diagonal base steps satisfying $\zeta:=\|\overline{\mathbf D}_y^{1/2}\mathbf A\overline{\mathbf D}_x^{1/2}\|_2<1$.
+For a log weight $s=\log w$, write
+\begin{equation}
+\mathbf P(s)=\begin{pmatrix}e^{-s}\overline{\mathbf D}_x^{-1}&-\mathbf A^\top\\-\mathbf A&e^s\overline{\mathbf D}_y^{-1}\end{pmatrix},\qquad T_s=(\mathbf P(s)+\mathcal M)^{-1}\mathbf P(s).
+\end{equation}
+Within epoch $j$, keep $s_j$ fixed and perform the reflected Halpern iteration from anchor $\mathbf z_j^{\mathrm a}$.
+For any finite epoch length $L_j\geq1$, set $\mathbf z_{j+1}^{\mathrm a}=T_{s_j}\mathbf z^{j,L_j-1}$.
+Then obtain a proposed next weight $\widetilde w_{j+1}>0$ from the existing controller, including its fallback branch, and use
+\begin{equation}
+s_{j+1}=\Pi_{[\log w_{\min},\log w_{\max}]}\!\left(s_j+\operatorname{clip}(\log\widetilde w_{j+1}-s_j,-b_j,b_j)\right),\qquad b_j=\frac{B}{(j+1)^p},\quad B>0,\quad p>1.
+\label{eq:clip}
+\end{equation}
+Here $0<w_{\min}\leq w_0\leq w_{\max}<\infty$.
+The final interval projection does not increase the displacement from $s_j$.
+The index counts every restart within one restricted call and resets only at a new restricted problem.
+There is no restriction on how the proposal is generated.
+If its original update lies within the budget, an implementation can return the original floating-point weight directly, avoiding an unnecessary log--exp round trip.
+
+\begin{lemma}[Controlled change of metric]
+For any real $s,t$,
+\begin{equation}
+e^{-c|t-s|}\mathbf P(s)\preceq\mathbf P(t)\preceq e^{c|t-s|}\mathbf P(s),\qquad c=(1-\zeta)^{-1}.
+\label{eq:comparison}
+\end{equation}
+In particular, $\mathbf P_j=\mathbf P(s_j)$ converges to a positive definite matrix, is uniformly bounded and uniformly positive definite, and satisfies
+\begin{equation}
+\mathbf P_{j+1}\preceq r_j\mathbf P_j,\qquad r_j=e^{cb_j},\qquad \prod_{j=0}^{\infty}r_j<\infty.
+\label{eq:product}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Let $\mathbf D(s)$ be the block-diagonal part of $\mathbf P(s)$.
+The scaled off-diagonal block has norm $\zeta$, independently of $s$, so $\mathbf P(s)\succeq(1-\zeta)\mathbf D(s)$.
+For any nonzero $\mathbf h$,
+\begin{equation}
+\left|\frac{d}{ds}\log(\mathbf h^\top\mathbf P(s)\mathbf h)\right|\leq\frac{\mathbf h^\top\mathbf D(s)\mathbf h}{\mathbf h^\top\mathbf P(s)\mathbf h}\leq c.
+\end{equation}
+Integration gives~\eqref{eq:comparison}.
+Equation~\eqref{eq:clip} gives $|s_{j+1}-s_j|\leq b_j$ and
+\begin{equation}
+\sum_{j=0}^{\infty}|s_{j+1}-s_j|\leq\sum_{j=0}^{\infty}b_j\leq B\left(1+\frac{1}{p-1}\right)<\infty.
+\end{equation}
+Thus $s_j$ converges, and the compact weight interval gives the uniform spectral bounds and positive definiteness of the limit.
+The product bound follows from $\sum_jb_j<\infty$.
+\end{proof}
+
+\section{Global convergence with the clipped controller}
+
+\begin{theorem}[Global convergence]
+For arbitrary controller proposals and arbitrary mapped-point restart times, the clipped-weight iteration converges to a single restricted KKT point.
+This includes anchors, chronological Halpern iterates, mapped points, and the primal projection multipliers.
+\end{theorem}
+
+\begin{proof}
+First suppose there are infinitely many finite epochs.
+Let $\mathbf t_j=\mathbf z^{j,L_j-1}$, $e_j=\np{\mathbf t_j-T_{s_j}\mathbf t_j}{\mathbf P_j}$, and fix $\mathbf z^\star\in\mathcal S$.
+The firm nonexpansiveness and epoch-ball estimates in the companion note give
+\begin{equation}
+\np{\mathbf z_{j+1}^{\mathrm a}-\mathbf z^\star}{\mathbf P_j}^{2}+e_j^2\leq\np{\mathbf z_j^{\mathrm a}-\mathbf z^\star}{\mathbf P_j}^{2}.
+\end{equation}
+Set $E_j=\np{\mathbf z_j^{\mathrm a}-\mathbf z^\star}{\mathbf P_j}^{2}$ and $\Gamma_j=\prod_{i=0}^{j-1}r_i$.
+The metric comparison yields
+\begin{equation}
+E_{j+1}\leq r_j(E_j-e_j^2),\qquad \frac{E_{j+1}}{\Gamma_{j+1}}\leq\frac{E_j}{\Gamma_j}-\frac{e_j^2}{\Gamma_j}.
+\label{eq:scaled}
+\end{equation}
+Since $1\leq\Gamma_j\leq\Gamma_\infty<\infty$, the anchors are bounded, $E_j$ has a limit, and $\sum_je_j^2<\infty$.
+The resolvent identity gives
+\begin{equation}
+\mathbf P_j(\mathbf t_j-\mathbf z_{j+1}^{\mathrm a})\in\mathcal M(\mathbf z_{j+1}^{\mathrm a}).
+\end{equation}
+Its left-hand side tends to zero by uniform spectral bounds and $e_j\to0$.
+Every cluster point of the anchors therefore belongs to $\mathcal S$ by closedness of the maximal monotone graph.
+Choose one cluster point $\mathbf z^\infty\in\mathcal S$.
+The preceding argument shows that $E_j$ relative to this point has a limit, and its convergent subsequence makes that limit zero.
+Uniform positive definiteness implies $\mathbf z_j^{\mathrm a}\to\mathbf z^\infty$.
+Within each epoch, both the Halpern and mapped iterates have $\mathbf P_j$-distance to $\mathbf z^\infty$ at most that of the anchor.
+Uniform spectral bounds prove their chronological convergence as well.
+The projection multiplier is
+\begin{equation}
+\boldsymbol\lambda^{j,k}=\mathbf c+\mathbf A^\top\mathbf y^{j,k}-\mathbf D_{x,j}^{-1}(\mathbf x^{j,k}-\widehat{\mathbf x}^{j,k}).
+\end{equation}
+It converges to $\mathbf c+\mathbf A^\top\mathbf y^\infty$ because $\mathbf D_{x,j}^{-1}$ is uniformly bounded.
+If there are finitely many restarts, the weight is fixed in the final infinite epoch and the usual Halpern theorem supplies the same conclusions.
+\end{proof}
+
+\section{Tail linear rates}
+
+\begin{theorem}[Linear rates under the existing local KL-UOT error bound]
+The anchors converge R-linearly when indexed by epoch, provided infinitely many restarts occur.
+If the sufficient-residual-reduction restart test is checked with bounded gaps and its baseline is refreshed under the new metric, convergence is also R-linear in primary PDHG evaluations after a finite initial phase.
+The necessary-reduction and artificial-length triggers may remain active.
+\end{theorem}
+
+\begin{proof}
+The local KKT error bound in the companion note depends on $\mathcal M$, not the weight.
+Since the metrics have uniform spectral bounds, its transfer to the family of fixed-point maps gives a common local constant $\alpha_0>0$ such that
+\begin{equation}
+\alpha_0\dist_{\mathbf P_j}(\mathbf z,\mathcal S)\leq\np{\mathbf z-T_{s_j}\mathbf z}{\mathbf P_j}
+\end{equation}
+for all late epochs and all $\mathbf z$ sufficiently near $\mathbf z^\infty$.
+For completeness, if the KKT error-bound constant is $C_{\mathrm K}$ and $\lambda_{\max}(\mathbf P_j)\leq\overline p$, one may take $\alpha_0=(1+C_{\mathrm K}\overline p)^{-1}$ after shrinking the neighborhood.
+The mapped images stay in the required KKT neighborhood uniformly because every $T_{s_j}$ fixes $\mathbf z^\infty$ and is nonexpansive in a uniformly equivalent norm.
+Let $d_j=\dist_{\mathbf P_j}(\mathbf z_j^{\mathrm a},\mathcal S)$ and $q_0=(1+\alpha_0^2)^{-1/2}$.
+The fixed-metric epoch-contraction argument, followed by~\eqref{eq:comparison}, gives
+\begin{equation}
+d_{j+1}\leq e^{cb_j/2}q_0d_j.
+\end{equation}
+Since $b_j\to0$, choose $q_1\in(q_0,1)$ and $J$ such that $e^{cb_j/2}q_0\leq q_1$ for $j\geq J$.
+Hence $d_j$ decays geometrically.
+If $\lambda_{\min}(\mathbf P_j)\geq\underline p>0$, the Euclidean anchor increment is at most $2d_j/\sqrt{\underline p}$, so summing increments proves R-linear convergence to the actual limit, also uniformly within each epoch.
+For sufficient-reduction factor $\theta\in(0,1)$ and check gaps at most $h$, the Halpern residual bound gives an eventual epoch-length bound $H=\lceil1/(\alpha_0\theta)\rceil+h$, exactly as in the companion note.
+Consequently the epoch rate implies a bound $Cq_1^{\lfloor N/H\rfloor}$ in primary evaluations.
+\end{proof}
+
+\paragraph{What empirical trajectories can establish.}
+A finite trace can identify a budget that leaves observed updates unchanged; it cannot prove summability of the unmodified infinite trajectory.
+The intervention~\eqref{eq:clip} enforces the property on all possible trajectories, including fallback updates, so its guarantee is independent of the calibration sample.
+Selecting a large $B$ may preserve current performance but makes the worst-case constants conservative.
+The proof concerns convergence rather than a practically sharp complexity estimate.
+There is no forced freezing time and no dependence on a safeguard rejection to activate the budget.
+
+\end{document}
