@@ -11,3 +11,9 @@
 /main.pdf
 /theory/*.pdf
 /.leaflink/
+
+# CN: 忽略预览图片，保留正文直接引用的 PNG 图。
+# EN: Ignore preview images while retaining PNG figures referenced by the manuscript.
+/figures/*.png
+!/figures/entropic_uot_accuracy_runtime_pareto_eps0.001.png
+/figures/hello_pareto_placeholder.pdf

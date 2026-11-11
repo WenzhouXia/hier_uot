@@ -1,0 +1,68 @@
+% CN: 对比算法的实现说明；PDCS 来源和优化范围对应 experiments/restricted_kl_uot/pdcs_gpu/{DEPENDENCIES.md,torch_pdcs.py,torch_kernels.cu,pdcs_compat.patch}。
+% EN: Implementation details of compared algorithms; PDCS provenance and optimization scope follow experiments/restricted_kl_uot/pdcs_gpu/{DEPENDENCIES.md,torch_pdcs.py,torch_kernels.cu,pdcs_compat.patch}.
+\section{Implementation Details of Compared Algorithms}
+\label{app:implementation-details}
+
+\subsection{SHUTTLE and PDUOT}
+\label{app:implementation-shuttle}
+\ours uses PyTorch for GPU data management and custom C++/CUDA kernels for hierarchy scans and restricted UOT solves.
+The \subsolver backend maintains FP64 primal and dual iterates and evaluates the original UOT stopping measures.
+The component comparisons use the same hierarchy parameters, support-management rules, cost-precision policy, and KKT tolerance, with only the declared component changed.
+
+\paragraph{Precision and refinement safeguard.}
+The default cost policy in the current \ours experiment configurations is \texttt{finest\_fp64}: input features are stored in FP32, coarse-level costs are evaluated in FP32, and finest-level costs and full-space stopping checks are evaluated in FP64.
+The primal and dual iteration states remain in FP64 at every level.
+The shared lower-bound construction additionally uses FP64 cost evaluation and a full-space dual-feasibility audit.
+% \xwz{Protocol audit: verify the actual cost policy and source version of every historical table/figure before finalization; this paragraph describes the current experiment configurations. Retain per-artifact provenance rather than assuming historical defaults match.}
+
+The \emph{refinement safeguard} is enabled by default through \texttt{refinement\_forcing\_check}; this switch also enables the sufficient-progress check, even when \texttt{refinement\_progress\_check} is false.
+After the first restricted solve at each level, it supplements the native KKT test with the local decrease and pricing-fidelity conditions in Appendix~\ref{app:refinement-convergence}.
+The checks use the costs evaluated at that level, with FP64 arithmetic for the bounds; enabling them does not change the cost-precision policy.
+The protected adaptive-solver convergence result and the conditional refinement-termination result retain the numerical scope stated in their proofs.
+Appendix~\ref{app:refinement-safeguard} reports the measured cost of these checks.
+
+\subsection{PDCS}
+\label{app:implementation-pdcs}
+Our \pdcs implementation is based on the official GPU implementation of \citet{lin2025practical} in the \texttt{src/pdcs\_gpu} directory of \href{https://github.com/ZikaiXiong/PDCS}{\texttt{ZikaiXiong/PDCS}}, at commit \href{https://github.com/ZikaiXiong/PDCS/commit/d7e15f5f14b1bf3f503eac155906923c5de07c63}{\texttt{d7e15f5f14b1bf3f503eac155906923c5de07c63}}.
+Starting from this implementation, we implement a PyTorch interface with custom C++/CUDA kernels and optimize generic execution overhead.
+Each restricted KL-UOT problem is represented exactly as an exponential-cone program with an explicit sparse conic matrix.
+The port retains the upstream scaling, adaptive step-size, restart, and primal-weight update rules.
+
+The CUDA extension reuses the upstream exponential-cone projection device routines and applies buffer reuse, cached cuSPARSE descriptors and workspaces, and fusion of vector updates, projections, and reductions.
+These optimizations operate on general sparse matrices, cone projections, and vectors.
+Solver iterates and original-coordinate UOT certificate checks use FP64 arithmetic.
+The scaled model, initialization, and early iteration updates are checked against the Julia/CUDA implementation; floating-point accumulation and fusion can change later adaptive decisions.
+The Julia validation baseline uses the same pinned commit with a recorded compatibility patch for CUDA.jl dispatch, optional certificate callbacks, import-time setup, and the initial matrix infinity norm.
+
+\paragraph{Integration and measurement.}
+The notation \ours (\pdcs) denotes the full \ours hierarchy with \pdcs replacing every restricted solve, including the coarsest solve.
+The measured backend configurations use zero initialization for each \pdcs restricted problem and propagated warm starts for \subsolver.
+% \xwz{Pending matched-initialization rerun: the present 43.09 s PDCS result is cold-started and the 0.77 s PDUOT result is warm-started. Do not relabel these as warm-start PDCS versus warm-start PDUOT; replace the data only after implementing and measuring PDCS warm starts.}
+Both backends are checked using the original unregularized UOT certificate rather than the native conic residual alone.
+End-to-end timing includes model conversion, workspace construction, GPU transfers, and certificate checks, while compilation and explicit prewarming are excluded.
+The reported comparison therefore measures the complete backend implementations under their recorded initialization policies; it does not isolate the effect of their update formulas.
+
+\subsection{UFGW Block-Coordinate Solvers}
+\label{app:implementation-ufgw}
+% CN: 实现来源和版本见 /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/ufgw_solver_comparison/results/20261110_ufgw_starmap_n16384/cases/*/{shuttle,pot}_repeat0/provenance.json；实际参数见同目录 request.json 和批次 config.json。
+% EN: Implementation sources and versions are recorded in /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/ufgw_solver_comparison/results/20261110_ufgw_starmap_n16384/cases/*/{shuttle,pot}_repeat0/provenance.json; request.json and the batch config.json record actual settings.
+The UFGW comparison uses the two-coupling tensorized-KL objective in Appendix~\ref{app:ufgw-extension}, with identical product initialization and mass rescaling after each coupling update.
+Each method completes ten full sweeps, with outer early stopping disabled.
+Inner solvers use their native stopping tests at tolerance $10^{-6}$, and optimization quality is evaluated through the common FP64 objective.
+% \xwz{PRECISION CHECK PENDING: POT 0.9.7.post1 UFGW defaults to tol_ot=1e-7, whereas this batch explicitly uses 1e-6. Native stopping residuals are not equivalent across POT and PDUOT. No tighter-tolerance results have been measured here; run a POT-MM pilot at 1e-7 and 1e-8 before making equal-inner-accuracy claims, then update the comparison if needed.}
+
+POT version \texttt{0.9.7.post1} runs its dense BCD algorithm on GPU in FP64, using MM for unregularized blocks and a local log-domain \sinkhorn adapter for entropic blocks.
+We denote these baselines by \bcdmm and \bcdsinkhorn, respectively.
+The MM adapter preserves the installed POT updates and stopping rule while suppressing storage of full coupling matrices at every inner iteration.
+The entropic adapter solves the same KL-regularized block using log-sum-exp updates, avoiding the kernel-domain path selected by the installed unified solver interface.
+It stops when the maximum change in either log scaling, multiplied by the block entropy coefficient, is below the inner tolerance.
+Both adapters retain POT's coupling and dual warm starts, and are checked against POT solutions on small problems without underflow.
+
+\oursufgw uses the native mixed-precision cost policy and FP64 \subsolver iterates.
+It retains cross-block support, primal, and dual warm starts subject to the complementarity gate with threshold $0.1$, using a fixed inner tolerance throughout.
+The entropic variant, \ourssinkhornufgw, uses automatic support reconstruction followed by sparse \sinkhorn refinement, returning sparse couplings without dense reconstruction.
+
+The common objective is evaluated independently in CPU FP64 after each complete sweep, including all mass corrections and the joint entropy constant.
+Runtime includes input transfer, cost or hierarchy construction, block updates, mass rescaling, and native diagnostics; compilation, warmup, common objective evaluation, and serialization are excluded.
+GPU memory is the maximum active PyTorch allocation during the algorithm, measured separately from common evaluation.
+Before measurement, each worker runs one complete warmup sweep on a 32-point problem with the same method and entropy setting.

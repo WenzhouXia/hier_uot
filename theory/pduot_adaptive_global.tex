@@ -1,0 +1,55 @@
+\paragraph{Metric changes under the weight budget.}
+Write $s=\log w$ and
+\begin{equation}
+\label{eq:pduot-variable-metric}
+\mathbf P(s)=\begin{pmatrix}e^{-s}\overline{\mathbf D}_x^{-1}&-\mathbf A_{\mathcal N}^{\top}\\-\mathbf A_{\mathcal N}&e^s\overline{\mathbf D}_y^{-1}\end{pmatrix},\qquad T_s=(\mathbf P(s)+\mathcal M)^{-1}\mathbf P(s).
+\end{equation}
+Let $\chi=\|\overline{\mathbf D}_y^{1/2}\mathbf A_{\mathcal N}\overline{\mathbf D}_x^{1/2}\|_2<1$ and $c_0=(1-\chi)^{-1}$.
+If $\mathbf D(s)$ is the block-diagonal part of $\mathbf P(s)$, then $\mathbf P(s)\succeq(1-\chi)\mathbf D(s)$ and, for every nonzero $\mathbf h$,
+\begin{equation*}
+\left|\frac{d}{ds}\log(\mathbf h^\top\mathbf P(s)\mathbf h)\right|\leq\frac{\mathbf h^\top\mathbf D(s)\mathbf h}{\mathbf h^\top\mathbf P(s)\mathbf h}\leq c_0.
+\end{equation*}
+Integration gives
+\begin{equation}
+\label{eq:pduot-metric-comparison}
+e^{-c_0|t-s|}\mathbf P(s)\preceq\mathbf P(t)\preceq e^{c_0|t-s|}\mathbf P(s).
+\end{equation}
+For an integer $J\geq1$, the budget in~\eqref{eq:pduot-weight-budget} satisfies
+\begin{equation}
+\label{eq:pduot-summable-budget}
+\sum_{j=1}^{\infty}|s_j-s_{j-1}|\leq\sum_{j=1}^{\infty}b_j\leq LJ\left(1+\frac{1}{p-1}\right)<\infty.
+\end{equation}
+Consequently $s_j$ converges, and $\mathbf P_j:=\mathbf P(s_j)$ converges to a positive definite matrix.
+The compact weight interval also gives constants $0<\underline\lambda\leq\overline\lambda<\infty$ with $\underline\lambda\mathbf I\preceq\mathbf P_j\preceq\overline\lambda\mathbf I$ for all $j$.
+
+\begin{proof}[Global convergence in Proposition~\ref{prop:pduot-convergence}]
+Suppose first that infinitely many restarts occur.
+Index epochs by $j\geq0$, with anchor $\mathbf a_j$, fixed map $T_j:=T_{s_j}$, and final Halpern iterate $\mathbf t_j$.
+The next anchor is $\mathbf a_{j+1}=T_j\mathbf t_j$.
+Both $T_j$ and $2T_j-\mathbf I$ fix every $\mathbf z^\star\in\mathcal S:=\mathcal M^{-1}(0)$ and are nonexpansive in $\mathbf P_j$.
+Induction in~\eqref{eq:halpern} therefore bounds every iterate and mapped point in epoch $j$ by the anchor's $\mathbf P_j$-distance to $\mathbf z^\star$.
+Firm nonexpansiveness at the final iterate gives, with $e_j=\|\mathbf t_j-T_j\mathbf t_j\|_{\mathbf P_j}$,
+\begin{equation}
+\label{eq:pduot-epoch-descent}
+\|\mathbf a_{j+1}-\mathbf z^\star\|_{\mathbf P_j}^2+e_j^2\leq\|\mathbf a_j-\mathbf z^\star\|_{\mathbf P_j}^2.
+\end{equation}
+Set $r_j=e^{c_0b_{j+1}}$, $\Gamma_j=\prod_{i=0}^{j-1}r_i$, and $E_j=\|\mathbf a_j-\mathbf z^\star\|_{\mathbf P_j}^2$.
+Equations~\eqref{eq:pduot-metric-comparison}--\eqref{eq:pduot-epoch-descent} imply
+\begin{equation*}
+\frac{E_{j+1}}{\Gamma_{j+1}}\leq\frac{E_j}{\Gamma_j}-\frac{e_j^2}{\Gamma_j},\qquad 1\leq\Gamma_j\leq\Gamma_\infty<\infty.
+\end{equation*}
+Thus the anchors are bounded, $E_j$ has a limit for every solution $\mathbf z^\star$, and $\sum_je_j^2<\infty$.
+The resolvent inclusion gives $\mathbf P_j(\mathbf t_j-\mathbf a_{j+1})\in\mathcal M(\mathbf a_{j+1})$.
+Its left-hand side tends to zero by $e_j\to0$ and the uniform spectral bounds.
+Closedness of the maximal monotone graph puts every cluster point of the anchors in $\mathcal S$.
+Choose one such point $\mathbf z^\infty$.
+The energy $E_j$ relative to this point has a limit and a subsequence tending to zero, so the whole anchor sequence converges to $\mathbf z^\infty$.
+The within-epoch distance bound and uniform spectral bounds give chronological convergence of all Halpern iterates and mapped points to the same limit.
+If only finitely many restarts occur, the last epoch has fixed weight, and the Halpern convergence theorem gives the same conclusion.
+
+The primal projection multiplier satisfies
+\begin{equation*}
+\boldsymbol\lambda=\mathbf c+\mathbf A_{\mathcal N}^{\top}\mathbf y-\mathbf D_x^{-1}(\mathbf x-\widehat{\mathbf x}).
+\end{equation*}
+Since $\mathbf D_x^{-1}$ is uniformly bounded, these multipliers also converge, to $\mathbf c+\mathbf A_{\mathcal N}^{\top}\mathbf y^\infty$.
+\end{proof}

@@ -45,6 +45,19 @@ The local folder is a standalone Git repository and is linked to Overleaf
 through Leaflink. Use `main.tex` as the root document with pdfLaTeX.
 Build products and local Leaflink metadata are excluded from synchronization.
 
+The inter-level stability appendix figure is regenerated from the pinned
+2026-10-19 measurements, without solving new problems:
+
+```bash
+micromamba run -n hier_ot python scripts/plot_hierarchy_stability.py
+```
+
+The script defaults to the enclosing code project's
+`results/uot_hierarchy_paper_candidate_20261019/`; use `--project-root` and
+`--results-dir` when working from a separate checkout. It checks the original
+input checksum and includes all 1,080 transitions. The resulting PDF/PNG and
+recomputed statistics are saved as `figures/hierarchy_stability_validation.*`.
+
 From this directory:
 
 ```bash

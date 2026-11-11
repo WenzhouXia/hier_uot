@@ -58,7 +58,29 @@ Their normalized target responses attain $H^2=2[1-\operatorname{sech}(\Gamma/(4\
 
 This bound isolates source--target interaction and proves a quadratic dependence on $1/\rho_b$ without a sampling assumption.
 It is not a rate in sample size and can be conservative on large supports.
-It applies to optimal endpoint responses; inexact coarse potentials can instead be handled directly by the next result.
+It applies to optimal endpoint responses; inexact coarse potentials can instead be handled directly by the computable bound below.
+
+\begin{corollary}[Weighted potential stability]
+\label{cor:uot-hierarchy-weighted-potentials}
+For any two finite target potentials $g^0,g^1$ with a common positive reference $b$ and penalty $\rho_b>0$, define
+$$Z_s=\sum_j b_j e^{-g_j^s/\rho_b},\qquad p_j^s=\frac{b_j e^{-g_j^s/\rho_b}}{Z_s},\qquad s\in\{0,1\},$$
+and remove scalar translations by setting $\bar g^s=g^s+\rho_b\log Z_s\,\mathbf1$.
+Then
+\begin{equation}
+\label{eq:hierarchy-weighted-potential}
+\sum_j\sqrt{p_j^0p_j^1}\,(\bar g_j^1-\bar g_j^0)^2\leq4\rho_b^2H^2(p^0,p^1).
+\end{equation}
+No uniform positive lower bound on the response entries is required.
+\end{corollary}
+\begin{proof}
+Writing $\delta_j=\bar g_j^1-\bar g_j^0$, the response identity gives $\delta_j=-\rho_b\log(p_j^1/p_j^0)$.
+Consequently,
+$$H^2(p^0,p^1)=4\sum_j\sqrt{p_j^0p_j^1}\,\sinh^2\!\left(\frac{\delta_j}{4\rho_b}\right)\geq\frac{1}{4\rho_b^2}\sum_j\sqrt{p_j^0p_j^1}\,\delta_j^2,$$
+where the inequality uses $|\sinh x|\geq|x|$.
+\end{proof}
+
+The estimate connects response stability to dual propagation by controlling the aligned potentials with weights that emphasize coordinates carrying mass in both responses.
+Coordinates with vanishing response weight may still have large potential differences, so the estimate does not imply uniform coordinatewise stability.
 
 \subsection{A computable inheritance bound}
 On the finer source instance, consider the auxiliary fixed-target problem defining $\uotHierarchyH_a(q^0)$.

@@ -1,0 +1,54 @@
+{
+  "source_path": "/home/xiawenzhou/project/hierarchical_ot/results/uot_hierarchy_paper_candidate_20261019/forward_results.json",
+  "source_sha256": "4be52dda8cac929ff1d9524a04d242c0e9956523302432a0d8f085558d38e5c4",
+  "source_commit": "3b92f455866dc9b3432b2ebcfe3fb2086ead5c9e",
+  "transitions": 1080,
+  "selection": "all recorded transitions; no case filtering",
+  "median_bound_ratio": 1.422225584947347,
+  "p90_bound_ratio": 6.555165526812522,
+  "maximum_bound_ratio": 588.0907429460208,
+  "median_prediction_fold": 1.1215865487374668,
+  "within_factor_two_percent": 81.66666666666667,
+  "by_penalty": [
+    {
+      "rho_a": 0.1,
+      "rho_b": 0.1,
+      "n": 216,
+      "median_bound_ratio": 2.400177055029113,
+      "median_prediction_fold": 1.2728929701149503,
+      "within_factor_two_percent": 91.66666666666666
+    },
+    {
+      "rho_a": 1.0,
+      "rho_b": 1.0,
+      "n": 216,
+      "median_bound_ratio": 1.372269543155149,
+      "median_prediction_fold": 1.224416951818732,
+      "within_factor_two_percent": 97.22222222222221
+    },
+    {
+      "rho_a": 10.0,
+      "rho_b": 10.0,
+      "n": 216,
+      "median_bound_ratio": 1.026267232799969,
+      "median_prediction_fold": 1.0177530973074962,
+      "within_factor_two_percent": 99.07407407407408
+    },
+    {
+      "rho_a": 0.1,
+      "rho_b": 2.0,
+      "n": 216,
+      "median_bound_ratio": 1.0547084929536499,
+      "median_prediction_fold": 1.0013426926083104,
+      "within_factor_two_percent": 100.0
+    },
+    {
+      "rho_a": 2.0,
+      "rho_b": 0.1,
+      "n": 216,
+      "median_bound_ratio": 6.507500515406399,
+      "median_prediction_fold": 3.9464654156758896,
+      "within_factor_two_percent": 20.37037037037037
+    }
+  ]
+}

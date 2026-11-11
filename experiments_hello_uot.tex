@@ -1,0 +1,32 @@
+\paragraph{Direct comparison with \hellouot.}
+We compare with the UOT extension of \hello~\citep{xia2026dual}, which solves the unregularized problem through repeated balanced-OT oracle calls.
+Table~\ref{tab:hello-uot-direct} considers the symmetric setting $\rho_a=\rho_b=1$ at the two larger scales of its original UOT benchmark.
+Both methods run to their native stopping criteria; we report their final primal accuracy against the same independently audited dual bound and their complete solve times, including initialization.
+Direct restricted-UOT solves reduce runtime by $15.0\times$ and $33.6\times$, respectively, while attaining smaller shared gaps.
+Appendix~\ref{app:hello-uot-comparison} reports all four penalty settings and the optimization trajectories.
+
+\begin{table}[t]
+\centering
+% CN: 数据来自 /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/hello_uot_comparison/results/20261111_formal_four_rho/summary.json，筛选 rho=(1,1) 且 n=65536/131072；使用最终原生解及完整同步求解耗时，不使用历史首次超越检查点。Gap 使用正常科学计数法并保留三位有效数字。
+% EN: Data: /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/hello_uot_comparison/results/20261111_formal_four_rho/summary.json, restricted to rho=(1,1) and n=65536/131072; final native solutions and complete synchronized solve times, replacing the historical first-crossing analysis. Gaps use ordinary scientific notation with three significant digits.
+% CN: 共同下界来自同实验 results/20261111_reference_four_rho/cases/*/reference/{reference.json,potentials.npz}；12/12通过独立FP64全空间审计，关联和校验见 reference_link.json。
+% EN: Shared bounds: results/20261111_reference_four_rho/cases/*/reference/{reference.json,potentials.npz} in the same experiment; all 12 pass independent FP64 full-space audits, linked and checked through reference_link.json.
+% \xwz{These measurements have refinement_forcing_check=False and cost_precision=finest_fp64. Retain their actual configuration in the provenance; rerun SHUTTLE if the final paper adopts a safeguard-enabled protocol. HELLO-UOT need not be rerun for that change.}
+\caption{\textbf{Direct comparison with \hellouot.}
+TOME E11.5$\to$E12.5 with $m=n$, $d=30$, and $\rho_a=\rho_b=1$.
+Time is in seconds, including initialization; \sharedgap uses~\eqref{eq:experimental-shared-gap}.
+Each method uses seed 42 and one run.}
+\label{tab:hello-uot-direct}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l*{4}{r}@{}}
+\toprule
+\multirow{2}{*}{Method} & \multicolumn{2}{c}{$n=65{,}536$} & \multicolumn{2}{c}{$n=131{,}072$} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-5}
+ & \runtime & \sharedgap & \runtime & \sharedgap \\
+\midrule
+\hellouot & 57.41 & $3.23\times10^{-5}$ & 217.10 & $5.90\times10^{-5}$ \\
+\ours & \textbf{3.82} & $\boldsymbol{2.44\times10^{-7}}$ & \textbf{6.46} & $\boldsymbol{3.49\times10^{-5}}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
