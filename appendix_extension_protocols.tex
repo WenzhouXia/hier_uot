@@ -1,0 +1,73 @@
+\section{Additional Experiment Protocols}
+\label{app:extension-experiment-protocols}
+
+\subsection{Unregularized UOT Comparisons}
+The complete-problem Pareto figure varies stopping tolerances for \ours, \mm, and \hellouot, entropic strength for \sinkhorn, and rank for \ulot.
+Larger markers indicate tighter stopping tolerances, smaller \sinkhorn regularization, or larger \ulot rank; lines connect configurations in sweep order.
+The current figure uses means over available valid paired runtime and shared-gap observations from planned seeds 42--46, with incomplete coverage that varies by configuration.
+% CN: 当前图及各点覆盖记录来自 paper_experiments_uot/accuracy_runtime_pareto/results/20261111_202336/{plot_selection.json,pareto_aggregate.csv}；plot_count、plot_seeds、plot_complete 记录有效覆盖，最终五 seed 汇总待完成。
+% EN: Current plotting and coverage records are paper_experiments_uot/accuracy_runtime_pareto/results/20261111_202336/{plot_selection.json,pareto_aggregate.csv}; plot_count, plot_seeds, and plot_complete record valid coverage, pending the complete five-seed summary.
+
+The million-point scaling figure uses seed 42 and one measurement per configuration.
+Each problem is solved on a single A100 GPU, with timing from input upload through hierarchy construction, initialization, and solving; compilation, prewarming, and common evaluation are excluded.
+Memory is peak active allocation rather than allocator reservation.
+The gray linear and quadratic slope guides have arbitrary vertical offsets and are not fitted models or complexity bounds.
+
+\subsection{Restricted-Solver Snapshots}
+\label{app:restricted-experiment-protocol}
+The current restricted-solver Pareto figure uses the lower-middle restricted problem among the finest-level solves of a parent \ours run on TOME E11.5--E12.5 ($m=n=65{,}536$, $d=30$).
+This is the historical snapshot-selection rule; newer captures use the upper-middle solve, and historical snapshots retain their original metadata.
+The four penalty settings have active supports between $1.31$ and $1.68$ million edges.
+Each solver uses its standard initialization and native stopping rule, with one run per configuration and parent seed 42.
+Lines connect valid parameter settings in sweep order; larger markers target higher accuracy.
+The common primal-accuracy evaluation uses~\eqref{eq:experimental-shared-gap}.
+
+\subsection{System Component Ablations}
+The preliminary component table uses equal marginal sizes, seed 42, one run per variant, and a KKT tolerance of $10^{-6}$.
+Panels A, B, D, and E use TOME E11.5--E12.5 with $d=30$; Panel C uses Gaussian point clouds with $d=3$.
+The common dual-assignment budget is $\kappa=16$ and the coarsest-size threshold is 256.
+\refineiters counts restricted-solve rounds at the finest problem size, including the final convergence-check round; it does not count inner iterations.
+Memory is peak active PyTorch allocation in GiB, and compilation and prewarming are excluded from timing.
+Panel C retains native backend initialization as described in Appendix~\ref{app:implementation-pdcs}; its memory measurements are unavailable.
+
+\subsection{Entropic UOT Evaluation}
+\label{app:entropic-evaluation}
+We evaluate the full entropic primal objective $P_\varepsilon$, including the entropy constant outside the reported support, and use a shared dual lower bound $D_{\varepsilon,\mathrm{ref}}$ from an independent FP64 \ottonline solve with native stopping threshold $10^{-8}$:
+\begin{equation}
+\entropicgap=\frac{P_\varepsilon-D_{\varepsilon,\mathrm{ref}}}{\max\{|P_\varepsilon|,|D_{\varepsilon,\mathrm{ref}}|,10^{-15}\}}.
+\label{eq:entropic-evaluation-gap}
+\end{equation}
+Each comparison fixes the entropic strength and marginal penalties, so all methods approximate the same full entropic UOT problem.
+Runtime covers prepared CPU inputs through synchronized solver output, including input transfer, the unregularized \ours solve, support construction, and sparse refinement when used; compilation, warmup, and common post-solve evaluation are excluded.
+The current Pareto figure compares reconstruction budgets $b_{\mathrm e}\in\{2,4,8,16,32\}$ with direct reuse of the final active support.
+\ottonline sweeps its native stopping threshold from $10^{-2}$ to $10^{-6}$, and \sparsink sweeps the sampling budget factor from $8$ to $128$.
+The current measurements use seed 42 and one run per configuration.
+% CN: 当前图仍展示历史 direct-reuse 叉号；自动预算 reconstruction 点待测量或核验后，与图注和正文同步替换，见 EXPERIMENT_PROGRESS.md 的 E14--E15。
+% EN: The current figure still shows historical direct-reuse crosses; automatic-budget reconstruction points await measurement or validation and coordinated replacement of the figure, caption, and text. See E14--E15 in EXPERIMENT_PROGRESS.md.
+
+\subsection{UFGW Objective}
+We denote the two-coupling objective by \ufgwobj, with $\varepsilon=0$ recovering~\eqref{eq:ufgw-relaxation} and $\varepsilon>0$ using the regularized relaxation in Appendix~\ref{app:ufgw-extension}.
+The solver comparison matches initialization, feature and structural costs, and penalty coefficients, and runs exactly ten complete coupling-update sweeps with outer early stopping disabled.
+STARmap inputs use physical spatial coordinates and 30-dimensional expression features, with $\alpha=0.4$ and $\rho_a=\rho_b=0.1$.
+Each configuration uses seed 0 and one measurement on an A100 GPU; the common FP64 objective evaluation is excluded from solver timing.
+Appendix~\ref{app:implementation-ufgw} gives the solver implementations and measurement protocol.
+
+\subsection{Temporal Transport}
+The moscot temporal benchmark uses released 30-dimensional expression embeddings, growth priors, and the authors' downstream evaluation pipeline~\citep{klein2025mapping}.
+The current comparison covers all 19 time pairs with seed 42 and one run per configuration on A100 GPUs.
+\ourssparsink reconstructs support within the final active-support budget and retains the resulting sparse coupling for downstream evaluation.
+Full-rank \sinkhorn and \ourssparsink use $\varepsilon=0.005$ and matched marginal penalties; low-rank UOT follows the authors' separate rank-specific settings with $\varepsilon=10^{-4}$ and $1000$ iterations.
+The marginal penalties vary across time pairs according to the authors' calibration of predicted apoptosis rates, so the comparison evaluates downstream utility under the published application settings.
+% CN: 统计来自 paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/{summary.csv,summary_table.csv}；114/114 项已完成。
+% EN: Statistics come from paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/{summary.csv,summary_table.csv}, with 114/114 configurations complete.
+Across all 19 time pairs, the relative deviations of \ourssparsink from full-rank \sinkhorn are below $1.26\%$ for \transitionacc\ and $0.034\%$ for germ-layer accuracy, where relative deviation is the absolute score difference divided by the full-rank score.
+Appendix~\ref{app:temporal-timing} reports coupling and downstream evaluation times separately.
+
+\subsection{Spatial Alignment}
+For each MOSTA time pair, we select the highest-accuracy BCD configuration from 20 settings spanning five values of $\alpha$, two finite marginal penalties, and both directions of a single hard marginal constraint.
+The moscot low-rank UFGW baseline uses the authors' selected parameters.
+The BCD variant uses the tensorized-KL two-coupling relaxation, whereas moscot uses a low-rank single-coupling model; both are evaluated through the same downstream transition metric.
+The inferred coupling is aggregated by cell type, each source-type row is normalized, and \transitionacc\ measures the fraction of transition probability assigned to biologically allowed pairs.
+Both methods are measured once per pair with seed 0 on A100 GPUs after independent warmup.
+Timing covers prepared normalized CPU inputs through synchronized CPU outputs, excluding compilation, warmup, downstream evaluation, and file I/O.
+The table reports \transitionacc\ in percent to one decimal place and runtime in seconds rounded to the nearest integer.

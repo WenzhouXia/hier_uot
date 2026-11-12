@@ -6,7 +6,27 @@ Reference masses and penalties are positive, costs are finite and nonnegative, a
 The hierarchy has finitely many levels, so finite termination at each level implies finite termination of the hierarchy.
 An exact restricted oracle is assumed to return its solution; finite outer termination does not assert finite-step exact solution by a numerical inner iteration.
 
+\paragraph{Restricted-to-full recovery.}
+\begin{proposition}[Restricted-to-full recovery]
+\label{prop:restricted-recovery}
+Let $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ satisfy the KKT conditions of~\eqref{eq:restricted-uot} on $\mathcal{N}$.
+If $\widehat f_i+\widehat g_j\leq C_{ij}$ for every $(i,j)\in[m]\times[n]$, then extending $\widehat{\mathbf{x}}$ by zero outside $\mathcal{N}$ yields a global primal solution of~\eqref{eq:primal-uot}, and $(\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ is a global dual solution of~\eqref{eq:dual-uot}.
+\end{proposition}
+
+Restricted KKT conditions provide marginal responses, active-edge feasibility, and complementarity; the full-space inequalities supply the remaining conditions.
+
+Assume exact bidirectional top-$\gamma$ pricing with $\gamma\geq1$, sparsification that preserves transported marginals and cost, and pruning that retains positive-flow and newly priced edges throughout this section.
+
 \subsection{Exact Restricted Solves}
+
+\begin{theorem}[Exact refinement]
+\label{thm:refinement-exact}
+If each restricted call returns an exact primal--dual solution and pricing stops only when all full-space dual inequalities hold, refinement terminates after finitely many rounds at a global primal--dual solution of KL-UOT.
+\end{theorem}
+
+A positive score at an exact restricted solution gives a feasible one-edge descent direction.
+Retaining that edge and the current positive support strictly decreases the next restricted optimal value.
+There are finitely many active supports, so the strictly decreasing sequence cannot revisit a support.
 
 \begin{proof}[Proof of Theorem~\ref{thm:refinement-exact}]
 Let $F(\mathcal N)$ be the optimal value on active support $\mathcal N$.
@@ -53,7 +73,43 @@ Taking the minimum over the finitely many such edgewise sets proves the claim.
 
 \subsection{Inexact Restricted Solves}
 
-\begin{proof}[Proof of Theorem~\ref{thm:refinement}]
+For inexact solves, let $\mathbf X^k$ be the returned coupling, $\Delta_k=\Phi(\mathbf X^k)-\Phi(\mathbf X^{k+1})$, and define the feasible coordinate gain
+\begin{equation}
+\label{eq:refinement-coordinate-gain}
+G_k=\max_{e\in\mathcal V_k\setminus\mathcal N_k}\max_{t\geq0}\{\Phi(\mathbf X^k)-\Phi(\mathbf X^k+t\mathbf E_e)\},
+\end{equation}
+with $G_k=0$ for an empty candidate set.
+Write $v_k=\max_{i,j}[\sigma^k_{ij}]_+$ and $a_k=\max_{(i,j)\in\mathcal N_k}[\sigma^k_{ij}]_+$ for full and active score maxima.
+The one-sided marginal-gradient error is
+\begin{equation}
+\label{eq:refinement-fidelity}
+\begin{aligned}
+\Omega_k={}&\max_i[f_i^k+\rho_a\log(r_i^k/a_i)]_+\\
+&+\max_j[g_j^k+\rho_b\log(q_j^k/b_j)]_+,
+\end{aligned}
+\end{equation}
+where a zero transported marginal contributes zero to its one-sided error.
+
+\begin{theorem}[Inexact refinement with explicit output conditions]
+\label{thm:refinement-explicit}
+Use $\ell_2$ stopping measures with a restricted tolerance $\varepsilon_{\mathrm r}>0$ and a full-space tolerance $\tau>0$.
+Set $d_k=\varepsilon_{\mathrm r}^2(1+|\Phi(\mathbf X^k)|)$.
+Suppose each restricted call returns in finite time with all three restricted stopping measures at most $\varepsilon_{\mathrm r}$ and, except for the first call at each level, satisfies
+\begin{equation}
+\label{eq:refinement-output-conditions}
+\begin{gathered}
+\Delta_k\geq G_k/2,\\
+\Delta_k\geq d_k
+\quad\text{or}\quad
+\max\{a_{k+1},\Omega_{k+1}\}\leq v_k/2.
+\end{gathered}
+\end{equation}
+Then refinement terminates after finitely many rounds with restricted stopping measures at most $\varepsilon_{\mathrm r}$ and full-space violation $\eta\leq\tau$.
+In particular, $\varepsilon_{\mathrm r}=\tau=\varepsilon$ gives the KKT stopping tolerance used in Algorithm~\ref{alg:ours}.
+\end{theorem}
+
+\begin{proof}[Proof of Theorems~\ref{thm:refinement-explicit} and~\ref{thm:refinement}]
+The local safeguard~\eqref{eq:refinement-implemented-gate} implies the explicit output conditions~\eqref{eq:refinement-output-conditions}, as derived in Appendix~\ref{app:refinement-local-stopping}.
 Extend all couplings by zero to the full edge set.
 The first condition in~\eqref{eq:refinement-output-conditions} and $G_k\geq0$ give objective nonincrease, and sparsification and pruning preserve the current objective.
 All subsequent couplings therefore lie in the sublevel set determined by the first returned coupling $\mathbf X^0$.

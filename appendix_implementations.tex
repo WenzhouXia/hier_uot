@@ -3,7 +3,7 @@
 \section{Implementation Details of Compared Algorithms}
 \label{app:implementation-details}
 
-\subsection{SHUTTLE and PDUOT}
+\subsection{\ours and \subsolver}
 \label{app:implementation-shuttle}
 \ours uses PyTorch for GPU data management and custom C++/CUDA kernels for hierarchy scans and restricted UOT solves.
 The \subsolver backend maintains FP64 primal and dual iterates and evaluates the original UOT stopping measures.
@@ -21,7 +21,7 @@ The checks use the costs evaluated at that level, with FP64 arithmetic for the b
 The protected adaptive-solver convergence result and the conditional refinement-termination result retain the numerical scope stated in their proofs.
 Appendix~\ref{app:refinement-safeguard} reports the measured cost of these checks.
 
-\subsection{PDCS}
+\subsection{\pdcs}
 \label{app:implementation-pdcs}
 Our \pdcs implementation is based on the official GPU implementation of \citet{lin2025practical} in the \texttt{src/pdcs\_gpu} directory of \href{https://github.com/ZikaiXiong/PDCS}{\texttt{ZikaiXiong/PDCS}}, at commit \href{https://github.com/ZikaiXiong/PDCS/commit/d7e15f5f14b1bf3f503eac155906923c5de07c63}{\texttt{d7e15f5f14b1bf3f503eac155906923c5de07c63}}.
 Starting from this implementation, we implement a PyTorch interface with custom C++/CUDA kernels and optimize generic execution overhead.
@@ -51,9 +51,9 @@ Each method completes ten full sweeps, with outer early stopping disabled.
 Inner solvers use their native stopping tests at tolerance $10^{-6}$, and optimization quality is evaluated through the common FP64 objective.
 % \xwz{PRECISION CHECK PENDING: POT 0.9.7.post1 UFGW defaults to tol_ot=1e-7, whereas this batch explicitly uses 1e-6. Native stopping residuals are not equivalent across POT and PDUOT. No tighter-tolerance results have been measured here; run a POT-MM pilot at 1e-7 and 1e-8 before making equal-inner-accuracy claims, then update the comparison if needed.}
 
-POT version \texttt{0.9.7.post1} runs its dense BCD algorithm on GPU in FP64, using MM for unregularized blocks and a local log-domain \sinkhorn adapter for entropic blocks.
+POT version \texttt{0.9.7.post1} runs its dense BCD algorithm on GPU in FP64, using \mm for unregularized blocks and a local log-domain \sinkhorn adapter for entropic blocks.
 We denote these baselines by \bcdmm and \bcdsinkhorn, respectively.
-The MM adapter preserves the installed POT updates and stopping rule while suppressing storage of full coupling matrices at every inner iteration.
+The \mm adapter preserves the installed POT updates and stopping rule while suppressing storage of full coupling matrices at every inner iteration.
 The entropic adapter solves the same KL-regularized block using log-sum-exp updates, avoiding the kernel-domain path selected by the installed unified solver interface.
 It stops when the maximum change in either log scaling, multiplied by the block entropy coefficient, is below the inner tolerance.
 Both adapters retain POT's coupling and dual warm starts, and are checked against POT solutions on small problems without underflow.

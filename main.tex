@@ -20,7 +20,7 @@
 \usepackage{mathtools}
 \usepackage{amsthm}
 
-\newcommand{\ours}{\texttt{Shuttle}\xspace}
+\newcommand{\ours}{\texttt{Salut}\xspace}
 \newcommand{\moscot}{\texttt{Moscot}\xspace}
 \newcommand{\subsolver}{\texttt{PDUOT}\xspace}
 \newcommand{\pdcs}{\texttt{PDCS}\xspace}
@@ -33,6 +33,10 @@
 \newcommand{\checkrestart}{\texttt{CheckRestart}\xspace}
 \newcommand{\updateweight}{\texttt{UpdateWeight}\xspace}
 \newcommand{\mm}{\texttt{MM}\xspace}
+\newcommand{\ulot}{\texttt{ULOT}\xspace}
+\newcommand{\sparsink}{\texttt{Spar-Sink}\xspace}
+\newcommand{\ottonline}{\texttt{OTT-online}\xspace}
+\newcommand{\cupdlpx}{\texttt{cuPDLPx}\xspace}
 \newcommand{\sinkhornonline}{\texttt{SinkhornOnline}\xspace}
 \newcommand{\sinkhorn}{\texttt{Sinkhorn}\xspace}
 \newcommand{\hello}{\texttt{HELLO}\xspace}
@@ -48,8 +52,8 @@
 \newcommand{\inneriters}{\ensuremath{\mathrm{Iters}}\xspace}
 \newcommand{\fullkkt}{\ensuremath{\mathrm{KKT}}\xspace}
 \newcommand{\ourssparsink}{{\ours\unskip--\sinkhorn}\xspace}
-\newcommand{\oursufgw}{\texttt{Shuttle-UFGW}\xspace}
-\newcommand{\ourssinkhornufgw}{\texttt{Shuttle-Sinkhorn-UFGW}\xspace}
+\newcommand{\oursufgw}{{\ours\unskip--\texttt{UFGW}}\xspace}
+\newcommand{\ourssinkhornufgw}{{\ours\unskip--\sinkhorn\unskip--\texttt{UFGW}}\xspace}
 \newcommand{\bcdmm}{\texttt{BCD-MM}\xspace}
 \newcommand{\bcdsinkhorn}{\texttt{BCD-Sinkhorn}\xspace}
 \newcommand{\entropicgap}{\ensuremath{\mathrm{Gap}_{\varepsilon}}\xspace}
@@ -65,13 +69,12 @@
 \newtheorem{definition}{Definition}
 \theoremstyle{plain}
 
-\icmltitlerunning{\ours: Linear-Memory UOT via Edge Localization}
+\icmltitlerunning{Scalable Active-Support Optimization for UOT}
 
 \begin{document}
 
 \twocolumn[
-%   \icmltitle{\ours: Sparse Hierarchical Unbalanced Optimal Transport Through Linear-Memory Edge Localization}
-    \icmltitle{A Linear-Memory Hierarchical Solver for Unbalanced Optimal Transport}
+    \icmltitle{Scalable Active-Support Optimization for Unbalanced Optimal Transport}
 
     \begin{icmlauthorlist}
         \icmlauthor{Anonymous Authors}{anon}
@@ -101,7 +104,7 @@ We prove convergence of the subproblem solver and finite termination of refineme
 % 实验结果：合并三层实验，突出效率和可扩展性。
 Experiments on synthetic and real-world transport problems demonstrate accurate solutions, linear memory growth, and efficient scaling beyond dense solvers.
 % 扩展能力：UFGW 与 sparse Sinkhorn 依赖 localized support，放在摘要结尾简洁说明。
-We further extend the localized-support framework to sparse entropic refinement and UFGW, obtaining efficient large-scale solvers with downstream behavior comparable to dense Sinkhorn on biological data.
+We further extend the localized-support framework to sparse entropic refinement and UFGW, obtaining efficient large-scale solvers with downstream behavior comparable to dense \sinkhorn on biological data.
 \end{abstract}
 
 \section{Introduction}
@@ -117,7 +120,7 @@ UOT minimizes transport cost plus divergence penalties on the deviations of the 
 We focus on KL marginal penalties:
 \begin{equation}
 \label{eq:primal-uot}
-\min_{X\geq 0}\quad \langle \mathbf{C},\mathbf{X}\rangle+\rho_a\KL(\mathbf{X}\mathbf{1}_n\,|\,\mathbf{a})
+\min_{\mathbf{X}\geq 0}\quad \langle \mathbf{C},\mathbf{X}\rangle+\rho_a\KL(\mathbf{X}\mathbf{1}_n\,|\,\mathbf{a})
 +\rho_b\KL(\mathbf{X}^\top\mathbf{1}_m\,|\,\mathbf{b}),
 \end{equation}
 Here, $\mathbf{X}\in\mathbb R_+^{m\times n}$ is the transport plan, $\rho_a,\rho_b>0$ control the marginal penalties, and $\KL(\mathbf{p}\,|\,\mathbf{h})=\sum_k(p_k\log(p_k/\mathbf{h}_k)-p_k+\mathbf{h}_k)$.
@@ -142,35 +145,48 @@ However, additional regularization introduces bias relative to unregularized UOT
 Low-rank methods constrain the coupling to admit a compact nonnegative factorization, improving computational and memory scalability at a fixed rank~\citep{scetbon2023unbalanced,halmos2024low}.
 This scalability comes at the cost of potentially substantial approximation error when the chosen rank is insufficient to represent the optimal coupling.
 
-A third line of work solves the original UOT problem.
+Several methods target the original UOT objective directly.
 Majorization--minimization (\mm) directly updates the coupling through multiplicative iterations~\citep{chapel2021unbalanced}.
 Alternatively, balanced-OT reductions separate marginal estimation from coupling construction through upfront estimation~\citep{liu2026solving} or iterative Frank--Wolfe refinement~\citep{sejourne2022faster,xia2026dual}.
-Another approach exploits coupling sparsity through a network-simplex framework that maintains forest-supported transport plans~\citep{agazzotti2026network}.
-Scalability remains limited by quadratic coupling storage in standard \mm implementations, the cost of marginal estimation or sequential balanced OT subproblems in reduction methods, and sequential tree updates in network simplex that hinder GPU parallelization.
-This leaves open how to solve the large scale unregularized UOT problem with linear memory and efficient GPU parallelism.
+Standard \mm implementations store the full coupling, while reduction methods incur the cost of marginal estimation or repeated balanced OT solves.
+% Another approach exploits coupling sparsity through a network-simplex framework that maintains forest-supported transport plans~\citep{agazzotti2026network}.
+% Scalability remains limited by quadratic coupling storage in standard \mm implementations, the cost of marginal estimation or sequential balanced OT subproblems in reduction methods, and sequential tree updates in network simplex that hinder GPU parallelization.
+% This leaves open how to solve the large scale unregularized UOT problem with linear memory and efficient GPU parallelism.
+
+Existing methods that exploit coupling sparsity face different limitations: regularization paths require quadratic marginal penalties~\citep{chapel2021unbalanced}; network simplex relies on sequential tree updates that complicate GPU parallelization~\citep{agazzotti2026network}; and safe screening provides no linear-memory guarantee throughout optimization~\citep{su2025safe}.
+This leaves open how to solve large-scale UOT problems with linear memory and efficient GPU parallelism.
 
 \paragraph{Our approach.}
-UOT admits sparse optimal couplings, suggesting that optimization can focus on locating a small set of relevant transport edges.
-At an exact solution restricted to the current support, dual potentials identify omitted edges whose insertion permits further objective decrease; the absence of dual violations certifies global optimality.
-This yields a column-generation strategy that alternates restricted UOT solves with dual pricing to discover relevant edges.
-To organize this process efficiently, information from smaller problems can guide support localization and solver initialization for larger problems.
-\hello implements this principle for balanced OT through a dual-guided hierarchy that combines coarse-to-fine dual propagation with within-level support refinement~\citep{xia2026dual}.
+UOT admits sparse optimal couplings, motivating optimization over a small active support.
+We introduce \ours, a \textbf{S}calable \textbf{A}ctive-support solver for \textbf{L}arge-scale \textbf{U}nbalanced optimal \textbf{T}ransport.
+It alternates optimization on the active support with support updates to identify missing transport variables.
 
-UOT shares the dual constraints $f_i+g_j\leq C_{ij}$ of balanced OT, allowing us to extend this framework to obtain \ours, a \textbf{S}parse \textbf{H}ierarchical solver for large-scale \textbf{U}nbalanced Optimal \textbf{T}ransport \textbf{T}hrough \textbf{L}inear-Memory \textbf{E}dge Localization.
-The marginal penalties turn the restricted linear programs into nonlinear convex problems, for which we develop \subsolver, a GPU-efficient primal--dual solver.
-We also apply an optimal translation to propagated potentials, balancing their marginal-response totals while preserving all dual scores to initialize the restricted solve.
-Together, these components enable efficient large-scale unregularized UOT optimization with linear memory.
+A central computational bottleneck is the repeated solution of nonlinear restricted UOT subproblems.
+To address this bottleneck, we develop \subsolver, a GPU-efficient first-order primal--dual solver that returns both the coupling and dual potentials for subsequent support updates.
+Following \hello's dual-guided hierarchy~\citep{xia2026dual}, we use dual potentials from smaller problems to initialize the active support and dual violations to guide support updates.
+Budgeted pruning and UOT-specific support sparsification control support size, ensuring linear working memory.
 
 Our contributions are summarized as follows:
+% CN: 讨论确定的贡献层级，暂作修改依据；下方正式贡献表述尚未调整。
+% EN: Agreed contribution hierarchy for later revision; the formal contribution statements below remain unchanged.
+% CN: 第一层（hier_uot 整体方法）：在受限支持上直接求解无正则 UOT，通过层级初始化与支持 refinement 求解完整问题；pricing、budgeted pruning 与 support sparsification 共同实现固定支持预算下的线性存储。
+% EN: Level 1 (hier_uot): Solve unregularized UOT directly on restricted supports, using hierarchical initialization and support refinement to solve the full problem; pricing, budgeted pruning, and support sparsification maintain linear storage under a fixed support budget.
+% CN: 第二层（PDUOT）：突出所开发的高效 GPU restricted-UOT 求解器及其利用问题结构的 primal--dual updates；外层支持管理归入第一层。
+% EN: Level 2 (PDUOT): Emphasize the efficient GPU restricted-UOT solver and its structure-exploiting primal--dual updates; outer support management belongs to Level 1.
+% CN: 第三层（两项收敛保证）：PDUOT 在所述条件下收敛至受限 KKT 点并具有局部线性收敛结果；带 safeguard 的 hier_uot inexact refinement 在所述条件下有限终止，达到规定的全空间 KKT 容差。
+% EN: Level 3 (two convergence guarantees): Under the stated conditions, PDUOT converges to a restricted KKT point with a local linear convergence result, and safeguarded hier_uot inexact refinement terminates finitely at the prescribed full-space KKT tolerance.
+% CN: 第四层（扩展与应用）：简洁说明 sparse entropic refinement 和 UFGW 两项扩展，并以真实下游任务验证效率、内存与任务质量；优势表述以最终实验支持的范围为准。
+% EN: Level 4 (extensions and applications): Briefly describe sparse entropic refinement and UFGW, and validate efficiency, memory use, and task quality on real downstream tasks, with claims limited to the final experimental evidence.
 \begin{itemize}
-    \item \textit{Dual-guided hierarchy for UOT:} We extend dual-guided hierarchical edge localization to unregularized UOT, enabling large-scale optimization with linear memory and finite-tolerance termination guarantees for safeguarded refinement.
-    \item \textit{GPU-efficient restricted solver:} We develop \subsolver, a GPU-parallel primal--dual solver with convergence guarantees under adaptive restart and protected primal-weight updates, and local stopping conditions for safeguarded refinement.
-    \item \textit{Extensions and applications:} We extend \ours to efficiently approximate entropic UOT at small regularization strengths and solve unbalanced fused Gromov--Wasserstein (UFGW) problems, demonstrating their effectiveness on large-scale biological alignment tasks.
+    \item \textit{Scalable active-support optimization:} We introduce \ours, a linear-memory active-support algorithm for large-scale UOT that combines restricted optimization with support initialization and refinement.
+\item \textit{GPU-efficient restricted solver:} For repeated restricted subproblem solves, we develop \subsolver, a GPU-friendly first-order solver that efficiently provides high-accuracy primal--dual solutions across a wide range of marginal penalty strengths.
+   \item \textit{Convergence guarantees:} Under the stated conditions, we establish global convergence and local linear convergence of \subsolver, as well as finite termination of support refinement at a prescribed full-space KKT tolerance with inexact restricted solves.
+    \item \textit{Extensions and applications:} We extend \ours to approximate entropic UOT and solve unbalanced fused Gromov--Wasserstein (UFGW) problems.
+We validate the efficiency and downstream performance of these extensions on large-scale biological tasks.
 \end{itemize}
 
 \section{Sparse Hierarchical Solver for UOT}
 \label{sec:method}
-
 
 \subsection{Overall Framework}
 \label{sec:framework}
@@ -196,7 +212,7 @@ X_{ij}(f_i+g_j-C_{ij})&=0.
 \end{equation*}
 
 An exact restricted solution satisfies these conditions on $\mathcal{N}$, together with the marginal-response equations on all nodes.
-It is therefore globally optimal whenever its potentials also satisfy every omitted dual inequality.
+It is therefore globally optimal whenever its potentials also satisfy every omitted dual inequality (Proposition~\ref{prop:restricted-recovery}, Appendix~\ref{app:refinement-convergence}).
 We use the dual score
 \begin{equation}
 \label{eq:dual-score}
@@ -242,43 +258,33 @@ Section~\ref{sec:uot-hierarchy} describes these operations, with pseudocode in A
 \end{algorithmic}
 \end{algorithm}
 
+\begin{figure}[t]
+\centering
+% CN: 单栏算法概览占位图，来自本次对话的生图结果 exec-550572f1-e28e-4902-b826-18533c1e3404.png；图内公式与流程尚待校正。
+% EN: Single-column overview placeholder from this conversation's generated image exec-550572f1-e28e-4902-b826-18533c1e3404.png; formulas and flow still require correction.
+\includegraphics[width=\columnwidth]{figures/shuttle_overview_placeholder.png}
+\caption{\textbf{Overview of \ours\ (draft placeholder).}
+Potential transfer, restricted UOT with \subsolver, and full-space support refinement.
+The illustration is provisional; its formulas and arrows remain to be corrected.}
+\label{fig:shuttle-overview}
+\end{figure}
+
 \subsection{Restricted UOT with \subsolver}
 \label{sec:pduot}
 
-Algorithm~\ref{alg:ours} repeatedly solves UOT on the current active support, giving rise to the following restricted problem.
-For columnwise vectorization of $\mathbf{X}$, the marginal-sum matrix is
+For an active support $\mathcal N$, let $\mathbf x$ collect its edge flows and $\mathbf c_{\mathcal N}$ their costs.
+The marginal-sum operator satisfies $\mathbf A_{\mathcal N}\mathbf x=(\mathbf X\mathbf1_n,\mathbf X^\top\mathbf1_m)$, where $\mathbf X$ is zero outside $\mathcal N$.
+With $G(\mathbf r,\mathbf q)=\rho_a\KL(\mathbf r\,|\,\mathbf a)+\rho_b\KL(\mathbf q\,|\,\mathbf b)$, the restricted problem is
+
 \begin{equation}
-\label{eq:transport-incidence}
-\mathbf{A}=\begin{pmatrix}\mathbf{1}_n^\top\otimes \mathbf{I}_m\\\mathbf{I}_n\otimes\mathbf{1}_m^\top\end{pmatrix}\in\mathbb R^{(m+n)\times mn}.
-\end{equation}
-Thus $\mathbf{A}\operatorname{vec}(\mathbf{X})=(\mathbf{X}\mathbf{1}_n,\mathbf{X}^\top\mathbf{1}_m)$, with the two vectors stacked vertically.
-Let $\mathbf{A}_{\mathcal N}$ retain the columns indexed by $\mathcal N$, and let $\mathbf{c}_{\mathcal N}$ retain the corresponding entries of $\operatorname{vec}(\mathbf{C})$.
-Define $G(\mathbf{r},\mathbf{q})=\rho_a\KL(\mathbf{r}\,|\,\mathbf{a})+\rho_b\KL(\mathbf{q}\,|\,\mathbf{b})$ for $\mathbf{r}\in\mathbb R^m$ and $\mathbf{q}\in\mathbb R^n$.
-
-\begin{definition}[Restricted UOT]
-\label{def:restricted-uot}
-For an active support $\mathcal N\subseteq[m]\times[n]$, restricted UOT is~\eqref{eq:primal-uot} with $X_{ij}=0$ for every $(i,j)\notin\mathcal N$.
-Let $\mathbf{x}\in\mathbb R^{|\mathcal N|}$ collect the transport variables indexed by $\mathcal N$; the primal and dual problems are
-\begin{align}
 \label{eq:restricted-uot}
-&\min_{\mathbf{x}\geq0}\;\langle \mathbf{c}_{\mathcal{N}},\mathbf{x}\rangle+G(\mathbf{A}_{\mathcal N}\mathbf{x}),\\
-\label{eq:restricted-dual-uot}
-&\max_{\mathbf{f},\mathbf{g}}\;D(\mathbf{f},\mathbf{g})\quad\text{s.t. }f_i+g_j\leq C_{ij},\ (i,j)\in\mathcal N.
-\end{align}
-The dual objective is unchanged from~\eqref{eq:dual-uot}, while only the inequalities indexed by $\mathcal N$ are retained.
-\end{definition}
+\min_{\mathbf{x}\geq0}\;\langle \mathbf{c}_{\mathcal{N}},\mathbf{x}\rangle+G(\mathbf{A}_{\mathcal N}\mathbf{x}).
+\end{equation}
 
-These repeated solves must efficiently produce high-accuracy primal--dual solutions satisfying the unregularized restricted KKT conditions.
-Adapting existing UOT algorithms to active supports presents challenges in jointly achieving this accuracy and computational efficiency (see Section~\ref{sec:restricted-experiments}).
-We therefore develop \subsolver, a practical GPU-efficient restricted UOT solver based on primal--dual hybrid gradient (PDHG)~\citep{esser2010general,chambolle2011first}.
-The interface $\subsolver(\mathcal P,\mathcal N,\mathcal Z_{\mathrm{init}};\varepsilon)$ accepts an initial primal--dual state and returns a state satisfying the restricted stopping criterion; $\varnothing$ selects the default initialization.
+We develop \subsolver to solve these nonlinear restricted problems using GPU-parallel primal--dual hybrid gradient (PDHG) updates~\citep{esser2010general,chambolle2011first}.
+Section~\ref{sec:restricted-experiments} compares its runtime and accuracy with other restricted solvers.
 
-The linear transport cost and separable marginal penalties lead to a saddle formulation with simple primal and dual updates.
-With
-\begin{equation*}
-F(\mathbf{x})=\langle \mathbf{c}_{\mathcal{N}},\mathbf{x}\rangle+\iota_{\mathbb R_+^{|\mathcal{N}|}}(\mathbf{x}),
-\end{equation*}
-the saddle formulation is
+Writing $F(\mathbf x)=\langle\mathbf c_{\mathcal N},\mathbf x\rangle+\iota_{\mathbb R_+^{|\mathcal N|}}(\mathbf x)$ gives the saddle formulation
 \begin{equation}
 \label{eq:restricted-saddle}
 \min_{\mathbf{x}}\max_{\mathbf{y}}\;F(\mathbf{x})+\langle \mathbf{A}_{\mathcal N}\mathbf{x},\mathbf{y}\rangle-G^*(\mathbf{y}),
@@ -297,7 +303,6 @@ Let $\mathbf{D}_x$ and $\mathbf{D}_y$ be positive diagonal step matrices.
 \widehat{\mathbf{y}}&=\operatorname{prox}_{G^*}^{\mathbf{D}_y^{-1}}\left(\mathbf{y}+\mathbf{D}_y\mathbf{A}_{\mathcal N}(2\widehat{\mathbf{x}}-\mathbf{x})\right).
 \end{aligned}
 \end{equation} 
-Here, $\operatorname{prox}_{G^*}^{\mathbf{D}_y^{-1}}(\mathbf{u})=\arg\min_v\{G^*(\mathbf{v})+\tfrac12\|\mathbf{v}-\mathbf{u}\|_{\mathbf{D}_y^{-1}}^2\}$.
 The primal step is a nonnegative projection driven by the dual scores, while the dual proximal map separates over nodes.
 For an input $u$, reference mass $h>0$, penalty $\rho$, and diagonal dual step $\mathbf{s}>0$, each coordinate solves
 \begin{equation*}
@@ -305,62 +310,25 @@ v-u+\mathbf{s} h e^{v/\rho}=0.
 \end{equation*}
 We solve this equation in the log domain to avoid overflow; Appendix~\ref{app:pduot-details} gives the scalar formulation.
 
-We combine this PDHG map with the following practical components, following restarted primal--dual methods~\citep{lu2024restarted,lin2025practical}.
-\begin{itemize}
-\item \textit{Reflected Halpern iteration.}
-Within each restart epoch, we apply
-\begin{equation}
-\label{eq:halpern}
-\mathbf{z}^{k+1}=\frac{1}{k+2}\mathbf{z}^{\mathrm a}+\frac{k+1}{k+2}(2\pduotmap \mathbf{z}^k-\mathbf{z}^k),
-\end{equation}
-where $\mathbf{z}=(\mathbf{x},\mathbf{y})$, $\mathbf{z}^{\mathrm a}$ is the fixed epoch anchor, and $k$ counts iterations within the epoch.
-We use the mapped point $\widehat{\mathbf{z}}=\pduotmap \mathbf{z}^k$ for stopping and output, since its coupling is nonnegative.
-
-\item \textit{Diagonal preconditioning.}
-We set $\mathbf{D}_x=w\overline{\mathbf{D}}_x$ and $\mathbf{D}_y=\overline{\mathbf{D}}_y/w$, where $w>0$ balances primal and dual steps.
-For node-covering supports, the base steps adapt to the active node degrees $d_v$:
-\begin{equation}
-\label{eq:pduot-metric}
-(\overline{\mathbf{D}}_x)_{ee}=\frac{\zeta}{2},\qquad
-(\overline{\mathbf{D}}_y)_{vv}=\frac{\zeta}{d_v},\qquad 0<\zeta<1.
-\end{equation}
-This choice ensures $\|\mathbf{D}_y^{1/2}\mathbf{A}_{\mathcal N}\mathbf{D}_x^{1/2}\|_2<1$.
-
-\item \textit{Adaptive restart.}
-We monitor the fixed-point residual and restart after sufficient reduction, moderate reduction followed by deterioration, or an epoch-length threshold.
-Each restart resets the anchor to the mapped point and the epoch counter to zero.
-
-\item \textit{Primal-weight adjustment.}
-At restart boundaries, a bounded log-domain proportional--integral controller adjusts $w$ using primal and dual displacements measured in the base metrics.
-With $L=\log(w_{\max}/w_{\min})$, we clip the $j$th proposed update to satisfy
-\begin{equation}
-\label{eq:pduot-weight-budget}
-\left|\log\frac{w_j}{w_{j-1}}\right|\leq b_j:=L\min\{1,(J/j)^p\},\qquad p>1.
-\end{equation}
-The counter resets at each restricted solve; the first $J$ updates are unrestricted by this budget.
-The base preconditioners remain fixed throughout the solve.
-\end{itemize}
-Algorithm~\ref{alg:pduot} summarizes the solver; Appendix~\ref{app:pduot-details} gives the practical control rules.
-At the mapped point, \checkstop evaluates marginal consistency $\delta_{\mathrm m}$, stationarity $\delta_{\mathrm s}$, and relative gap $\delta_{\mathrm g}$ in the original problem coordinates, returning when
-\begin{equation}
-\label{eq:pduot-stopping}
-\max\{\delta_{\mathrm m},\delta_{\mathrm s},\delta_{\mathrm g}\}\leq\varepsilon.
-\end{equation}
-Appendix~\ref{app:stopping-criterion} defines these measures and explains their relation to the restricted KKT conditions and the balanced-OT limit.
+Algorithm~\ref{alg:pduot} combines this map with reflected Halpern iteration and adaptive restart, following restarted primal--dual methods~\citep{lu2024restarted,lin2025practical}.
+Here $\mathbf z=(\mathbf x,\mathbf y)$, $\mathbf z^{\mathrm a}$ is the epoch anchor, and $k$ counts iterations within an epoch.
+We use Pock--Chambolle diagonal preconditioning, with fixed base steps scaled by a primal weight $w>0$.
+At restart boundaries, \updateweight adapts $w$ using primal and dual displacements, subject to a summable log-weight budget that supports the convergence guarantee in Proposition~\ref{prop:pduot-convergence}.
+Appendix~\ref{app:pduot-controls} gives the base steps, restart tests, and protected weight updates.
 
 \begin{algorithm}[t]
 \caption{\subsolver for restricted UOT}
 \label{alg:pduot}
 \begin{algorithmic}[1]
 \STATE \textbf{Input:} UOT problem $\mathcal P$, active support $\mathcal N$, initial state $\mathbf{z}^0$, tolerance $\varepsilon$.
-\STATE \textbf{Output:} restricted primal--dual solution $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$.
+\STATE \textbf{Output:} restricted primal--dual solution $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ at a mapped point with nonnegative flow.
 \STATE Choose $\overline{\mathbf{D}}_x,\overline{\mathbf{D}}_y,w$; set $\mathbf{z}^{\mathrm a}\gets \mathbf{z}^0$, $j\gets0$.
 \LOOP
     \STATE $\mathbf{D}_x\gets w\overline{\mathbf{D}}_x$, $\mathbf{D}_y\gets\overline{\mathbf{D}}_y/w$
     \STATE $\mathbf{z}\gets \mathbf{z}^{\mathrm a}$, $k\gets0$
     \LOOP
         \STATE $\widehat{\mathbf{z}}\gets\pduotmap \mathbf{z}$ by~\eqref{eq:pduot-map}; retain $\boldsymbol{\lambda}$.
-        \IF{$\checkstop(\widehat{\mathbf{z}},\boldsymbol{\lambda};\varepsilon)$}
+        \IF{$\checkstop(\widehat{\mathbf{z}},\boldsymbol{\lambda};\varepsilon)$ (Appendix~\ref{app:stopping-criterion})}
             \STATE $(\widehat{\mathbf{f}},\widehat{\mathbf{g}})\gets-\widehat{\mathbf{y}}$
             \STATE \textbf{Return:} $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$.
         \ENDIF
@@ -376,58 +344,13 @@ Appendix~\ref{app:stopping-criterion} defines these measures and explains their 
 \end{algorithmic}
 \end{algorithm}
 
-The fixed-metric analyses underlying cuPDLPx and PDCS leave their practical adaptive primal-weight updates outside the convergence guarantees~\citep{lu2024restarted,lu2025cupdlpx,lin2025practical}.
-The following proposition covers both adaptive restart and the protected primal-weight updates of \subsolver in exact arithmetic.
-
-\begin{proposition}[Convergence of \subsolver]
-\label{prop:pduot-convergence}
-Fix an active support covering all nodes, and suppose $\mathbf a,\mathbf b>0$, $\rho_a,\rho_b>0$, and all active costs are finite.
-Fix positive diagonal base steps satisfying $\|\overline{\mathbf D}_y^{1/2}\mathbf A_{\mathcal N}\overline{\mathbf D}_x^{1/2}\|_2<1$, use~\eqref{eq:pduot-weight-budget} with $0<w_{\min}\leq w_0\leq w_{\max}<\infty$, and assume exact proximal evaluations.
-Then the following statements hold:
-\begin{itemize}
-\item \textbf{Global convergence.}
-For arbitrary mapped-point restart times, the iterates and mapped points converge to a restricted KKT point from any initial anchor.
-\item \textbf{Local linear convergence.}
-With the practical sufficient-residual-reduction test checked at bounded intervals and its baseline refreshed after weight updates, convergence is R-linear in PDHG evaluations after a finite initial phase.
-\end{itemize}
-\end{proposition}
-
-Appendices~\ref{app:pduot-global}--\ref{app:pduot-restart} give the proof, including the local KL-UOT error bound.
-Practical control steps are detailed in Appendix~\ref{app:pduot-controls}.
-
 \subsection{UOT-Aware Hierarchy and Refinement}
 \label{sec:uot-hierarchy}
 
 \paragraph{Inter-level stability.}
-A coarse problem is useful if it retains information that can initialize a larger UOT solve.
-We therefore ask how changing the source instance affects the optimal response on a shared target side.
-For KL-UOT, the normalized target response
-\begin{equation}
-\label{eq:hierarchy-response-shape}
-p_j(\mathbf g)=\frac{b_j e^{-g_j/\rho_b}}{\sum_k b_k e^{-g_k/\rho_b}}
-\end{equation}
-separates the marginal shape from its total transported mass and is invariant under scalar translations of $\mathbf g$.
-The following result identifies a regime in which this shape can be inherited.
-
-\begin{proposition}[Shared-side response stability]
-\label{prop:uot-hierarchy-stability}
-Consider two unregularized KL-UOT instances with positive reference weights, finite costs, positive marginal penalties, and a common target reference $\mathbf b$ and target penalty $\rho_b$.
-Let $\mathbf p^0,\mathbf p^1$ be their normalized optimal target marginals, and define, over the union of the source sets,
-\begin{equation*}
-\Gamma=\max_{i,i',j,j'}|C_{ij}-C_{ij'}-C_{i'j}+C_{i'j'}|.
-\end{equation*}
-With $H^2(\mathbf p,\mathbf z)=\sum_j(\sqrt{p_j}-\sqrt{z_j})^2$,
-\begin{equation*}
-H^2(\mathbf p^0,\mathbf p^1)\leq 2\left[1-\operatorname{sech}\!\left(\frac{\Gamma}{4\rho_b}\right)\right]\leq \frac{\Gamma^2}{16\rho_b^2}.
-\end{equation*}
-\end{proposition}
-
-Proposition~\ref{prop:uot-hierarchy-stability} shows that a small cost interaction relative to $\rho_b$ limits shared-side shape changes, motivating the reuse of coarse dual information in finer solves.
-After removing scalar translations, this response error also controls the potential error with geometric-mean response weights (Corollary~\ref{cor:uot-hierarchy-weighted-potentials}).
-Appendix~\ref{app:uot-hierarchy-stability} proves the result and develops a sharper computable bound and a conditional response predictor.
-Guided by this stability, we use the nested random subsampling and dual propagation of \hello~\citep{xia2026dual}, changing one side at a time so that the other side's potential can be inherited.
-The bound applies to arbitrary source subsets; quantitative rates in the retained sample size require additional geometric assumptions.
-The next step adjusts the response totals after propagation.
+We use the nested random subsampling and dual propagation of \hello~\citep{xia2026dual}, changing one marginal at a time so that the other side's potential can be inherited.
+For KL-UOT, small cost interaction relative to the shared-side marginal penalty bounds changes in the normalized optimal marginal-response shape (Proposition~\ref{prop:uot-hierarchy-stability}, Appendix~\ref{app:uot-hierarchy-stability}).
+This supports coarse-to-fine initialization in that regime; rates in the retained sample size require additional geometric assumptions.
 
 \paragraph{Potential translation.}
 Following \hello, we inherit the shared-side potential and complete the other side by a $c$-transform~\citep{xia2026dual}, obtaining dual-feasible potentials whose marginal responses may imply different total transported masses.
@@ -470,68 +393,41 @@ Flows on retained edges and node potentials are warm-started in the next restric
 \subsection{Convergence and Complexity}
 \label{sec:analysis}
 
-We first connect a restricted \subsolver solution to the full KL-UOT problem.
+The fixed-metric analyses underlying \cupdlpx and \pdcs leave their practical adaptive primal-weight updates outside the convergence guarantees~\citep{lu2024restarted,lu2025cupdlpx,lin2025practical}.
+The following proposition covers both adaptive restart and the protected primal-weight updates of \subsolver in exact arithmetic.
 
-\begin{proposition}[Restricted-to-full recovery]
-\label{prop:restricted-recovery}
-Let $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ satisfy the KKT conditions of~\eqref{eq:restricted-uot} on $\mathcal{N}$.
-If $\widehat f_i+\widehat g_j\leq C_{ij}$ for every $(i,j)\in[m]\times[n]$, then extending $\widehat{\mathbf{x}}$ by zero outside $\mathcal{N}$ yields a global primal solution of~\eqref{eq:primal-uot}, and $(\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ is a global dual solution of~\eqref{eq:dual-uot}.
+\begin{proposition}[Convergence of \subsolver]
+\label{prop:pduot-convergence}
+Fix an active support covering all nodes, and suppose $\mathbf a,\mathbf b>0$, $\rho_a,\rho_b>0$, and all active costs are finite.
+Fix positive diagonal base steps satisfying $\|\overline{\mathbf D}_y^{1/2}\mathbf A_{\mathcal N}\overline{\mathbf D}_x^{1/2}\|_2<1$, use~\eqref{eq:pduot-weight-budget} with $0<w_{\min}\leq w_0\leq w_{\max}<\infty$, and assume exact proximal evaluations.
+Then the following statements hold:
+\begin{itemize}
+\item \textbf{Global convergence.}
+For arbitrary mapped-point restart times, the iterates and mapped points converge to a restricted KKT point from any initial anchor.
+\item \textbf{Local linear convergence.}
+With the practical sufficient-residual-reduction test checked at bounded intervals and its baseline refreshed after weight updates, convergence is R-linear in PDHG evaluations after a finite initial phase.
+\end{itemize}
 \end{proposition}
 
-Restricted KKT conditions already provide the marginal responses, active-edge feasibility, and complementarity.
-The full-space inequalities supply the only missing KKT conditions.
+Appendices~\ref{app:pduot-global}--\ref{app:pduot-restart} give the proof, including the local KL-UOT error bound.
+Practical control steps are detailed in Appendix~\ref{app:pduot-controls}; Appendix~\ref{app:pduot-weight-budget-experiment} examines the effect of the weight budget.
 
-We analyze refinement at a fixed hierarchy level with positive reference masses and penalties, finite nonnegative costs, and node-covering active supports.
-Assume exact bidirectional top-$\gamma$ pricing with $\gamma\geq1$, preservation of transported marginals and cost during sparsification, and pruning that retains all positive-flow and newly priced edges.
-
-\begin{theorem}[Exact refinement]
-\label{thm:refinement-exact}
-If each restricted call returns an exact primal--dual solution and pricing stops only when all full-space dual inequalities hold, refinement terminates after finitely many rounds at a global primal--dual solution of KL-UOT.
-\end{theorem}
-
-A positive score at an exact restricted solution gives a feasible one-edge descent direction.
-Retaining that edge and the current positive support strictly decreases the next restricted optimal value.
-There are finitely many active supports, so the strictly decreasing sequence cannot revisit a support.
-
-For inexact solves, let $\mathbf X^k$ be the returned coupling, $\Delta_k=\Phi(\mathbf X^k)-\Phi(\mathbf X^{k+1})$, and define the feasible coordinate gain
-\begin{equation}
-\label{eq:refinement-coordinate-gain}
-G_k=\max_{e\in\mathcal V_k\setminus\mathcal N_k}\max_{t\geq0}\{\Phi(\mathbf X^k)-\Phi(\mathbf X^k+t\mathbf E_e)\},
-\end{equation}
-with $G_k=0$ for an empty candidate set.
-Write $v_k=\max_{i,j}[\sigma^k_{ij}]_+$ and $a_k=\max_{(i,j)\in\mathcal N_k}[\sigma^k_{ij}]_+$ for full and active score maxima.
-The one-sided marginal-gradient error is
-\begin{equation}
-\label{eq:refinement-fidelity}
-\begin{aligned}
-\Omega_k={}&\max_i[f_i^k+\rho_a\log(r_i^k/a_i)]_+\\
-&+\max_j[g_j^k+\rho_b\log(q_j^k/b_j)]_+,
-\end{aligned}
-\end{equation}
-where a zero transported marginal contributes zero to its one-sided error.
+With exact restricted solves, inserting a positive-score edge permits strict objective decrease (Theorem~\ref{thm:refinement-exact}, Appendix~\ref{app:refinement-convergence}).
+For inexact solves, the \emph{refinement safeguard} requires decrease relative to a feasible coordinate gain, together with sufficient objective decrease or pricing fidelity; Appendix~\ref{app:refinement-local-stopping} gives the local checks.
 
 \begin{theorem}[Inexact refinement]
 \label{thm:refinement}
-Use $\ell_2$ stopping measures with a restricted tolerance $\varepsilon_{\mathrm r}>0$ and a full-space tolerance $\tau>0$.
-Set $d_k=\varepsilon_{\mathrm r}^2(1+|\Phi(\mathbf X^k)|)$.
-Suppose each restricted call returns in finite time with all three restricted stopping measures at most $\varepsilon_{\mathrm r}$ and, except for the first call at each level, satisfies
-\begin{equation}
-\label{eq:refinement-output-conditions}
-\begin{gathered}
-\Delta_k\geq G_k/2,\\
-\Delta_k\geq d_k
-\quad\text{or}\quad
-\max\{a_{k+1},\Omega_{k+1}\}\leq v_k/2.
-\end{gathered}
-\end{equation}
+Consider a fixed KL-UOT level in exact arithmetic, with positive reference masses and penalties, finite nonnegative costs, and node-covering active supports.
+Assume exact bidirectional top-$\gamma$ pricing with $\gamma\geq1$, sparsification that preserves transported marginals and cost, and pruning that retains positive-flow and newly priced edges.
+Fix restricted and full-space tolerances $\varepsilon_{\mathrm r},\tau>0$ with $\ell_2$ stopping measures.
+Suppose each restricted call returns in finite time with all three restricted stopping measures at most $\varepsilon_{\mathrm r}$ and, except for the first call at each level, satisfies the refinement safeguard~\eqref{eq:refinement-implemented-gate}.
 Then refinement terminates after finitely many rounds with restricted stopping measures at most $\varepsilon_{\mathrm r}$ and full-space violation $\eta\leq\tau$.
 In particular, $\varepsilon_{\mathrm r}=\tau=\varepsilon$ gives the KKT stopping tolerance used in Algorithm~\ref{alg:ours}.
 \end{theorem}
 
-The objective bounds the number of sufficient-decrease rounds.
-On the remaining rounds, pricing fidelity implies either geometric contraction of the largest full-space violation or a uniformly positive coordinate gain, which the next solve converts into objective decrease.
-Appendix~\ref{app:refinement-convergence} proves both theorems and gives local stopping conditions, called the \emph{refinement safeguard}, that enforce~\eqref{eq:refinement-output-conditions} within a single \subsolver call.
-These conditions require only the active support and the preceding scan maximum; they preserve the nominal tolerance and keep restricted solves separate from full-space pricing.
+Appendix~\ref{app:refinement-convergence} proves the result through objective decrease and violation contraction.
+The safeguard uses only the active support and the preceding scan maximum, preserving the nominal tolerance without additional full-space pricing.
+Appendix~\ref{app:refinement-safeguard} measures its overhead in complete solves.
 % \xwz{RERUN REQUIRED: historical performance measurements have refinement_forcing_check=False and refinement_progress_check=False. Rerun supported KL/l2-stationarity configurations with refinement_forcing_check=True, preserving each declared cost policy. Verify the computed output conditions and update timing, figures, tables and provenance. The dedicated on/off batch is complete; it does not retroactively enable the safeguard in historical measurements. Numerical bounds use evaluated costs, with scope specified in the appendix.}
 
 Finally, let $\mathbf{s}=|\mathcal{N}|$ denote the largest maintained active support.
@@ -552,45 +448,25 @@ The sparse support and restricted UOT solver provided by \ours also support entr
 \subsection{Sparse Entropic Refinement}
 \label{sec:entropic-extension}
 
-Let $\Phi$ denote the unregularized objective in~\eqref{eq:primal-uot}, and let $\mathcal{N}_\star$ be the final active support returned by \ours.
-To approximate entropic UOT at a small regularization strength $\varepsilon>0$, we solve
+To approximate entropic UOT at small regularization strength $\varepsilon>0$, we reconstruct a support $\mathcal N_{\mathrm e}$ from the unregularized \ours solution: retain its positive-flow edges and add bidirectional top-$b_{\mathrm e}$ edges under its final dual scores.
+Writing $\Phi$ for~\eqref{eq:primal-uot}, we then solve
 \begin{equation}
 \label{eq:sparse-entropic-extension}
-\min_{X\geq0,\,\supp(X)\subseteq\mathcal{N}_\star}\;\Phi(\mathbf{X})+\varepsilon\KL(\mathbf{X}\,|\,\mathbf{a}\otimes \mathbf{b}).
+\min_{X\geq0,\,\supp(X)\subseteq\mathcal N_{\mathrm e}}\;\Phi(\mathbf{X})+\varepsilon\KL(\mathbf{X}\,|\,\mathbf{a}\otimes \mathbf{b}).
 \end{equation}
-Generalized Sinkhorn updates on this fixed support cost $O(|\mathcal{N}_\star|+m+n)$ time and memory per iteration.
-Reusing the final active support avoids an additional support-construction scan and retains an explicitly sparse coupling for downstream tasks.
-The approximation comes from restricting the support of the full entropic problem; a small $\varepsilon$ motivates reusing edges localized by the unregularized solver, while its downstream accuracy is evaluated experimentally.
-Appendix~\ref{app:entropic-extension} describes the sparse updates and an optional support expansion.
+Generalized \sinkhorn updates cost $O(|\mathcal N_{\mathrm e}|+m+n)$ time and memory per iteration and return a sparse coupling for downstream tasks.
+The budget $b_{\mathrm e}$ can be chosen automatically to fit the final active-support size; Appendix~\ref{app:entropic-extension} gives the construction and a direct-reuse variant.
+The support restriction approximates the full entropic problem; Section~\ref{sec:entropic-experiments} evaluates its accuracy.
 
 \subsection{Unbalanced Fused Gromov--Wasserstein}
 \label{sec:ufgw-extension}
 
 UFGW combines feature matching with alignment of within-dataset relations.
-Let $\mathbf{A}\in\mathbb R^{m\times m}$ and $\mathbf{B}\in\mathbb R^{n\times n}$ encode these relations, and let $\mathbf{M}\in\mathbb R^{m\times n}$ be the feature cost.
-We use a two-coupling block-coordinate relaxation with tensorized KL marginal penalties~\citep{sejourne2023unbalanced}.
-% CN: 请作者补入原始 UGW relaxation 论文的引用；此处暂用现有综述引用，不修改 bibliography。
-% EN: Add the original UGW relaxation citation; the existing survey is cited provisionally without changing the bibliography.
-For nonnegative couplings $\mathbf{P},\mathbf{Q}$, define
-\begin{equation*}
-\mathcal Q_{A,B}(\mathbf{P},\mathbf{Q})=\sum_{i,k,j,l}(A_{ik}-B_{jl})^2P_{ij}Q_{kl}
-\end{equation*}
-and $D_a(\mathbf{P},\mathbf{Q})=\KL((\mathbf{P}\mathbf{1})\otimes(\mathbf{Q}\mathbf{1})\,|\,\mathbf{a}\otimes \mathbf{a})$, with $D_b$ defined analogously for target marginals.
-The relaxed objective is
-\begin{equation}
-\label{eq:ufgw-relaxation}
-\begin{aligned}
-\min_{P,Q\geq0}\quad &(1-\alpha)\mathcal Q_{A,B}(\mathbf{P},\mathbf{Q})\\
-&+\frac{\alpha}{2}\langle \mathbf{M},\mathbf{P}+\mathbf{Q}\rangle
-+\rho_aD_a(\mathbf{P},\mathbf{Q})+\rho_bD_b(\mathbf{P},\mathbf{Q}),
-\end{aligned}
-\end{equation}
-where $\alpha\in[0,1]$ controls feature matching and $\alpha=0$ gives the UGW relaxation.
-Fixing either coupling yields a KL-UOT subproblem whose marginal penalty coefficients are scaled by the mass of the fixed coupling.
-We alternate \ours solves for the two blocks, with mass-balancing rescaling after each block update; sparse entropic refinement provides an optional regularized variant.
+In the two-coupling relaxation with tensorized KL marginal penalties~\citep{sejourne2023unbalanced}, fixing either coupling yields a KL-UOT block, which we solve with \ours.
+Alternating these solves with mass-balancing rescaling gives the UFGW solver; applying sparse entropic refinement to each block gives its regularized variant.
 For the squared-Euclidean structural and feature costs used in our experiments, each block cost admits an exact squared-Euclidean embedding computed from sparse coupling moments.
-This representation allows \ours to scan the block costs without storing dense structural or cross-cost matrices.
-The block formulas, rescaling, and entropic variant are given in Appendix~\ref{app:ufgw-extension}.
+Thus \ours can localize edges and solve the blocks without storing dense structural or cross-cost matrices.
+Appendix~\ref{app:ufgw-extension} gives the objective, block reductions, and rescaling.
 
 \section{Experiments}
 \label{sec:experiments}
@@ -599,12 +475,12 @@ We evaluate \ours in terms of unregularized UOT accuracy and scalability, restri
 
 \paragraph{Setup and metrics.}
 Our primary real-data benchmark uses successive developmental stages from TOME mouse embryogenesis, with squared-Euclidean costs on a shared PCA representation.
-We compare \ours with GPU-based \mm, online \sinkhorn implemented in OTT, and the low-rank method ULOT.
-Unless otherwise specified, \runtime denotes solver wall-clock time in seconds, including hierarchy construction for \ours, and \gpumem denotes peak GPU memory in GiB.
+We compare \ours with GPU-based \mm, online \sinkhorn implemented in OTT, and the low-rank method \ulot.
+Unless otherwise specified, \runtime denotes solver wall-clock time in seconds, including hierarchy construction for \ours, and \gpumem denotes peak active GPU allocation in GiB.
 Timing excludes compilation, explicit warmup, and common post-solve evaluation.
+In tables, bold marks the best displayed values within each comparison, including ties; -- denotes unavailable measurements.
 The final experimental protocol will enable the refinement safeguard in the supported \ours comparisons, except when explicitly ablated.
-% \xwz{RERUN REQUIRED: this is the target final protocol, not the configuration of all current measurements. Current main-scaling, Pareto, component-ablation, sensitivity, and HELLO-UOT-comparison SHUTTLE batches have refinement_forcing_check=False. Rerun the supported SHUTTLE measurements with refinement_forcing_check=True and replace their tables/figures before describing them as safeguard-enabled. Preserve the declared cost policy; do not silently change coarse FP32 costs to FP64. The dedicated on/off experiment in Appendix app:refinement-safeguard is complete.}
-GPU memory measures peak active allocation during the algorithm rather than allocator reservation.
+% \xwz{RERUN REQUIRED: this is the target final protocol, not the configuration of all current measurements. Current main-scaling, Pareto, component-ablation, sensitivity, and HELLO-UOT-comparison hier_uot batches have refinement_forcing_check=False. Rerun the supported hier_uot measurements with refinement_forcing_check=True and replace their tables/figures before describing them as safeguard-enabled. Preserve the declared cost policy; do not silently change coarse FP32 costs to FP64. The dedicated on/off experiment in Appendix app:refinement-safeguard is complete.}
 For the unregularized UOT comparisons, we evaluate every coupling using the original unregularized objective, including couplings obtained with entropic regularization or low-rank constraints.
 To compare primal accuracy independently of each solver's dual output, we use a shared feasible dual bound $D_{\mathrm{ref}}$ for each instance and report
 \begin{equation}
@@ -612,66 +488,16 @@ To compare primal accuracy independently of each solver's dual output, we use a 
 \label{eq:experimental-shared-gap}
 \end{equation}
 The same bound is used across all methods and parameter settings on that instance.
+Appendix~\ref{app:extension-experiment-protocols} gives additional measurement and sampling details.
 % \xwz{Experimental protocol to finalize: hardware, precision, timing and peak-memory measurement, shared-bound construction and validation, parameter grids, and random seeds.
 % Exclude compilation warm-up and common accuracy evaluation from solver timing, and disclose their costs separately.}
 
 \subsection{Unregularized UOT}
 \label{sec:uot-comparison}
 
-\paragraph{Time, memory, and accuracy.}
-We first compare \ours with \mm and \sinkhorn at a common problem size, reporting runtime, peak GPU memory, and \sharedgap in Table~\ref{tab:uot-comparison}.
-The four penalty settings cover weak, moderate, and strong symmetric penalties, together with a highly asymmetric configuration.
-The \sinkhorn baseline uses $\varepsilon=10^{-3}$.
-% \xwz{Provisional analysis; verify against measured results: \ours is expected to combine small primal--dual gaps with substantially lower memory consumption than dense \mm.
-% Online \sinkhorn also avoids quadratic storage, making runtime at matched accuracy the central comparison with this baseline.
-% The relative runtime advantage may depend on the penalty regime, particularly when weak penalties favor rapid \mm convergence.}
-
-\begin{table}[t]
-\centering
-% CN: 数据来源：paper_experiments_uot/main_scaling/results/20261025_170426/summary_table.csv；仅 n=16384 的 mm、ott_dense、shuttle 共 12 次成功运行；显存由 MiB 除以 1024 转为 GiB。
-% EN: Source: paper_experiments_uot/main_scaling/results/20261025_170426/summary_table.csv; the 12 successful n=16384 runs for mm, ott_dense and shuttle; memory converted from MiB to GiB by dividing by 1024.
-% \xwz{SOURCE AUDIT PENDING: the original 20261025_170426 batch could not be located in the current checkout or the checked worktrees. Retain these existing table values provisionally; recover the archive or rerun before finalizing provenance and protocol alignment.}
-\caption{\textbf{Unregularized UOT comparison.}
-TOME E11.5$\to$E12.5 instances with $m=n=16{,}384$ and $d=30$.
-Memory denotes peak active GPU allocation in GiB; accuracy uses the shared bound in~\eqref{eq:experimental-shared-gap}.
-Results use seed $42$ with one run per method; best values within each penalty setting are bold.}
-\label{tab:uot-comparison}
-\footnotesize
-\setlength{\tabcolsep}{2pt}
-\begin{tabular}{llrrr}
-\toprule
-$(\rho_a,\rho_b)$ & Method & \runtime~$\downarrow$ & \gpumemshort~$\downarrow$ & \sharedgap~$\downarrow$ \\
-\midrule
-\multirow{3}{*}{$(0.1,0.1)$}
- & \mm & 47.06 & 14.016 & $5.60\times10^{-6}$ \\
- & \sinkhorn & 3.56 & 4.035 & $2.41\times10^{-3}$ \\
- & \ours & \textbf{1.85} & \textbf{0.532} & $\boldsymbol{8.95\times10^{-8}}$ \\
-\midrule
-\multirow{3}{*}{$(1,1)$}
- & \mm & 160.63 & 14.016 & $7.07\times10^{-5}$ \\
- & \sinkhorn & 27.58 & 4.035 & $1.07\times10^{-3}$ \\
- & \ours & \textbf{2.59} & \textbf{0.532} & $\boldsymbol{1.49\times10^{-7}}$ \\
-\midrule
-\multirow{3}{*}{$(10,10)$}
- & \mm & 379.95 & 14.016 & $1.32\times10^{-3}$ \\
- & \sinkhorn & 75.84 & 4.035 & $1.21\times10^{-3}$ \\
- & \ours & \textbf{7.40} & \textbf{0.532} & $\boldsymbol{5.44\times10^{-7}}$ \\
-\midrule
-\multirow{3}{*}{$(0.045,99.995)$}
- & \mm & 587.69 & 14.016 & $1.96\times10^{-2}$ \\
- & \sinkhorn & 4.00 & 4.035 & $1.70\times10^{-3}$ \\
- & \ours & \textbf{1.92} & \textbf{0.532} & $\boldsymbol{3.43\times10^{-6}}$ \\
-\bottomrule
-\end{tabular}
-
-\smallskip
-% \xwz{Preliminary results at $n=m=16{,}384$; larger instances will follow.}
-\end{table}
-
-
 \paragraph{Runtime--accuracy trade-offs.}
-We next compare parameter sweeps at a fixed sample size and feature dimension across the four penalty settings, including ULOT to examine the accuracy attainable with low-rank couplings.
-We vary the stopping tolerance for \ours and \mm, the regularization strength for online \sinkhorn, and the coupling rank for ULOT.
+We compare \ours, \mm, \hellouot, online \sinkhorn, and \ulot across four marginal-penalty settings.
+We vary the stopping tolerance for \ours, \mm, and \hellouot, the regularization strength for \sinkhorn, and the coupling rank for \ulot.
 Figure~\ref{fig:uot-runtime-accuracy} reports runtime versus \sharedgap, with each curve connecting configurations of the same method.
 % \xwz{Provisional analysis; verify against measured results: \ours is expected to retain high accuracy across dimensions, with its runtime advantage becoming more pronounced in high-dimensional settings.
 % Low-rank methods may offer shorter runtimes at moderate accuracy, while increasing rank raises their computational cost.
@@ -679,20 +505,19 @@ Figure~\ref{fig:uot-runtime-accuracy} reports runtime versus \sharedgap, with ea
 
 \begin{figure}[t]
 \centering
-% CN: 图及汇总数据来源：paper_experiments_uot/accuracy_runtime_pareto/results/20261025_201833/{accuracy_runtime_pareto_2x2.pdf,pareto_aggregate.csv}；绘图方法见同目录 plot_selection.json。
-% EN: Figure and aggregate data: paper_experiments_uot/accuracy_runtime_pareto/results/20261025_201833/{accuracy_runtime_pareto_2x2.pdf,pareto_aggregate.csv}; plotted methods are recorded in plot_selection.json.
-% \xwz{ARCHIVE CHECK: the historical batch is now in paper_experiments_uot/accuracy_runtime_pareto/results/20261025_201833_没有pduot/. It used normalize_subproblem_masses=True and did not record pduot_mode; verify plotted points against that archive before claiming alignment with the current defaults. The PDF bytes differ, so source identity still needs checking.}
+% CN: 图及汇总数据来源：paper_experiments_uot/accuracy_runtime_pareto/results/20261111_202336/{accuracy_runtime_pareto_2x2.pdf,accuracy_runtime_pareto_2x2.png,pareto_aggregate.csv}；绘图方法见同目录 plot_selection.json。
+% EN: Figure and aggregate data: paper_experiments_uot/accuracy_runtime_pareto/results/20261111_202336/{accuracy_runtime_pareto_2x2.pdf,accuracy_runtime_pareto_2x2.png,pareto_aggregate.csv}; plotted methods are recorded in plot_selection.json.
+% \xwz{PARTIAL-SEED PLACEHOLDER: this figure currently averages available valid paired runtime/gap observations only; seeds 42--46 are planned but incomplete, and coverage varies by configuration (plot_count/plot_seeds/plot_complete in pareto_aggregate.csv). Once the complete five-seed experiment finishes, rerun collect and replace this figure again.}
 \includegraphics[width=\linewidth]{figures/uot_accuracy_runtime_pareto_2x2.pdf}
 \caption{\textbf{Runtime--accuracy comparison.}
-Runtime versus the shared gap in~\eqref{eq:experimental-shared-gap} on TOME E11.5--E12.5 with $n=m=16{,}384$ and $d=30$.
-Panels compare $(\rho_a,\rho_b)=(0.1,0.1)$, $(1,1)$, $(10,10)$, and $(0.045,99.995)$.
-Marker size increases with tighter stopping tolerances, smaller Sinkhorn regularization, or larger ULOT rank; lines connect each method's nondominated configurations.
-% \xwz{Preliminary results from one random seed.}
+TOME E11.5--E12.5 ($m=n=32{,}768$, $d=30$), using \sharedgap~\eqref{eq:experimental-shared-gap}.
+Lines connect parameter settings; larger markers target higher accuracy.
+Means use available valid seeds; five-seed coverage is incomplete.
 }
 \label{fig:uot-runtime-accuracy}
 \end{figure}
 
-\input{experiments_hello_uot}
+Independent comparisons with \hellouot at $n=m\in\{32{,}768,65{,}536,131{,}072\}$, including final native solutions and optimization trajectories, are reported in Appendix~\ref{app:hello-uot-comparison}.
 
 \paragraph{Large-scale performance.}
 We evaluate \ours on two independent whole-brain MERFISH samples, Zhuang-ABCA-1 and Zhuang-ABCA-2~\citep{zhang2023wholebrainmerfish}, using a common 30-dimensional PCA representation of the 1,122 measured genes.
@@ -709,12 +534,9 @@ Appendix~\ref{app:scalability-accuracy} reports the shared gaps at each scale to
 % EN: Two-panel figure and fit data: paper_experiments_uot/main_scaling/results/20261102_150232_shuttle_zhuang_large/{scaling.pdf,scaling_statistics.json,manifest.json,cases/*/shuttle_repeat0/metrics.json}; 20/20 successful formal solves; runtime_sec excludes reference construction and common evaluation, with memory converted from MiB to GiB.
 \includegraphics[width=\linewidth]{figures/uot_zhuang_scaling.pdf}
 \caption{\textbf{Million-point UOT scalability.}
-(a) Runtime and (b) peak active GPU allocation of \ours on Zhuang-ABCA-1$\to$Zhuang-ABCA-2, with equal numbers of cells on both sides and $d=30$.
-Colors and marker shapes distinguish $(\rho_a,\rho_b)$, as listed in the shared legend.
-Each problem is solved on a single A100 GPU; time includes input upload, hierarchy construction, initialization, and solving, while excluding compilation, prewarming, and common evaluation.
-Both axes are logarithmic.
-Gray lines show linear and quadratic slope references with arbitrary vertical offsets, rather than fitted models or complexity bounds.
-Results use seed $42$ with one measurement per configuration.}
+(a) Runtime and (b) peak GPU memory on Zhuang-ABCA-1$\to$Zhuang-ABCA-2 ($m=n$, $d=30$), using a single A100 GPU.
+Gray lines indicate linear and quadratic scaling, with arbitrary vertical offsets.
+One run per configuration.}
 \label{fig:uot-large-scale}
 \end{figure}
 
@@ -722,12 +544,14 @@ Results use seed $42$ with one measurement per configuration.}
 \label{sec:restricted-experiments}
 % 预测的实验结果
 % 1. PDUOT，小rho配置下，要较大规模才有优势；中大rho配置下，PDUOT在上万规模后就有优势（相对于MM，Sinkhorn等强基线）
-% 2. Shuttle算法，同样也是中大rho配置下优势更大，且它具有很强的scalability，能单卡gpu计算几十万甚至百万规模的UOT问题
-% 3. Shuttle-SparSink算法能以线性内存近似dense Sinkhorn的结果（适用于熵正则化较小的困难场景），相比于现有online Sinkhorn 或者 Spar-Sinkh 算法具有精度或效率上的优势；在下游指标上Shuttle-SparSink能基本达到dense Sinkhorn的指标，且相比于其他scalable的算法具有更好的指标
-% 4. Shuttle-UFGW算法相比于BCD-MM算法在相同精度下具有更高的efficiency和更好的Scalaiblity；在下游指标上相比于ULFGW算法在大部分指标上效果更好
+% 2. hier_uot算法，同样也是中大rho配置下优势更大，且它具有很强的scalability，能单卡gpu计算几十万甚至百万规模的UOT问题
+% 3. hier_uot-SparSink算法能以线性内存近似dense Sinkhorn的结果（适用于熵正则化较小的困难场景），相比于现有online Sinkhorn 或者 Spar-Sinkh 算法具有精度或效率上的优势；在下游指标上hier_uot-SparSink能基本达到dense Sinkhorn的指标，且相比于其他scalable的算法具有更好的指标
+% 4. hier_uot-UFGW算法相比于BCD-MM算法在相同精度下具有更高的efficiency和更好的Scalaiblity；在下游指标上相比于ULFGW算法在大部分指标上效果更好
 
+% CN: 结果解读待补：重点比较达到相同精度的求解时间随边际惩罚 rho 增大的变化；说明 PDUOT 受惩罚强度增大的影响相对 Sinkhorn 和 MM 明显更小，以支持引言中跨惩罚强度高效获得高精度 primal--dual 解的主张。具体幅度与适用范围按最终实验结果填写。
+% EN: Results discussion to add: compare how time to matched accuracy changes as the marginal penalty rho increases. Explain that PDUOT is substantially less affected than Sinkhorn and MM, supporting the introduction's claim of efficient high-accuracy primal--dual solves across penalty strengths. Report magnitudes and scope from the final measurements.
 We compare \subsolver with existing solvers on shared restricted UOT instances, evaluating runtime and primal--dual accuracy across support sizes and marginal penalty parameters.
-For each $(n,\rho_a,\rho_b)$ setting, we capture the lower-middle restricted problem among the finest-level solves of an actual \ours run.
+Each setting uses a fixed finest-level restricted problem from an actual \ours run (Appendix~\ref{app:restricted-experiment-protocol}).
 Each solver uses its standard initialization and native stopping rule, with parameter sweeps evaluated through runtime and the shared gap in~\eqref{eq:experimental-shared-gap}.
 This comparison isolates the cost of solving the same sparse optimization problem from its effect on subsequent refinement.
 
@@ -740,11 +564,10 @@ This comparison isolates the cost of solving the same sparse optimization proble
 % CN: J=64 审计：20 个 PDUOT 扫描点均记录 restart_count，最大为 17；保护不会改变这些迭代轨迹，未据此声称保护开销为零。
 % EN: J=64 audit: all 20 PDUOT points record restart_count, with maximum 17; the budget leaves these iteration trajectories unchanged, without establishing zero timing overhead. Evidence: experiments/primal_weight_budget_20261111/report/history_J64_audit.json.
 \includegraphics[width=\linewidth]{figures/restricted_solver_accuracy_runtime_pareto_2x2_n65536.pdf}
-\caption{\textbf{Restricted-solver runtime--accuracy comparison on \ours active supports.}
-Runtime versus the shared gap in~\eqref{eq:experimental-shared-gap} for the lower-middle finest-level restricted problem captured on TOME E11.5--E12.5 with $n=m=65{,}536$ and $d=30$.
-Panels compare $(\rho_a,\rho_b)=(0.1,0.1)$, $(1,1)$, $(0.045,99.995)$, and $(10,10)$; the corresponding active supports contain between $1.31$ and $1.68$ million edges.
-Marker size follows each method's parameter sweep, and lines connect valid points in parameter order.
-Results use seed $42$ with one measurement per configuration.
+\caption{\textbf{Restricted-solver runtime--accuracy comparison.}
+Fixed \ours subproblems from TOME E11.5--E12.5 ($m=n=65{,}536$, $d=30$), using \sharedgap~\eqref{eq:experimental-shared-gap}.
+Lines connect parameter settings; larger markers target higher accuracy.
+One run per configuration.
 }
 \label{fig:restricted-runtime-accuracy}
 \end{figure}
@@ -762,11 +585,12 @@ Results use seed $42$ with one measurement per configuration.
 % EN: Reproduce with: CUDA_VISIBLE_DEVICES=<idle GPU> PYTHONPATH=src:. micromamba run -n hier_ot python -m experiments.restricted_kl_uot.pdcs_gpu.pilot_resident --output-dir experiments/restricted_kl_uot/results/torch_pdcs_shuttle_n16384_NEW_BATCH --n 16384 --seed 42 --torch-modes fused --skip-julia.
 \begin{table}[t]
 \centering
-\caption{Preliminary component ablations with $m=n$, seed 42, and KKT tolerance $10^{-6}$.
+\caption{\textbf{Component ablations (preliminary).}
+$m=n$, KKT tolerance $10^{-6}$.
 Panels A, B, D, and E use TOME E11.5$\to$E12.5 ($d=30$); C uses Gaussian point clouds ($d=3$).
-All panels use the main experiment's solver settings, including dual-assignment budget $\kappa=16$ and coarsest size 256.
-\runtime is in seconds; \gpumem is peak active PyTorch allocation in GiB; \refineiters counts finest-level refinement rounds.
-Compilation and prewarming are excluded; -- denotes unavailable measurements.}
+C compares warm-started \subsolver with cold-started \pdcs.
+\refineiters counts finest-level refinement rounds.
+One run per variant.}
 \label{tab:component-settings-mock}
 \footnotesize
 \setlength{\tabcolsep}{2pt}
@@ -812,7 +636,6 @@ Returned solutions and the final full-space solution are accepted using the orig
 Both backends require one finest-level refinement round in this pilot.
 Appendix~\ref{app:implementation-details} describes the implementations and timing protocol.
 Appendix~\ref{app:pduot-component-ablation} isolates the internal control choices of \subsolver on fixed restricted problems.
-Appendix~\ref{app:refinement-safeguard} measures the refinement safeguard's overhead in complete \ours solves.
 
 \paragraph{Active support.}
 Panel B retains the hierarchy and propagated potentials while replacing active-support refinement with a full-graph solve at each level.
@@ -1027,10 +850,29 @@ Results are medians over five repeated timings per configuration.}
 
 \input{theory/inter_level_response_stability}
 
-\section{PDUOT Analysis and Control Steps}
+\section{\subsolver Analysis and Control Steps}
 \label{app:pduot-details}
 
+\paragraph{Restricted formulation.}
+For columnwise vectorization of $\mathbf X$, the full marginal-sum matrix is
+\begin{equation}
+\label{eq:transport-incidence}
+\mathbf A=\begin{pmatrix}\mathbf1_n^\top\otimes\mathbf I_m\\\mathbf I_n\otimes\mathbf1_m^\top\end{pmatrix}\in\mathbb R^{(m+n)\times mn}.
+\end{equation}
+The restricted matrix $\mathbf A_{\mathcal N}$ retains the columns indexed by $\mathcal N$.
+\begin{definition}[Restricted UOT]
+\label{def:restricted-uot}
+Restricted UOT is~\eqref{eq:primal-uot} with $X_{ij}=0$ for $(i,j)\notin\mathcal N$, equivalently~\eqref{eq:restricted-uot}.
+Its dual is
+\begin{equation}
+\label{eq:restricted-dual-uot}
+\max_{\mathbf f,\mathbf g}D(\mathbf f,\mathbf g)\quad\text{s.t. }f_i+g_j\leq C_{ij},\ (i,j)\in\mathcal N.
+\end{equation}
+The objective is unchanged from~\eqref{eq:dual-uot}; only the active inequalities are retained.
+\end{definition}
+
 \paragraph{KL proximal evaluation.}
+We use $\operatorname{prox}_{G^*}^{\mathbf D_y^{-1}}(\mathbf u)=\arg\min_{\mathbf v}\{G^*(\mathbf v)+\tfrac12\|\mathbf v-\mathbf u\|_{\mathbf D_y^{-1}}^2\}$.
 For dual input $u$, reference mass $h>0$, penalty $\rho>0$, and step $\mathbf{s}>0$, the coordinate proximal problem is
 \begin{equation*}
 \min_v\;\rho h(e^{v/\rho}-1)+\frac{(v-u)^2}{2\mathbf{s}}.
@@ -1046,6 +888,12 @@ This log-domain formulation supports scalar evaluation without explicitly constr
 We first establish the fixed-metric facts used within each epoch, then control metric changes across adaptive restarts.
 Throughout this appendix, fix $\mathcal N$ and abbreviate $\mathbf{c}=\mathbf{c}_{\mathcal N}$.
 All proximal operations in the proofs are exact.
+Within a restart epoch, Algorithm~\ref{alg:pduot} applies reflected Halpern iteration:
+\begin{equation}
+\label{eq:halpern}
+\mathbf z^{k+1}=\frac{1}{k+2}\mathbf z^{\mathrm a}+\frac{k+1}{k+2}(2\pduotmap\mathbf z^k-\mathbf z^k).
+\end{equation}
+Here $\mathbf z^{\mathrm a}$ is the fixed epoch anchor and $\mathbf z^0=\mathbf z^{\mathrm a}$.
 For a positive definite matrix $\mathbf{P}$, write $\|\mathbf{z}\|_\mathbf{P}=(\mathbf{z}^\top \mathbf{P}\mathbf{z})^{1/2}$ and $\operatorname{dist}_\mathbf{P}(\mathbf{z},S)=\inf_{u\in S}\|\mathbf{z}-\mathbf{u}\|_\mathbf{P}$.
 Define the restricted KKT mapping
 \begin{equation}
@@ -1252,7 +1100,17 @@ The triangle inequality then yields the local sharpness estimate
 
 \subsection{Practical Control Steps}
 \label{app:pduot-controls}
-\checkrestart tests fixed-point residual reduction relative to the epoch anchor, deterioration relative to the previous check after moderate reduction, and the epoch-length threshold described in the main text.
+\paragraph{Preconditioning.}
+We set $\mathbf D_x=w\overline{\mathbf D}_x$ and $\mathbf D_y=\overline{\mathbf D}_y/w$ using Pock--Chambolle base steps.
+For node-covering active supports with node degrees $d_v$, these are
+\begin{equation}
+\label{eq:pduot-metric}
+(\overline{\mathbf D}_x)_{ee}=\frac{\zeta}{2},\qquad (\overline{\mathbf D}_y)_{vv}=\frac{\zeta}{d_v},\qquad 0<\zeta<1.
+\end{equation}
+They satisfy $\|\mathbf D_y^{1/2}\mathbf A_{\mathcal N}\mathbf D_x^{1/2}\|_2<1$ for every $w>0$; the base steps remain fixed within a restricted solve.
+
+\paragraph{Restart and primal-weight updates.}
+\checkrestart tests fixed-point residual reduction relative to the epoch anchor, deterioration relative to the previous check after moderate reduction, and an epoch-length threshold.
 The practical reduction factors are $0.2$ and $0.5$, and the epoch-length threshold is $0.36$ times the total iteration count; the first restart check also starts a new epoch.
 At a restart, let $d_x=\|\widehat{\mathbf{x}}-\mathbf{x}^{\mathrm a}\|_{\overline{\mathbf{D}}_x^{-1}}$ and $d_y=\|\widehat{\mathbf{y}}-\mathbf{y}^{\mathrm a}\|_{\overline{\mathbf{D}}_y^{-1}}$.
 For valid, nonnegligible displacements, \updateweight forms $e=\log(d_x/d_y)-\log w$, updates an integral state $I\leftarrow\nu I+e$, and sets
@@ -1260,6 +1118,12 @@ For valid, nonnegligible displacements, \updateweight forms $e=\log(d_x/d_y)-\lo
 w^+ = \operatorname{clip}\bigl(\exp(\log w+k_pe+k_iI),w_{\min},w_{\max}\bigr).
 \end{equation*}
 When these displacement or residual checks are invalid, the implementation falls back to a previously retained weight with better primal--dual residual balance and resets the integral state.
+With $L=\log(w_{\max}/w_{\min})$, the $j$th weight update satisfies
+\begin{equation}
+\label{eq:pduot-weight-budget}
+\left|\log\frac{w_j}{w_{j-1}}\right|\leq b_j:=L\min\{1,(J/j)^p\},\qquad p>1.
+\end{equation}
+The update counter resets at each restricted solve, so the first $J$ updates are unrestricted by this additional budget.
 Every proposal, including fallback, then passes through~\eqref{eq:pduot-weight-budget}: its log displacement from the current weight is clipped to $[-b_j,b_j]$.
 If a newly retained weight is clipped, the retained value is replaced by the accepted weight; the integral update is otherwise unchanged.
 We use $w_{\min}=10^{-12}$, $w_{\max}=10^{12}$, $J=64$, and $p=1.01$.
@@ -1271,7 +1135,12 @@ For clarity, its stopping and restart tests are shown at each iteration; the imp
 \section{Stopping Criterion}
 \label{app:stopping-criterion}
 
-This section defines the three measures used in~\eqref{eq:pduot-stopping}, then analyzes the gap and its balanced-OT limit.
+At the mapped point, \checkstop evaluates marginal consistency $\delta_{\mathrm m}$, stationarity $\delta_{\mathrm s}$, and relative gap $\delta_{\mathrm g}$, requiring
+\begin{equation}
+\label{eq:pduot-stopping}
+\max\{\delta_{\mathrm m},\delta_{\mathrm s},\delta_{\mathrm g}\}\leq\varepsilon.
+\end{equation}
+This section defines these measures, then analyzes the gap and its balanced-OT limit.
 All stopping measures are evaluated in the original problem coordinates on a fixed active support $\mathcal N$.
 
 \subsection{Residuals and Termination}
@@ -1402,13 +1271,20 @@ The supported coupling has the form $X_{ij}=u_iK_{ij}v_j$, with generalized scal
 Our implementation evaluates the scaling iterations in the log domain using sparse row and column reductions on the GPU.
 The KL term in~\eqref{eq:sparse-entropic-extension} uses the full reference $\mathbf{a}\otimes \mathbf{b}$, including its constant contribution outside $\mathcal{N}$, when evaluating the objective.
 
-The default choice is $\mathcal{N}=\mathcal{N}_\star$.
-An optional expansion uses the positive-flow support of the unregularized solution $\mathbf{X}^0$ and bidirectional top-$b_{\mathrm e}$ selection under its final dual scores:
+\paragraph{Support reconstruction.}
+Let $\mathbf X^0$ be the unregularized solution, $\mathcal N_\star$ its final active support, and $\boldsymbol\sigma$ its final dual scores.
+For a per-direction edge budget $b_{\mathrm e}\geq1$, reconstruct the support as
 \begin{equation}
-\mathcal{N}_{b_{\mathrm e}}=\supp(\mathbf{X}^0)\cup\operatorname{RowTop}_{b_{\mathrm e}}(\boldsymbol{\sigma})\cup\operatorname{ColTop}_{b_{\mathrm e}}(\boldsymbol{\sigma}).
+\mathcal N_{\mathrm e}=\supp(\mathbf{X}^0)\cup\operatorname{RowTop}_{b_{\mathrm e}}(\boldsymbol{\sigma})\cup\operatorname{ColTop}_{b_{\mathrm e}}(\boldsymbol{\sigma}).
 \end{equation}
-Here, $b_{\mathrm e}$ denotes the per-node edge budget.
-Constructing this alternative support requires an additional full-space scan.
+The top-score selections include nonpositive scores and require an additional full-space scan.
+Writing $s=|\mathcal N_\star|$ and $s_+=|\supp(\mathbf X^0)|$, automatic reconstruction selects
+\begin{equation}
+b_{\mathrm e}=\min\left\{32,\left\lfloor\frac{s-s_+}{m+n}\right\rfloor\right\}.
+\end{equation}
+For $b_{\mathrm e}\geq1$, the bound $|\mathcal N_{\mathrm e}|\leq s_++b_{\mathrm e}(m+n)\leq s$ preserves the final active-support budget; $32$ is the current scan implementation's top-$k$ limit.
+If the automatic budget is zero, we reuse $\mathcal N_\star$.
+Direct reuse, $\mathcal N_{\mathrm e}=\mathcal N_\star$, is also available as a separate variant that avoids the reconstruction scan.
 
 \subsection{Accuracy across Entropic Strengths}
 \label{app:entropic-epsilon-accuracy}
@@ -1416,7 +1292,7 @@ Constructing this alternative support requires an additional full-space scan.
 We evaluate the returned sparse coupling on TOME E11.5$\to$E12.5 with $m=n=16{,}384$, $d=30$, and mean squared ground cost normalized to one.
 For each of the four penalty settings, we use seven logarithmically spaced values of $\varepsilon$ from $10^{-3.5}$ to $10^{-2.5}$, centered at $10^{-3}$.
 Support reconstruction retains the positive-flow edges of the unregularized solution and allocates the remaining final active-support edge budget to bidirectional dual assignment.
-SHUTTLE and sparse refinement use native stopping thresholds of $10^{-6}$; each configuration has a separate FP64 OTT-online reference with native stopping threshold $10^{-8}$ and an independently computed initializer.
+\ours and sparse refinement use native stopping thresholds of $10^{-6}$; each configuration has a separate FP64 \ottonline reference with native stopping threshold $10^{-8}$ and an independently computed initializer.
 All 28 sparse solves and their independent references pass the declared success checks.
 
 Figure~\ref{fig:entropic-epsilon-accuracy} reports the full-space shared gap~\eqref{eq:entropic-evaluation-gap}, the relative coupling error $E_X=\|\mathbf X-\mathbf X_{\mathrm{ref}}\|_1/\|\mathbf X_{\mathrm{ref}}\|_1$, and the fraction of reference mass omitted by the reconstructed support $\mathcal N$,
@@ -1448,6 +1324,26 @@ Results use seed 42 with one measurement per configuration.}
 
 \section{Two-Coupling UFGW Updates}
 \label{app:ufgw-extension}
+
+\paragraph{Objective.}
+Let $\mathbf A\in\mathbb R^{m\times m}$ and $\mathbf B\in\mathbb R^{n\times n}$ encode within-dataset relations, and let $\mathbf M\in\mathbb R^{m\times n}$ be the feature cost.
+We use a two-coupling relaxation with tensorized KL marginal penalties~\citep{sejourne2023unbalanced}.
+% CN: 请作者补入原始 UGW relaxation 论文的引用；此处暂用现有综述引用，不修改 bibliography。
+% EN: Add the original UGW relaxation citation; the existing survey is cited provisionally without changing the bibliography.
+For nonnegative couplings $\mathbf P,\mathbf Q$, define
+\begin{equation*}
+\mathcal Q_{A,B}(\mathbf P,\mathbf Q)=\sum_{i,k,j,l}(A_{ik}-B_{jl})^2P_{ij}Q_{kl}
+\end{equation*}
+and $D_a(\mathbf P,\mathbf Q)=\KL((\mathbf P\mathbf1)\otimes(\mathbf Q\mathbf1)\,|\,\mathbf a\otimes\mathbf a)$, with $D_b$ defined analogously for target marginals.
+The relaxed objective is
+\begin{equation}
+\label{eq:ufgw-relaxation}
+\begin{aligned}
+\min_{P,Q\geq0}\quad &(1-\alpha)\mathcal Q_{A,B}(\mathbf P,\mathbf Q)\\
+&+\frac{\alpha}{2}\langle\mathbf M,\mathbf P+\mathbf Q\rangle+\rho_aD_a(\mathbf P,\mathbf Q)+\rho_bD_b(\mathbf P,\mathbf Q),
+\end{aligned}
+\end{equation}
+where $\alpha\in[0,1]$ controls feature matching and $\alpha=0$ gives the UGW relaxation.
 
 \paragraph{Reduction to KL-UOT.}
 Write $|\mathbf{Q}|=\sum_{kl}Q_{kl}$ and $\mathbf{q}_a=\mathbf{Q}\mathbf{1}$, $\mathbf{q}_b=\mathbf{Q}^\top\mathbf{1}$.
@@ -1500,6 +1396,8 @@ Scaling these embeddings by $\sqrt{1-\alpha}$ and concatenating feature vectors 
 For fixed structural and feature dimensions, the embedding storage grows linearly with the number of points and the moment accumulation depends on the maintained coupling support.
 
 \input{appendix_implementations}
+\input{appendix_extension_protocols}
+\input{appendix_uot_comparison}
 \input{appendix_hello_uot}
 \input{appendix_analysis}
 

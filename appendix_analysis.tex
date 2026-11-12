@@ -1,6 +1,6 @@
 % CN: 分析实验附录；占位数据与实测结果必须显式区分。
 % EN: Analysis-experiment appendix; placeholder data must be explicitly distinguished from measurements.
-\section{PDUOT Component Ablations}
+\section{\subsolver Component Ablations}
 \label{app:pduot-component-ablation}
 % CN: J=64 审计：本图全部 2598 次测量均保存重启计数，最大为 25，预算不会触发；保留原实验来源，不将其重标为已运行新保护版本。
 % EN: J=64 audit: all 2598 measurements record restart counts, maximum 25, so the budget cannot trigger. Retain historical provenance rather than relabeling these runs as executions of the protected implementation. Evidence: experiments/primal_weight_budget_20261111/report/history_J64_audit.json.
@@ -20,7 +20,7 @@ The preconditioning ablation replaces degree-based diagonal steps with scalar ba
 % CN: 图来自 paper_experiments_uot/pduot_ablation/results/pduot_cdf_n65536_seeds_20261110_gpu6/cdf_components_iterations.pdf；逐次结果与曲线数据分别见同目录 summary.json 和 cdf_data.json；采集来源为 results/corpus_n65536_seeds_20261110。
 % EN: Figure source: paper_experiments_uot/pduot_ablation/results/pduot_cdf_n65536_seeds_20261110_gpu6/cdf_components_iterations.pdf; per-run results and curve data are summary.json and cdf_data.json in that directory; snapshots come from results/corpus_n65536_seeds_20261110.
 \includegraphics[width=0.96\linewidth]{figures/pduot_component_ablation_cdf_iterations.pdf}
-\caption{\textbf{Internal PDUOT component ablations.}
+\caption{\textbf{Internal \subsolver component ablations.}
 Empirical CDFs of PDHG map evaluations to reach a restricted KKT residual of $10^{-6}$ on TOME snapshots ($d=30$, parent size $m=n=65{,}536$).
 Panels separate the four penalty pairs; $N$ counts restricted problems, and curves farther left require fewer iterations.
 Every variant retains adaptive restart, and each ablation removes only its named component.

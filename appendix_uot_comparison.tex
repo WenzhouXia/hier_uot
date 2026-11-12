@@ -1,0 +1,52 @@
+\section{Fixed-Size UOT Comparison}
+\label{app:uot-fixed-size}
+
+\paragraph{Time, memory, and accuracy.}
+We first compare \ours with \mm and \sinkhorn at a common problem size, reporting runtime, peak GPU memory, and \sharedgap in Table~\ref{tab:uot-comparison}.
+The four penalty settings cover weak, moderate, and strong symmetric penalties, together with a highly asymmetric configuration.
+The \sinkhorn baseline uses $\varepsilon=10^{-3}$.
+% \xwz{Provisional analysis; verify against measured results: \ours is expected to combine small primal--dual gaps with substantially lower memory consumption than dense \mm.
+% Online \sinkhorn also avoids quadratic storage, making runtime at matched accuracy the central comparison with this baseline.
+% The relative runtime advantage may depend on the penalty regime, particularly when weak penalties favor rapid \mm convergence.}
+
+\begin{table}[t]
+\centering
+% CN: 数据来源：paper_experiments_uot/main_scaling/results/20261025_170426/summary_table.csv；仅 n=16384 的 mm、ott_dense、shuttle 共 12 次成功运行；显存由 MiB 除以 1024 转为 GiB。
+% EN: Source: paper_experiments_uot/main_scaling/results/20261025_170426/summary_table.csv; the 12 successful n=16384 runs for mm, ott_dense and shuttle; memory converted from MiB to GiB by dividing by 1024.
+% \xwz{SOURCE AUDIT PENDING: the original 20261025_170426 batch could not be located in the current checkout or the checked worktrees. Retain these existing table values provisionally; recover the archive or rerun before finalizing provenance and protocol alignment.}
+\caption{\textbf{Unregularized UOT comparison.}
+TOME E11.5$\to$E12.5 instances with $m=n=16{,}384$ and $d=30$.
+Memory denotes peak active GPU allocation in GiB; accuracy uses the shared bound in~\eqref{eq:experimental-shared-gap}.
+Results use seed $42$ with one run per method; best values within each penalty setting are bold.}
+\label{tab:uot-comparison}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{llrrr}
+\toprule
+$(\rho_a,\rho_b)$ & Method & \runtime~$\downarrow$ & \gpumemshort~$\downarrow$ & \sharedgap~$\downarrow$ \\
+\midrule
+\multirow{3}{*}{$(0.1,0.1)$}
+ & \mm & 47.06 & 14.016 & $5.60\times10^{-6}$ \\
+ & \sinkhorn & 3.56 & 4.035 & $2.41\times10^{-3}$ \\
+ & \ours & \textbf{1.85} & \textbf{0.532} & $\boldsymbol{8.95\times10^{-8}}$ \\
+\midrule
+\multirow{3}{*}{$(1,1)$}
+ & \mm & 160.63 & 14.016 & $7.07\times10^{-5}$ \\
+ & \sinkhorn & 27.58 & 4.035 & $1.07\times10^{-3}$ \\
+ & \ours & \textbf{2.59} & \textbf{0.532} & $\boldsymbol{1.49\times10^{-7}}$ \\
+\midrule
+\multirow{3}{*}{$(10,10)$}
+ & \mm & 379.95 & 14.016 & $1.32\times10^{-3}$ \\
+ & \sinkhorn & 75.84 & 4.035 & $1.21\times10^{-3}$ \\
+ & \ours & \textbf{7.40} & \textbf{0.532} & $\boldsymbol{5.44\times10^{-7}}$ \\
+\midrule
+\multirow{3}{*}{$(0.045,99.995)$}
+ & \mm & 587.69 & 14.016 & $1.96\times10^{-2}$ \\
+ & \sinkhorn & 4.00 & 4.035 & $1.70\times10^{-3}$ \\
+ & \ours & \textbf{1.92} & \textbf{0.532} & $\boldsymbol{3.43\times10^{-6}}$ \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+% \xwz{Preliminary results at $n=m=16{,}384$; larger instances will follow.}
+\end{table}

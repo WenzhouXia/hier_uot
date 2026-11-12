@@ -1,9 +1,9 @@
-\section{Direct Comparison with HELLO-UOT}
+\section{Direct Comparison with \hellouot}
 \label{app:hello-uot-comparison}
 
 \paragraph{Protocol.}
 We use the same pinned TOME inputs for both methods at $n=m\in\{32{,}768,65{,}536,131{,}072\}$, with $d=30$, seed 42, and one run per method and instance.
-The comparison retains the original \hellouot protocol: fully corrective Frank--Wolfe with balanced \hello oracles, initialized from Sinkhorn marginals and a target potential at $\varepsilon_{\mathrm{init}}=10^{-2}$.
+The comparison retains the original \hellouot protocol: fully corrective Frank--Wolfe with balanced \hello oracles, initialized from \sinkhorn marginals and a target potential at $\varepsilon_{\mathrm{init}}=10^{-2}$.
 The initializer uses FP64, batch size 512, stopping threshold $10^{-3}$, and at most $10^6$ iterations.
 \hellouot retains its running-best relative primal--dual gap threshold $10^{-4}$ and cap of 100 outer iterations; all 12 runs satisfy that stopping rule.
 Its balanced oracles use tolerance $10^{-6}$, coarse threshold 1024, split factor 4, assignment budget 16, pricing budget 2, and the original marginal-change warm-start gate of $10^{-2}$.
@@ -17,8 +17,8 @@ For each instance, an independent \ours solve at restricted and full-space toler
 We apply FP64 full-space double c-transforms, potential translation, and a numerical safety shift, followed by an independent feasibility audit, to obtain $D_{\mathrm{ref}}$.
 All 12 references pass the audit; \sharedgap is defined by~\eqref{eq:experimental-shared-gap}, using primal objectives independently recomputed in FP64 on the original inputs.
 Method timing excludes compilation, prewarming, common objective evaluation, and reference construction.
-For \hellouot, initialization time includes the synchronized formal Sinkhorn solve and the initial balanced oracle.
-The legacy Sinkhorn timing starts with resident JAX inputs: its first upload takes place before warmup and is excluded, whereas subsequent balanced-oracle transfers and \ours input transfers are included.
+For \hellouot, initialization time includes the synchronized formal \sinkhorn solve and the initial balanced oracle.
+The legacy \sinkhorn timing starts with resident JAX inputs: its first upload takes place before warmup and is excluded, whereas subsequent balanced-oracle transfers and \ours input transfers are included.
 Historical raw records store the complete \ours clock in \texttt{full\_native\_runtime\_sec}; the table and figures use this clock rather than the earlier first-crossing analysis.
 
 \begin{table}[t]
@@ -61,8 +61,8 @@ Bold values are smaller within each pair.}
 
 \begin{figure}[p]
 \centering
-% CN: 三张PDF由 scripts/plot_hello_uot_comparison.py 从 /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/hello_uot_comparison/results/20261111_formal_four_rho/{summary.json,manifest.json,cases/*/hello_uot_repeat0/trajectory.json} 重画，仅简化 log 刻度以避免小面板标签重叠；SHUTTLE 为最终原生解及完整计时。
-% EN: PDFs redrawn by scripts/plot_hello_uot_comparison.py from /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/hello_uot_comparison/results/20261111_formal_four_rho/{summary.json,manifest.json,cases/*/hello_uot_repeat0/trajectory.json}, simplifying log ticks to prevent small-panel label overlap; SHUTTLE uses the final native solution and full runtime.
+% CN: 三张PDF由 scripts/plot_hello_uot_comparison.py 从 /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/hello_uot_comparison/results/20261111_formal_four_rho/{summary.json,manifest.json,cases/*/hello_uot_repeat0/trajectory.json} 重画，仅简化 log 刻度以避免小面板标签重叠；hier_uot 为最终原生解及完整计时。
+% EN: PDFs redrawn by scripts/plot_hello_uot_comparison.py from /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/hello_uot_comparison/results/20261111_formal_four_rho/{summary.json,manifest.json,cases/*/hello_uot_repeat0/trajectory.json}, simplifying log ticks to prevent small-panel label overlap; hier_uot uses the final native solution and full runtime.
 \begin{subfigure}{\linewidth}
 \centering
 \includegraphics[width=\linewidth]{figures/hello_uot_gap_time_n32768.pdf}
@@ -80,7 +80,7 @@ Bold values are smaller within each pair.}
 \includegraphics[width=\linewidth]{figures/hello_uot_gap_time_n131072.pdf}
 \caption{$n=m=131{,}072$.}
 \end{subfigure}
-\caption{\textbf{HELLO-UOT trajectories and final SHUTTLE solutions.}
+\caption{\textbf{\hellouot trajectories and final \ours solutions.}
 Each row covers the four penalty pairs labeled above the panels on TOME E11.5$\to$E12.5 with $d=30$.
 Blue squares trace observed \hellouot primal candidates after initialization and each outer oracle call; one coral point marks the final \ours solution at its complete solve time.
 Both axes are logarithmic, and \sharedgap uses an independent audited lower bound for each instance.

@@ -11,6 +11,12 @@ This includes a coarse-to-fine source augmentation; the opposite direction follo
 Let $q^\star$ be the finer optimal target marginal and $p^\star=q^\star/\|q^\star\|_1$.
 From a coarse target potential $g^0$, form $q^0_j=b_j\exp(-g^0_j/\rho_b)$, $M_0=\|q^0\|_1$, and $p=q^0/M_0$.
 The coarse potential need not be exactly optimal.
+For a target potential $\mathbf g$, the normalized response is
+\begin{equation}
+\label{eq:hierarchy-response-shape}
+p_j(\mathbf g)=\frac{b_j e^{-g_j/\rho_b}}{\sum_k b_k e^{-g_k/\rho_b}}
+\end{equation}
+This separates the response shape from total transported mass and is invariant under scalar translations of $\mathbf g$.
 We use $H^2(p,z)=\sum_j(\sqrt{p_j}-\sqrt{z_j})^2$ and $J(p,z)=\operatorname{KL}(p\mid z)+\operatorname{KL}(z\mid p)$ for probability vectors.
 
 \begin{lemma}[Mass and shape]
@@ -30,7 +36,9 @@ The marginal formulation follows by minimizing over couplings at fixed target sh
 For two source instances with a common target set, take their union as the source index set and define the rectangular cost oscillation
 $$\Gamma=\max_{i,i',j,j'}|C_{ij}-C_{ij'}-C_{i'j}+C_{i'j'}|.$$
 
-\begin{proposition}[Shape stability from cost interaction]\label{prop:uot-hierarchy-interaction}
+\begin{proposition}[Shared-side response stability]
+\label{prop:uot-hierarchy-stability}
+\label{prop:uot-hierarchy-interaction}
 Let $p^0,p^1$ be the normalized optimal target marginals of any two such source instances with the same $b$ and $\rho_b$.
 Then
 $$H^2(p^0,p^1)\leq2\left[1-\operatorname{sech}\!\left(\frac{\Gamma}{4\rho_b}\right)\right]\leq\frac{\Gamma^2}{16\rho_b^2}.$$
