@@ -1,6 +1,6 @@
 # Sparse entropic KL-UOT：基线调研与实验取舍
 
-本文档服务于 `entropic_uot` 的基线选择及 SHUTTLE sparse entropic refinement 的贡献讨论，写法参照论文目录的 `RELATED_WORK_ALGORITHM_MAP.md`。记录保留、待适配和排除的方法；不把工程判断当作论文结论，不把未运行的方法写成已完成实验。
+本文档服务于 `entropic_uot` 的基线选择及 hier_uot sparse entropic refinement 的贡献讨论，写法参照论文目录的 `RELATED_WORK_ALGORITHM_MAP.md`。记录保留、待适配和排除的方法；不把工程判断当作论文结论，不把未运行的方法写成已完成实验。
 
 核对日期：2026-10-18。检查了本项目调用链、`cuda118_all` 中已安装的 OTT-JAX 0.4.6，以及下列官方仓库源码快照：
 
@@ -18,7 +18,7 @@ $$P_\varepsilon(\pi)=\langle C,\pi\rangle+\rho_a\operatorname{KL}(\pi\mathbf1\mi
 
 | 候选 | 当前决定 | 回答的问题 | 主要限制 |
 |---|---|---|---|
-| 完整 OTT-JAX LSE Sinkhorn | 已增加 TI on/off sweep；continuation 待做 | SHUTTLE 相对加强后的完整问题 solver 是否仍有优势？ | 尚未启用 ε-scaling |
+| 完整 OTT-JAX LSE Sinkhorn | 已增加 TI on/off sweep；continuation 待做 | hier_uot 相对加强后的完整问题 solver 是否仍有优势？ | 尚未启用 ε-scaling |
 | 双向几何 kNN + sparse Sinkhorn | 作者决定暂不实施，保留消融设计 | dual-guided active support 是否优于相同边数的几何邻域？ | 是构造的机制对照，不是另一个独立论文 solver |
 | Schmitzer sparse scaling / MultiScaleOT | 已接官方 CPU 0.3.8；不做 GPU 移植 | 相对已有自适应截断和多尺度方法的价值 | 高维使用独立二分层级接 explicit API；CPU 硬件单独标明 |
 | LCN clustering support + KL-UOT sparse Sinkhorn | 已接入，目标邻居数 8/32/128 sweep | 高维聚类近似产生的 support 是否足够好？ | 纯稀疏适配基线，非完整 LCN-Sinkhorn；不是官方现成 KL-UOT sparse 接口 |
@@ -42,16 +42,16 @@ $$P_\varepsilon(\pi)=\langle C,\pi\rangle+\rho_a\operatorname{KL}(\pi\mathbf1\mi
 
 当前 `reference` 也走 `solve_ott`，仍默认关闭 TI，保留原有参考解配置。新 metrics 保存 `recenter_potentials` 和 `ott_version`，图中圆形为 `ti_off`、六边形为 `ti_on`，实心/空心依然表示内部收敛。历史结果文件没有保存 TI 开关，不能仅由 metrics 独立恢复过去任意代码版本的配置。
 
-### 2.2 SHUTTLE sparse Sinkhorn：TI 入口存在，但当前 wrapper 未调用
+### 2.2 hier_uot sparse Sinkhorn：TI 入口存在，但当前 wrapper 未调用
 
 本地调用链：
 
-1. `run_case.py` 的 SHUTTLE 分支调用 `hier_uot.solve(..., entropic_refinement=...)`。
-2. `src/hier_uot/entropic_refinement/solver.py::solve_sparse_sinkhorn` 调用 `load_extension().solve(...)`，并传入 SHUTTLE 的 warm-start potentials。
+1. `run_case.py` 的 hier_uot 分支调用 `hier_uot.solve(..., entropic_refinement=...)`。
+2. `src/hier_uot/entropic_refinement/solver.py::solve_sparse_sinkhorn` 调用 `load_extension().solve(...)`，并传入 hier_uot 的 warm-start potentials。
 3. `src/hier_uot/_native/sparse_sinkhorn/bindings.cpp` 将 `solve` 绑定到 `solve_sparse_sinkhorn_cuda`；这是普通 generalized Sinkhorn 更新。
 4. 同一个 binding 还暴露 `solve_translation_invariant`，绑定 `solve_sparse_ti_sinkhorn_cuda`，但当前实验上述调用链没有调用这个入口。
 
-因此，**本地存在 TI 内核不等于当前实验已经使用 TI**。另外，SHUTTLE 的 inter-level dual-potential calibration、最终评测的势规范化，与在 entropic 迭代中使用 TI 是不同的用途，不能混称。
+因此，**本地存在 TI 内核不等于当前实验已经使用 TI**。另外，hier_uot 的 inter-level dual-potential calibration、最终评测的势规范化，与在 entropic 迭代中使用 TI 是不同的用途，不能混称。
 
 ### 2.3 Spar-Sink：普通 generalized scaling
 
@@ -113,7 +113,7 @@ TI-Sinkhorn 优化全局势平移方向。变换 `(f+t,g-t)` 保持 pairwise sum
 
 ## 5. 双向几何 kNN support + sparse Sinkhorn
 
-### 5.1 算法和与 SHUTTLE 的关系
+### 5.1 算法和与 hier_uot 的关系
 
 对每个 source，选原始代价最小的 k 个 target；对每个 target，反向选 k 个 source；合并去重：
 
@@ -121,7 +121,7 @@ $$\mathcal A_k^{\mathrm{geom}}=\{(i,j):j\in\operatorname{RowTopK}(-C)_i\}\cup\{(
 
 在该 support 上求同一个 entropic KL-UOT restricted problem，support 外的 coupling 为零；不做 Spar-Sink 的随机采样逆概率重加权。双向选择且 `k>=1` 时，每个正质量节点至少有一条边；UOT 不要求这个图满足 balanced OT 的固定边际可行性条件。
 
-几何 kNN 按 `-c_ij` 选边。SHUTTLE 按论文口径的 dual score `sigma_ij=f_i+g_j-c_ij` 选边，并能合并非正则解的正流 support。固定行内 `f_i` 是常数，差别来自 target 势 `g_j`；反向则来自 source 势 `f_i`。这正好检验几何近邻是否足以替代 dual-guided localization。
+几何 kNN 按 `-c_ij` 选边。hier_uot 按论文口径的 dual score `sigma_ij=f_i+g_j-c_ij` 选边，并能合并非正则解的正流 support。固定行内 `f_i` 是常数，差别来自 target 势 `g_j`；反向则来自 source 势 `f_i`。这正好检验几何近邻是否足以替代 dual-guided localization。
 
 ### 5.2 适用于高维吗？
 
@@ -129,17 +129,17 @@ $$\mathcal A_k^{\mathrm{geom}}=\{(i,j):j\in\operatorname{RowTopK}(-C)_i\}\cup\{(
 
 - 首版建议在 GPU 上分块精确计算 squared-L2 cost，并维护双向 top-k；不依赖低维 KD-tree，也不修改输入维度。点对代价计算为 `O(m n d)`，另有 top-k 选择开销；scratch 随块大小而非完整矩阵增长，输出 support 不超过 `k(m+n)` 条边。
 - 更大规模可用近似近邻，但要额外记录索引构建、query 时间和邻居 recall。近似构图的误差与 restricted solve 的误差应分别处理。
-- 高维距离集中、群体比例差异、密度差异和非局部匹配都可能让纯几何 kNN 漏掉重要边；不能预设结果会好，也不能预设一定输给 SHUTTLE。
+- 高维距离集中、群体比例差异、密度差异和非局部匹配都可能让纯几何 kNN 漏掉重要边；不能预设结果会好，也不能预设一定输给 hier_uot。
 
 ### 5.3 公平比较
 
-- 与 SHUTTLE 使用相同 sparse solver、dtype、TI 开关和最终完整证书。
+- 与 hier_uot 使用相同 sparse solver、dtype、TI 开关和最终完整证书。
 - 报告实际去重后的边数；相同 k 不保证不同 support 策略的边数相同。另做近似相同边数的曲线。
-- 首轮都从零势开始，单独比较 support；第二轮再做 SHUTTLE warm-start 消融。不能只给 SHUTTLE 好的初始化，却把收益都归因于 support。
-- 几何构图计入时间，SHUTTLE 的完整无熵求解和额外 dual assignment 也计入时间。复用 support 的多 ε 场景另报摊销成本。
-- 可把“双向 kNN + 非正则正流 support”作为消融，但它已经使用 SHUTTLE 的输出，不能再称独立几何基线。
+- 首轮都从零势开始，单独比较 support；第二轮再做 hier_uot warm-start 消融。不能只给 hier_uot 好的初始化，却把收益都归因于 support。
+- 几何构图计入时间，hier_uot 的完整无熵求解和额外 dual assignment 也计入时间。复用 support 的多 ε 场景另报摊销成本。
+- 可把“双向 kNN + 非正则正流 support”作为消融，但它已经使用 hier_uot 的输出，不能再称独立几何基线。
 
-**决定：按作者最新要求，暂不实施。** 这是对 support 定位机制的消融基线，不作为找到的独立文献方法。上述实现设计留作备忘；尚未运行，不能把“预计 SHUTTLE 会更好”当作实测结论。
+**决定：按作者最新要求，暂不实施。** 这是对 support 定位机制的消融基线，不作为找到的独立文献方法。上述实现设计留作备忘；尚未运行，不能把“预计 hier_uot 会更好”当作实测结论。
 
 ## 6. LCN 官方代码逐项核对
 
@@ -175,7 +175,7 @@ $$\mathcal A_k^{\mathrm{geom}}=\{(i,j):j\in\operatorname{RowTopK}(-C)_i\}\cup\{(
 - **机制：** GPU block-sparse kernel truncation、ε-scaling、log-domain stabilization，支持 unbalanced OT。
 - **实现范围：** 官方 multiscale 特化主要面向 1–3 维；不要把 GeomLoss online backend 与 multiscale backend 混称，也不要写成所有 GeomLoss 功能只支持低维。
 - **决定：** 按作者选择，不纳入本轮高维点云实验；不通过降维改变 TOME 问题来加入比较。
-- **写作边界：** 不据此宣称 SHUTTLE 胜过低维 multiscale solver，也不宣称现有方法没有小 ε 加速。
+- **写作边界：** 不据此宣称 hier_uot 胜过低维 multiscale solver，也不宣称现有方法没有小 ε 加速。
 - **来源：** [官方说明](https://www.kernel-operations.io/geomloss/)，[kernel truncation 示例](https://www.kernel-operations.io/geomloss/_auto_examples/sinkhorn_multiscale/plot_kernel_truncation.html)。
 
 ### 7.2 Entropic UOT domain decomposition
@@ -199,13 +199,13 @@ Nyström 是 kernel 近似；非负低秩 coupling 则约束 transport plan 的�
 
 已有小规模同-mask、FP64 coupling 对照验证通过；它只支持该测试范围内的更新一致性，不保证小 ε、FP32 或大规模条件下的准确性与性能。`validate_official.py` 可重跑这个检查。
 
-SHUTTLE 的潜在贡献应围绕 **dual-guided localization 得到的 active support 能否有效支持小 ε 的完整 entropic KL-UOT 近似**。固定 support 上内部收敛不自动构成完整问题证书；非正则正流 support 也不自动覆盖近退化情况下的所有重要 entropic edges。
+hier_uot 的潜在贡献应围绕 **dual-guided localization 得到的 active support 能否有效支持小 ε 的完整 entropic KL-UOT 近似**。固定 support 上内部收敛不自动构成完整问题证书；非正则正流 support 也不自动覆盖近退化情况下的所有重要 entropic edges。
 
 ## 9. 下一轮实验建议和完成标准
 
 1. **先补强完整 solver：**OTT-TI on/off sweep 已实现；明确固定 rho 的 TI + continuation 待实现。新结果记录 `ott_version`、TI 开关、ε schedule 和最终目标误差。
 2. **双向 kNN 暂缓：**保留第 5 节的设计，本轮不实现。优先考虑第 11 节的 FlashSinkhorn 完整 GPU solver 和 Nyström KL-UOT 候选。
-3. **分离 support 与求解器收益：**在同一 support 上比较普通/TI、零势/SHUTTLE 势初始化；然后用共同设置比较 SHUTTLE、kNN、importance sampling 和可选 clustering support。
+3. **分离 support 与求解器收益：**在同一 support 上比较普通/TI、零势/hier_uot 势初始化；然后用共同设置比较 hier_uot、kNN、importance sampling 和可选 clustering support。
 4. **再决定 Schmitzer 适配范围：**简化 full-scan adaptive truncation 与完整 multiscale 移植分开标注；前者不能替后者承受所有方法比较结论。
 5. **LCN 先做机制对照：**如增加 clustering/LSH support，明确适配来源；完整 LCN 的 KL-UOT 和 coupling 评测准备完成后再加入。
 
@@ -261,7 +261,7 @@ SHUTTLE 的潜在贡献应围绕 **dual-guided localization 得到的 active sup
 
 ### 11.4 FlashSinkhorn：目前最直接的高维 GPU 完整问题候选
 
-**发现路径：**引用 Spar-Sink 的 SinkSLOT 将其列为完整 GPU 基线。FlashSinkhorn 本身不是 sparse-support solver，它以 fused Triton kernels 流式计算完整点对更新；加入比较是为了检验 SHUTTLE 相对现代完整 GPU solver 的价值。
+**发现路径：**引用 Spar-Sink 的 SinkSLOT 将其列为完整 GPU 基线。FlashSinkhorn 本身不是 sparse-support solver，它以 fused Triton kernels 流式计算完整点对更新；加入比较是为了检验 hier_uot 相对现代完整 GPU solver 的价值。
 
 **官方实现：**[ot-triton-lab/flash-sinkhorn](https://github.com/ot-triton-lab/flash-sinkhorn)，本次静态核对 commit `bb2bf5aeaf2eacbbf291b767e14d97a6702dc9e1`；[论文](https://arxiv.org/abs/2602.03067)。这里只考虑 dense streaming backend，不重新纳入作者已排除的 3D multiscale backend。
 
@@ -305,7 +305,7 @@ Rand-Sink 在 Spar-Sink 官方函数中有 `method='rand-sink'` 分支，确有 
 
 ## 12. 已确认的实现方案与验证边界
 
-LCN 采用共享 Euclidean k-means++、十次 Lloyd 更新、同簇全部跨侧边。以目标邻居数 `8/32/128` 选择 `ceil(n_target / neighbors)` 个簇，实际边数由簇分布决定；仅孤立节点补一条跨侧最近邻边，补边数量单独记录。现代 Torch 归约替换旧 TorchScript/torch_scatter；保留上游 commit、原许可证与修改说明。求解复用 generalized sparse Sinkhorn，使用原始 cost 和 `a⊗b` reference，无低秩项、无 SHUTTLE warm-start。图例明确标注为适配的 LCN clustering + sparse Sinkhorn。
+LCN 采用共享 Euclidean k-means++、十次 Lloyd 更新、同簇全部跨侧边。以目标邻居数 `8/32/128` 选择 `ceil(n_target / neighbors)` 个簇，实际边数由簇分布决定；仅孤立节点补一条跨侧最近邻边，补边数量单独记录。现代 Torch 归约替换旧 TorchScript/torch_scatter；保留上游 commit、原许可证与修改说明。求解复用 generalized sparse Sinkhorn，使用原始 cost 和 `a⊗b` reference，无低秩项、无 hier_uot warm-start。图例明确标注为适配的 LCN clustering + sparse Sinkhorn。
 
 Schmitzer 调用原版 PyPI MultiScaleOT **0.3.8** CPU C++/Eigen 核心，使用两侧独立权重的 `TSinkhornSolverSoftMarginal` 与 KL marginal functions。源码调研 commit 与安装的发布版本分别记录，不声称两者相同。为避免默认网格树枚举高维子格，使用独立最大跨度轴中位数二分层级，接官方 explicit API，保持原始最细层点序。ε 从 `max(1,epsilon)` 到目标值逐层几何下降，每层三个值。原生稳定化、截断、参数默认值不变；API 必填的 `errorGoal` 由适配器设为 `1e-4`，不是库默认值。使用原始权重 reference，并将吸收势与残余 scaling 合并输出。
 

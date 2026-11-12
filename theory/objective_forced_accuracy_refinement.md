@@ -11,7 +11,7 @@
 不启用旧的 `refinement_progress_check`，不计算 $L_k$ 或 $G_k$。
 
 本候选放宽“始终固定 inner tolerance”这一设计偏好，换取算法表述简单。
-它没有证明原版固定 tolerance 的 SHUTTLE 自动有限终止，也不保证异常算例不会付出补精成本。
+它没有证明原版固定 tolerance 的 hier_uot 自动有限终止，也不保证异常算例不会付出补精成本。
 
 ## 2. 算法：只控制下一轮精度
 

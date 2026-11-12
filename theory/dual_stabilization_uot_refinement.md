@@ -357,7 +357,7 @@ Median master-call counts were 3 without stabilization, 6 for KL-Bregman strengt
 Median total SLSQP iterations were respectively 94, 109, and 182.
 These are not PDUOT iteration counts or GPU runtimes.
 They show that the moving-center construction adds work on these already easy, accurately solved cases.
-The evidence currently favors this geometry over Euclidean stabilization, but does not support enabling it unconditionally in SHUTTLE.
+The evidence currently favors this geometry over Euclidean stabilization, but does not support enabling it unconditionally in hier_uot.
 
 The next practical gate is an inexact-master test with errors at the intended native tolerance, followed by a localized experimental PDUOT implementation if that gate is informative.
 The original four criteria remain unmet as a whole: the exact-step theory and local prox structure are promising, while native-error finite refinement and normal-path performance remain unresolved.
@@ -560,7 +560,7 @@ The precision budget is not derived from a worst-case numerical curvature consta
 ### Hard support budget
 
 Two-pass sparsification retains at most $2(m+n-1)$ positive edges and preserves the fixed-center model primal bound.
-Protecting those edges and a bounded pricing batch leaves linear active-support storage, with structural-edge capacity reserved as in SHUTTLE.
+Protecting those edges and a bounded pricing batch leaves linear active-support storage, with structural-edge capacity reserved as in hier_uot.
 The maximal violating edge must remain protected until the next restricted solve.
 Changing the graph normalization after pruning does not silently preserve native residual values; those tests are evaluated on the current graph at the next solve.
 
@@ -795,4 +795,4 @@ They support modest normal-path overhead on the measured configurations; they do
 4. Theory: Sections 12 and 14 give conditional exact-arithmetic finite refinement with inexact solves and sparse support, assuming the stated inner stopping contracts are attainable. Arbitrarily fixed native KKT error alone is insufficient. There is no proved FP64 lower bound on the eventual required gap budget.
 
 The research question therefore has a conditional positive answer for a localized exceptional stabilization scheme, and a negative answer for simple smoothing or unconditional stabilization as a free convergence guarantee.
-The experimental candidate is suitable for author review, not an already established theorem for unchanged production SHUTTLE.
+The experimental candidate is suitable for author review, not an already established theorem for unchanged production hier_uot.

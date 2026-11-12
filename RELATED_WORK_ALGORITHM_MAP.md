@@ -4,6 +4,8 @@
 
 核对日期：2026-10-18。下文将原论文结论、标准实现的成本和本文写作建议分开。复杂度一般是单次迭代或单次扫描的成本，不能直接当成达到目标精度的总成本。记 $s$ 为保留的边数，$r$ 为 coupling 的非负秩，$k$ 为 cost factorization 的秩。
 
+2026-11-12 增补 Auricchio et al. 的 cost-truncation/PFW 论文（Section 2.15），并更新 Sections 3、4、9 的分类和叙事建议；其余条目保留各自的核对范围，不代表全量重新核验。当前引言叙事以 [STORYLINE_INTRO.md](STORYLINE_INTRO.md) 为准。
+
 ## 1. 分类前先区分的几个概念
 
 | 信息 | 要问的问题 | 不能混淆的内容 |
@@ -49,7 +51,7 @@
 - **路线 B：OT-oracle Frank–Wolfe。** 原论文对平移优化后的 formulation 使用 Frank–Wolfe，并重点利用已排序一维 balanced OT 的线性时间 oracle；这条路线可处理无熵 UOT。框架本身并不局限于一维：HELLO 的 UOT 扩展以一般维度 balanced OT oracle 实现 translation-invariant fully-corrective Frank–Wolfe，见本地 `papers/hello/main_appendix.tex` 的 UOT 部分。正文可以并列引用 `sejourne2022faster,xia2026dual`，无需另起 HELLO-UOT 方法名；这里的 oracle 用途与后文直接迁移 dual-guided hierarchy 是两个不同层次。
 - **关键优点：** 揭示 UOT 的全局 normalization 问题；一维算法利用的结构非常强。
 - **分类标签：** A：熵正则/scaling；B：OT-oracle reformulation/一维结构。
-- **与 SHUTTLE 的关系：** 势平移是直接相关的先例。不能将 score-preserving translation 本身当作我们首次提出的机制；应强调它在跨层 potential calibration 中的用途。
+- **与 hier_uot 的关系：** 势平移是直接相关的先例。不能将 score-preserving translation 本身当作我们首次提出的机制；应强调它在跨层 potential calibration 中的用途。
 - **写作边界：** 一维 oracle 的线性成本不能外推到任意高维 cost。
 
 ### 2.4 Schmitzer — Stabilized sparse scaling algorithms for entropy regularized transport problems
@@ -129,7 +131,7 @@
 - **表示与成本：** 论文 Algorithm 1 从 $mn$ 维 mask 出发，按周期筛边，优化器只处理保留变量。Section 3.4 分析完整 screening pass 的 $O(mn)$ 工作；这不意味着 incidence matrix 必须 dense 存储，也不意味着任何 screening 实现都必需二次内存。
 - **关键优点：** 显式、带保证地缩减 support，可以与多种 solver 组合。
 - **分类标签：** safe support elimination；solver-independent acceleration。
-- **与 SHUTTLE 的关系：** screening 排除不可能的边，hierarchical localization 构造/补充候选边，可以互补。我们也有 full scans，因此不能仅以“它要二次扫描”解释差异。
+- **与 hier_uot 的关系：** screening 排除不可能的边，hierarchical localization 构造/补充候选边，可以互补。我们也有 full scans，因此不能仅以“它要二次扫描”解释差异。
 - **年份提醒：** 当前 bib 写 2025；Crossref 的期刊卷期为 Neurocomputing 668、2026，DOI 含 2025。由作者自行决定按 online-first 或卷期年份维护，本文档不改 bib。
 
 ### 2.11 Liu et al. — Solving Discrete (Semi) Unbalanced Optimal Transport with Equivalent Transformation Mechanism and KKT-Multiplier Regularization
@@ -141,7 +143,7 @@
 - **表示与成本：** 边际/势变量规模为 $m+n$，但 hard/soft c-transform 仍涉及点对运算；最后 balanced OT 的成本由所选 oracle 决定。精确转化不是自动的线性复杂度保证。
 - **关键优点：** 将 nonlinear marginal selection 与 conditional balanced coupling 分开，直接连接成熟 OT solvers。
 - **分类标签：** marginal-first reformulation；OT oracle；hard/soft c-transform。
-- **与 SHUTTLE 的关系：** 可支持“固定 transported marginals 后变成 OT”的讨论；由 OT 基本解性质可推出**存在**至多 $m+n-1$ 条正边的 UOT 最优解，不表示每个最优解都这么稀疏。共享 sparse-optimum structure 与共享 dual constraints 分别支持 sparse representation 与 dual-guided localization。
+- **与 hier_uot 的关系：** 可支持“固定 transported marginals 后变成 OT”的讨论；由 OT 基本解性质可推出**存在**至多 $m+n-1$ 条正边的 UOT 最优解，不表示每个最优解都这么稀疏。共享 sparse-optimum structure 与共享 dual constraints 分别支持 sparse representation 与 dual-guided localization。
 
 ### 2.12 Séjourné et al. — Unbalanced optimal transport, from theory to numerics
 
@@ -155,10 +157,10 @@
 - **引用键：** `xia2026dual`。
 - **来源：** 本地 `papers/hello/main_body.tex` 与 `TERMINOLOGY.md`。
 - **算法：** balanced OT 的 dual-guided hierarchy。跨层传播 dual potentials 并构造初始 support；层内交替 restricted LP solve、full-space dual-violation detection、edge insertion 与 budgeted pruning。
-- **目标：** 原始 balanced discrete OT；不是 UOT solver。
+- **目标：** 主算法求解原始 balanced discrete OT；其 UOT 扩展通过 balanced-OT oracle 执行 fully-corrective Frank--Wolfe，应与直接 restricted-UOT 求解区分。
 - **表示与成本：** 固定特征维数与 support budget 下，持久状态为线性内存；完整扫描仍有 $mn$ 级点对工作，特征计算还依赖维数。
 - **关键优点：** 统一跨层与层内的边定位信号。
-- **写作用途：** 在“我们的方法”承接来源。SHUTTLE 的贡献应明确为 UOT 适配、calibration、restricted nonlinear solver 及相应保证，不能再次声称发明 dual-guided hierarchy。
+- **写作用途：** Related work 中先介绍 HELLO-UOT 的 OT-oracle 路线；Our approach 解释层级初始化时，明确 dual-guided hierarchy 的来源。hier_uot 以 scalable active-support 求解为整体定位，优先强调高效 restricted nonlinear solver 和内外层保证，不能再次声称发明 dual-guided hierarchy。
 
 ### 2.14 Agazzotti et al. — A Network Simplex Framework for Discrete Unbalanced Optimal Transport
 
@@ -171,6 +173,15 @@
 - **与本文的直接关系：** 它已经建立了“稀疏 primal--dual support + full-space pricing”的 UOT 先例，因此正文不能再笼统声称已有无熵 UOT solver 都需要二次内存。区分点应落在 hierarchical localization、批量 edge insertion、GPU restricted solve、高维 matrix-free cost 和 support budget，而不是“首次使用 sparse active support”。
 - **分类标签：** sparse combinatorial solver；adapted network simplex；edgewise pricing。
 
+### 2.15 Auricchio et al. — Transport Less, Solve Faster: Exploiting sparsity in algorithm design for Unbalanced Optimal Transport
+
+- **作者与来源**：Gennaro Auricchio、Francesco Rinaldi、Saverio Salzo、Giovanni Spisso；[arXiv:2611.10268v1](https://arxiv.org/abs/2611.10268v1)，2026-11-06；[全文](https://arxiv.org/html/2611.10268v1)。本次重点核对 Sections 3--6 和支持识别定理；尚未加入 `references.bib`。
+- **目标与表示**：覆盖 KL 的一般 marginal-penalized UOT。令 $c^{(R)}_{ij}=\min\{c_{ij},R\}$，显式维护 $\mathcal E_R=\{(i,j):c_{ij}<R\}$ 上的流量，高成本部分通过两侧 residual masses 压缩；变量数为 $|\mathcal E_R|+m+n$。
+- **迭代**：压缩问题上使用 pairwise Frank--Wolfe，每步在新 atom 与 active atom 之间转移质量；不执行当前支持上完整的 restricted-UOT reoptimization。
+- **理论**：分析截断/重构误差、PFW 收敛率、局部条件下的 extended-support identification，以及 FW gap 加重构误差的原目标证书。KL 情形的理论采用保持压缩问题最优解不变的边际 barrier 修改；速率按 good steps 表述，不能直接当作 GPU runtime 保证。有限识别也不等同于无条件恢复唯一 coupling 的全部正边。
+- **与 hier_uot 的比较**：比较 pairwise 更新与 PDUOT restricted reoptimization、成本阈值压缩与动态支持预算、各自的保证对象。不能说其不支持 KL 或缺乏收敛理论，也不能把 cost capping 简化成直接删掉所有高成本边。$|\mathcal E_R|$ 未必线性；PFW 的稀疏迭代表示与完整变量集合的规模需要分别讨论。
+- **分类标签**：sparsity-exploiting UOT；cost truncation/compression；pairwise Frank--Wolfe。纳入正文最近邻 related work，不能据此直接宣称 hier_uot 更快，性能结论仍需实验。
+
 ## 3. 无熵 UOT 内部的建议分类
 
 “Direct methods”过于宽泛，也容易让读者误以为后面列出的 MM、Frank--Wolfe 和 screening 是三个穷尽的 solver 家族。更准确的上位名称是 **solvers for unregularized UOT**：它们保留原始 marginal-penalized objective，不额外加入 coupling regularizer，也不对 coupling 施加低秩约束。内部按优化组织方式分为三类，safe screening 另列为可叠加的加速层。
@@ -179,16 +190,17 @@
 |---|---|---|---|
 | 1 | Direct plan optimization | 直接以 coupling 或其 row/column sums 更新原目标 | MM；BFGS/L-BFGS-B 和 coordinate descent 可在调研文档或实验说明中出现，不必在 introduction 罗列 |
 | 2 | Reformulation and OT-oracle methods | 先求 transported marginals，或在外层迭代中调用 balanced OT oracle | ETM；translation-invariant Frank--Wolfe（现有主要结果限于 1-D） |
-| 3 | Sparse combinatorial methods | 显式维护稀疏 support/basis，通过 support event 或 dual pricing 改变结构 | L2² regularization path；adapted network simplex（L2²/KL） |
+| 3 | Sparsity-exploiting UOT methods | 利用稀疏 support/basis 或截断压缩，通过 support event、pricing 或原子更新推进优化 | L2² regularization path；adapted network simplex（L2²/KL）；cost-truncation PFW |
 | 加速层 | Support-reduction techniques | 在 underlying solver 之外安全删除必为零的变量 | safe screening |
 
-这个分类与前两大类组成完整 related-work 结构：
+上述内部分类用于核查机制；2026-11-12 确定的正文组织为四个短段落：
 
 1. Coupling-regularized methods。
 2. Low-rank coupling methods。
-3. Solvers for unregularized UOT，其中再用上述三个机制组织代表工作。
+3. Direct updates and OT-oracle reductions：MM、marginal-first 与 balanced-OT oracle 路线。
+4. Sparsity-exploiting UOT methods：regularization path、adapted network simplex、cost-truncation PFW。
 
-正文不需要给三个无熵子类分别起段落；用一句总领，再用三句覆盖即可。Safe screening 的句子应明确它是 complementary acceleration，而不是第四种独立 solver。推荐顺序仍为 coupling regularization → low rank → unregularized solvers → our approach。
+第四段单独介绍与本文最近的稀疏路线，具体说明其优化操作、目标和理论范围，再引出 hier_uot 选择的反复 restricted reoptimization 路线。分类用于呈现差异，不证明性能优劣，也不是穷尽且互斥的算法分类。Safe screening 仍是 complementary acceleration，不单列成独立 solver 家族。
 
 ## 4. 候选方法的纳入与排除
 
@@ -199,6 +211,7 @@
 - **1-D Frank--Wolfe：** 可保留，但必须写出 one-dimensional specialization；不能用它代表一般高维 OT-oracle solver。
 - **Regularization path：** 与 MM 来自同一篇论文，但机制不同；它是 L2²-specific sparse support solver，适合和 network simplex 放在一句。
 - **Adapted network simplex：** 最新且与本文最接近的 sparse primal--dual UOT solver，必须纳入并准确区分。
+- **Cost-truncation PFW：** Auricchio et al. 2026 的新近稀疏 UOT 路线，见 Section 2.15；应与 network simplex 等一起单独介绍，并区分 pairwise 更新和完整 restricted reoptimization。
 - **Safe screening：** 值得保留，但作为 solver-independent support reduction。
 
 ### 4.2 不建议在 introduction 的无熵段落罗列
@@ -218,13 +231,13 @@
 | tree UOT 是一般 KL-UOT 的几何加速器 | 其具体模型是 tree-GKR，不应省略模型范围 |
 | 稀疏最优解意味着 solver 运算稀疏 | 还需要 sparse storage、support selection 和避免遍历被删边的实现 |
 | 所有 Sinkhorn 都有二次内存 | matrix-free、truncated 和 sampled kernels 都是反例 |
-| screening 有二次扫描，所以不够 scalable | SHUTTLE 也有 full scan；应比较持久存储、扫描频率、候选 support 的获取和 restricted solve 成本 |
+| screening 有二次扫描，所以不够 scalable | hier_uot 也有 full scan；应比较持久存储、扫描频率、候选 support 的获取和 restricted solve 成本 |
 | low-rank UOT 的线性复杂度无条件成立 | 还依赖 rank、cost factorization，以及内外迭代次数 |
 | safe KL screening 完全等于我们的原始 KL 设定 | 公开版存在 $+\epsilon$ convention，需逐公式核对版本 |
 
 ## 6. 可留在正文与可后移的信息
 
-- Introduction 必须讲：各路线的主要机制、改动了什么目标/表示、与 SHUTTLE 的关系。
+- Introduction 必须讲：各路线的主要机制、改动了什么目标/表示、与 hier_uot 的关系。
 - Method / appendix 再讲：具体 update、精确复杂度条件、stopping、safe region 推导、正则参考测度。
 - 不必为凑齐分类把应用论文、综述、通用 PDHG 文献混进 UOT solver taxonomy；这些引用各自放在应用背景、定义和子求解器来源处。
 - 本文档覆盖当前段落及已讨论的 ETM/HELLO，不声称覆盖全部 UOT 文献。PDCS、PDHCG-CQP、Moreau 等通用 conic 求解路线若要写入，需先逐篇核对其论文与 KL-UOT 转化，而不能仅按本地实验方法名当作新的 UOT 论文家族。
@@ -246,7 +259,7 @@
 
 ### Spar-Sink
 
-- **建议：** 是 SHUTTLE + sparse Sinkhorn 在“逼近 full entropic UOT”任务上的直接相关 baseline，尤其当论文要强调 sparse entropic extension 的收益时。
+- **建议：** 是 hier_uot + sparse Sinkhorn 在“逼近 full entropic UOT”任务上的直接相关 baseline，尤其当论文要强调 sparse entropic extension 的收益时。
 - **相同点：** 都减少 kernel 运算、输出 sparse plan。
 - **不同点：** Spar-Sink 使用 importance sampling 和 kernel reweighting；我们用无熵优化产生的 support，默认沿用该 support 上的原始 entropic kernel。二者不是同一个 support 上的两种 scaling 更新，也不保证同样的近似偏差。
 - **官方实现核对：** [all_funcs.py](https://github.com/Mengyu8042/Spar-Sink/blob/main/code/all_funcs.py) 的 `spar_sinkhorn_unbalanced` 接受完整 `M,K`，构造 dense probability、mask 和 `K_spar`。官方版本的前处理/表示仍可能为二次内存；这与理论上的稀疏迭代成本应分别报告。不能拿它的 dense 前处理直接宣称 sampling 方法本身不可能 matrix-free。
@@ -265,10 +278,12 @@ active-set 不专属于 dual，column generation 也不是不用 dual 的 primal
 3. **Manupriya et al., Submodular Framework for Structured-Sparse Optimal Transport：** [原文](https://arxiv.org/abs/2406.04914)，[代码](https://github.com/Piyushi-0/Sparse-UOT)。Algorithm 1 从空 support 出发，选择 gradient 得分最大的候选边，加入后在当前 support 上重新优化。它明确存在“选边 + restricted reoptimization”结构；但目标是带 cardinality / structured sparsity constraints 的 MMD-UOT，并非原始无 rank/cardinality 约束的 KL-UOT。不能笼统说此前 UOT 没有主动构建 support。
 4. **更广义的 unbalanced transport 优化：** Carioni–Iglesias–Walter, Extremal points and sparse optimization for generalized Kantorovich–Rubinstein norms，[原文](https://arxiv.org/abs/2209.09167)，FoCM 2025。对 smooth fidelity + generalized KR norm 的 measure optimization 使用 accelerated generalized conditional gradient。不是本文离散 KL coupling 问题，但足以说明“unbalanced transport 从未使用原子生成”会过宽。此条仅按公开摘要确认问题范围与算法，未细读全部证明。
 5. **HELLO / OT-oracle fully-corrective FW：** 维护的 atoms 是完整 balanced OT solutions / potential candidates，不是每个 atom 一条运输边。它属于 UOT 的 oracle-based 迭代，但不能直接等同于我们按边的 restricted optimization。
+6. **Adapted network simplex：** Section 2.14 已给出 KL-UOT 上稀疏 primal--dual support 和 pricing 的先例；不能把新颖性建立在此前没有 dual 选边上。
+7. **Auricchio et al. 2026：** Section 2.15 的 cost-truncation/PFW 同样利用 UOT 稀疏性并给出理论保证，但采用压缩问题上的 pairwise 原子更新。
 
 ### 9.3 当前可以与不能说什么
 
-- **可以说：** 已核对的上述方法没有直接覆盖“固定 KL penalty、无 coupling 额外正则/非负秩约束、跨层与层内 dual-guided edge localization、sparse restricted primal–dual solver、线性持久存储”的完整组合。正文最好正面陈述这个组合，不依赖 first claim。
+- **可以说：** 本文建立面向原始无正则 KL-UOT 的 scalable active-support 方法，重点是高效 PDUOT restricted reoptimization、内外层收敛保障，以及支持初始化和预算约束下的有效更新。与上述方法逐项比较具体操作和条件，不用完整组件组合来替代论证，也不依赖 first claim。
 - **不能说：** 首次对 UOT 使用 active-set、首次使用 dual 选边、首次用 sparse support，或者整个 UOT 文献没有 column generation。
 - **未确认：** 本次未找到并核实一个与固定 KL-UOT 逐边 restricted master + full-space pricing 完全同构、且先于本工作的独立算法；这不是不存在的证明。搜索覆盖当前原始论文、引用线索、arXiv metadata 的 active-set / column-generation / working-set / constraint-generation / greedy 等关键词。通用搜索部分受限，不能将零结果当成全面 full-text 检索。
 - **创新性判断：** 即使最终没有找到完全对应的 KL 先例，把通用 constraint generation 应用于这组 KKT 也不是自动很强的贡献。需要把新增机制及其必要性、理论条件和大规模实测结果讲清楚，尤其区分从 HELLO 继承的部分。

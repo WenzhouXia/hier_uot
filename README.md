@@ -1,6 +1,15 @@
 # hier_uot
 
-ICML 2027 manuscript for SHUTTLE.
+ICML 2027 manuscript for hier_uot.
+
+## Naming
+
+The paper title is **Scalable Active-Support Optimization for Unbalanced Optimal Transport**.
+The algorithm display name is **Salut**, controlled by `\ours` in `main.tex`.
+Derived algorithm names reuse that macro.
+Comments and Markdown prose use the stable project name `hier_uot`.
+Existing `shuttle` strings in paths, configuration keys, commands, and historical
+results are literal technical identifiers and must remain valid.
 
 ## Layout
 
@@ -8,6 +17,7 @@ ICML 2027 manuscript for SHUTTLE.
 - `references.bib`: shared bibliography.
 - `theory/`: standalone refinement and PDUOT convergence notes and diagnostics.
 - `RELATED_WORK_ALGORITHM_MAP.md`: related-work research notes.
+- `STORYLINE_INTRO.md`: introduction storyline and revision outline.
 - `SPARSE_SINKHORN_BASELINE_SURVEY.md`: standalone copy of the baseline survey.
 
 ## Template

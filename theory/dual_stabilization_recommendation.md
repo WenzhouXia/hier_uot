@@ -7,7 +7,7 @@ The recommendation below is retained as the historical result of that investigat
 
 ## Recommendation
 
-Keep the ordinary SHUTTLE path and its sufficient-progress test.
+Keep the ordinary hier_uot path and its sufficient-progress test.
 Use a mathematical pricing-margin test to switch to a KL-aware stabilized phase only when the proposed new edges do not supply a reliable primal descent direction.
 Allow full dual violation to fluctuate in both modes.
 Do not introduce a stagnation window or roll back earlier primal iterates.

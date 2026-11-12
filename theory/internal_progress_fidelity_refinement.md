@@ -176,7 +176,7 @@ Artifact：`internal_forcing_integrated_n4096.json`。
 该 checkpoint 在非增 gate 就被拒绝，尚未进入 native fidelity 分支；不能把这个 trace 错解为仅由 log gate 拒绝。
 Anchor 的真实 suboptimality 仅约 $2.87\times10^{-46}$，远低于 FP64 对完整 objective 相减可分辨的尺度。
 该结果说明 exact-arithmetic 可达性不足以保证新增内部 gate 在浮点上实用。
-这是构造的 restricted warm start，不是自然 SHUTTLE 轨迹、无限循环反例或普遍失败率。
+这是构造的 restricted warm start，不是自然 hier_uot 轨迹、无限循环反例或普遍失败率。
 对照 $\rho=1,c=2$、同类 warm start，新旧条件均410步通过。
 另一个适中质量、接近最优的压力问题使用 $\rho=1,c=2$，anchor 为 $(1-10^{-7})e^{-1}$，初始 potentials 为 $1\pm10^{-6}$，可靠性门槛 $5\times10^{-8}$。
 原 PDUOT 10步达标；新条件在第10步拒绝，继续同一次迭代至20步后通过，名义 tolerance 仍为 $10^{-6}$。

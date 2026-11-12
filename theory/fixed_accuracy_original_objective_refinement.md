@@ -1,4 +1,4 @@
-# 固定 inner tolerance 的 SHUTTLE refinement：原目标下降与终止 rounding
+# 固定 inner tolerance 的 hier_uot refinement：原目标下降与终止 rounding
 
 日期：2026-10-20。
 
@@ -12,7 +12,7 @@
 
 ### 改什么
 
-保持正常SHUTTLE流程：每轮以原容差调用PDUOT，随后full scan、dual-violation insertion和budgeted pruning。
+保持正常hier_uot流程：每轮以原容差调用PDUOT，随后full scan、dual-violation insertion和budgeted pruning。
 每层记录已有full residual，每完成两轮检查它是否相对上一个块端点收缩到固定比例$q$以内。
 若没有收缩，该层从下一轮开始永久进入保障模式；进入下一level时重新使用正常模式。
 实验中$q=0.9$用于正常路径核验，$q=0.5$用于更容易触发保障模式的压力测试；该选择与PDUOT tolerance无关。
@@ -276,7 +276,7 @@ $$\gamma_-=\frac{\eta_*}{2}\min\{\delta/2,\eta_*\delta/(2R)\}>0.$$
 连同最多 $V-1$ 条 structural edges 和最多 $bV$ 条当轮 pricing candidates，受保护边数至多 $(b+3)V-2$。
 故 $\beta\geq b+3$ 时，原只删零 flow 的 budgeted pruning 仍可实施。
 
-Normal path 可保持原 SHUTTLE 不变，在一个固定收缩率 $q\in(0,1)$ 的停滞检测后只切换一次到上述 safeguard。
+Normal path 可保持原 hier_uot 不变，在一个固定收缩率 $q\in(0,1)$ 的停滞检测后只切换一次到上述 safeguard。
 无限未终止但不切换的 normal path 会有几何趋零的 full residual，矛盾。
 切换后由第7节有限结束，故整个 level 有限结束。
 每层重置；inner tolerance 始终不变。
@@ -382,7 +382,7 @@ RestrictedSolve与FullScan之间无回调、无补精、无循环重试；两组
 需要区分未触发的标量controller开销、误触发频率和触发后成本，避免把额外评测插桩时间计入solver性能。
 
 **有限步理论。** 第12节给出固定inner精度下的有限终止论证，终止包含原restricted KKT和full判停。
-明确假设包括每次inner调用有限、cost一致、精确pricing和保目标support update；这不是unchanged SHUTTLE的定理。
+明确假设包括每次inner调用有限、cost一致、精确pricing和保目标support update；这不是unchanged hier_uot的定理。
 第8节同时保留原$\beta\geq b+3$硬预算。
 
 稳定求值版本的完整结果目录为`experiments/refinement_forcing_uot/results/original_rounding_20261020_003138/`。
@@ -473,7 +473,7 @@ Prepare和SafeguardStepOrReturn在正常模式下分别沿用原结果和不作�
 Raw统计出口是性能优化；有限终止的下降证明仍由trial势和原目标更新承担。
 
 可用于正文的定理范围是：在每次restricted调用有限、成本一致、pricing精确且support update保留规定coupling与方向的假设下，配备本保障机制的每层refinement有限步返回满足给定restricted KKT与full dual-violation容差的点，支持线性working memory，无需restricted精确解。
-固定内层容差与显式误差预算写入附录算法定义；不把定理归给完全不变的原SHUTTLE。
+固定内层容差与显式误差预算写入附录算法定义；不把定理归给完全不变的原hier_uot。
 
 按作者四点，当前方案已有紧凑的正文呈现、明确的局部接入边界、一般路径的小开销计时证据，以及固定精度有限终止推导。
 候选仍有具体代价：异常路径需原目标比较与修正，双势出口需局部scan适配，且不能保证所有异常实例上的runtime不增加。

@@ -66,7 +66,7 @@ $$\min\left\{\frac12,\frac{\nu}{2R}\right\}$$
 `experiments/refinement_forcing_uot/test_coordinate_representability.py` 的110项标量测试通过。
 覆盖flow从 $10^{-250}$ 至 $10^{250}$、三组penalties和三档正score，验证相对界与实际FP64 flow变化。
 两项边界测试明确记录极小score可导致舍入停滞、新零边在subnormal尺度可出现underflow。
-这些测试使用给定score核验坐标运算，没有证明实际potential求值同样准确，也不是完整SHUTTLE轨迹测试。
+这些测试使用给定score核验坐标运算，没有证明实际potential求值同样准确，也不是完整hier_uot轨迹测试。
 
 ## 6. 对候选方案的影响
 

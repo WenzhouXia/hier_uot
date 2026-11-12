@@ -1,4 +1,4 @@
-# SHUTTLE theory notes
+# hier_uot theory notes
 
 - `internal_progress_fidelity_refinement.md`: current same-call PDUOT progress-or-fidelity scheme, exact/inexact finite-refinement statements, default-off production integration (`bbb6d0c`), complete 135-run comparison, and finite-precision limitations.
 - `refinement_convergence.tex`: manuscript appendix proving exact finite optimality and conditional inexact finite-tolerance termination, including the coordinate-gain lemma and local stopping implementation.

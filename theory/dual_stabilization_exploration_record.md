@@ -37,7 +37,7 @@ Pairwise dual constraints 不变，但 node response 和 restricted objective �
 
 在 exact arithmetic 下，假设 restricted 方法能达到每次要求的模型 KKT 和任意正的模型误差预算，可证明：固定中心的拒绝阶段有限，中心更新次数也有限，最终达到原 KKT tolerance。
 证明允许非精确 restricted 解、非单调 raw dual violation、保 cost 与 marginals 的 support sparsification。
-它不意味着现有固定 KKT tolerance 的原版 SHUTTLE 自动有限步终止。
+它不意味着现有固定 KKT tolerance 的原版 hier_uot 自动有限步终止。
 没有证明任意 PDUOT controller/restart 组合满足上述可达性假设，也没有给出 FP64 下预算的实用下限。
 
 ## 实验证据与范围
