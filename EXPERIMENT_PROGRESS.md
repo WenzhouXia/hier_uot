@@ -85,7 +85,7 @@
 | E16 | UFGW solver 与轨迹 `tab:ufgw-solvers`、`fig:ufgw-objective-time` | 4/4 配置完成规定的 10 sweeps | **重跑 hier_uot 两行及轨迹** | 缺完整内层控制器记录；另有 POT 精度核对待办 |
 | E17 | temporal transport 与 timing breakdown `fig:temporal-runtime`、`fig:temporal-timing-breakdown` | 汇总记录 114/114 配置；原始记录并不完整 | **重跑 hier_uot 相关配置＋核对图源** | 缺完整内层记录；timing 旧目录缺失，当前图与可用归档 PDF 字节不同 |
 | E18 | MOSTA spatial alignment `tab:ufgw-application` | 7 个时间对、两方法，14/14 成功 | **重跑 hier_uot+BCD** | 缺完整内层记录；保留已选配置，moscot low-rank 基线不因预算变更重跑 |
-| E19 | 通用 runtime breakdown `tab:uot-runtime-breakdown` | 历史布局数据，当前整节注释掉 | **已移除；恢复前重跑** | 混合源码版本，计时项需核对为互不重叠口径 |
+| E19 | 通用 runtime breakdown `tab:uot-runtime-breakdown` | 独立入口已实现；My4090 完成 12 个单 seed 预览配置 | **预览完成；正式五 seed 待跑** | 图中展示 initialization、restricted solves、pricing、other，support maintenance 并入 other；原始五项计时保留，同步边界与嵌套扣除，保留普通运行配对诊断 |
 | E20 | Schmitzer/LCN 等额外 entropic baselines | 尚无用于该节的正式结果 | **已移除 / 待补实验** | 不将占位或计划写成已完成；full Sinkhorn warm-start 对比也尚待补做 |
 | E21 | 附录不同维度 runtime–accuracy Pareto，label 待定 | 新增计划 | **待补实验；单 seed** | 四个维度 × 四组 penalty 的 $4\times4$ 大图；仅比较 hier_uot 与 Sinkhorn |
 
@@ -216,7 +216,11 @@ $$G(t)=\frac{P(t)-D_{\mathrm{ref}}}{\max\{|P(t)|,|D_{\mathrm{ref}}|,10^{-15}\}}.
 
 ### E19–E20：未展示或尚未完成的实验
 
+E19 附录图已确定采用双栏 $1\times4$ 布局，support maintenance 在图中并入 Other，原始分项保留。2026-11-14 已在 My4090 启动独立补充批次 `paper_experiments_uot/runtime_breakdown/results/20261114_runtime_breakdown_n262144_my4090/`：$n=262144$、四组既有 penalty、seed 42，4 个 profile 与 4 个普通配对运行，沿用预览的关闭 GPU 污染监控设置。配置为 `config_n262144_my4090.yaml`；启动时首组 $(0.1,0.1)$ 正在执行，尚无完成结论。原有小规模批次保持不变，未启动五 seed 网格。
+
 - **通用 runtime breakdown**：旧路径 `paper_experiments_uot/accuracy_runtime_pareto/results/20261025_222731/` 与 `paper_experiments_uot/component_ablation/results/20261102_193809/` 仅作为历史线索，未在本轮确认为正式来源。恢复前需用共同源码和正式 GPU 协议重跑，核对初始化、restricted solve、scan、update 和其他时间不重叠。
+
+  2026-11-14 新建 `paper_experiments_uot/runtime_breakdown/`。实验进程内临时包装现有函数，CUDA 同步阶段边界并扣除嵌套阶段，不修改生产求解器；受限调用中的 sparsification 单独归入 support maintenance。My4090 预览批次为 `results/20261114_runtime_breakdown_preview_my4090/`：TOME E11.5→E12.5、PCA $d=30$、$n=4096/16384/65536$、四组 penalty、seed 42，12/12 个 profile 与 12/12 个普通配对运行均达到 KKT $10^{-6}$。分解时间总和闭合，profile/control 时间比为 0.962–1.006，配对目标值最大差 $5.56\times10^{-17}$。关闭 GPU 污染监控，作为图形和计时实现预览，不替换论文正式表格。已生成单栏 $2\times2$ 和双栏 $1\times4$ 的 PDF/PNG，输入、请求、原始完整结果、环境和源码指纹均随批次保存并回传。正式配置为 $n=16384/65536/262144$、四组 penalty、五 seed，共 60 个 profile，尚未启动。
 - **Schmitzer/LCN 额外基线**：当前整节注释掉，没有正式可引用结果，保持移除直到适配和测量完成。
 - **full Sinkhorn warm-start 加速**：若要作为中心结论，需要补 cold-start 与 hier_uot 初始化 full Sinkhorn 的端到端比较，计入初始化成本；现有 sparse refinement 对比不能代替它。
 - **general marginal penalty 附录**：当前暂时移除，不作为已完成的正文实验或理论贡献登记。
