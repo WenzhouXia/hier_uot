@@ -71,7 +71,7 @@
 | E02 | 完整 UOT runtime–accuracy `fig:uot-runtime-accuracy` | 当前新批次 `20261111_202336` 为 $n=32768$、seed 42、五方法；旧图尚未替换 | **正在重跑；需补至五 seed** | 新批次显式启用 safeguard 和 GPU 监控；需补四个 seed，并保留全部成功/失败分母 |
 | E03 | 百万点 scaling 与精度表 `fig:uot-large-scale`、`tab:uot-scaling-accuracy` | 找到图像实际匹配的新归档：20/20 求解与 gap 有效 | **待重跑＋需先统一数据版本** | 当前图、正文统计和精度表混用了不同批次；新归档仍关闭 safeguard |
 | E04 | HELLO-UOT 对比 `tab:hello-uot-direct`、`tab:hello-uot-complete`、`fig:hello-uot-trajectories` | 12 个实例，24 次原生求解；12 个独立 reference 通过审计 | **重跑 hier_uot 部分** | hier_uot 旧批次关闭 safeguard；HELLO-UOT 无需仅因该开关重跑 |
-| E05 | 受限求解器 runtime CDF，替换现有 `fig:restricted-runtime-accuracy`（最终 label 待定） | 历史 Pareto 80/80 点成功，保留归档；CDF 尚未运行 | **待补 CDF 并替换正文图** | 四个 penalty 子图，统一 shared gap $10^{-6}$，比较各方法达到共同精度的时间；不增加第二套精度面板 |
+| E05 | 受限求解器 runtime CDF，替换现有 `fig:restricted-runtime-accuracy`（最终 label 待定） | 独立入口已实现；433 个快照通过 dry-run；GPU smoke 和正式测量待执行 | **代码完成，待 GPU 验证和测量** | 四个 penalty 子图，统一 shared gap $10^{-4}$；额外共同检查耗时单独扣除，保留全部计划分母 |
 | E06 | 系统组件消融 A–E `tab:component-settings-mock` | A/B/D/E 实测 pilot；C 为后端集成 pilot | **待重跑；C 先补实现** | A/B/D 对齐 safeguard；E 正式重跑；C 先补 PDCS warm-start mapping |
 | E07 | PDUOT 内部组件 CDF `fig:pduot-component-ablation-cdf` | 433 个快照 × 6 变体，2598/2598 成功 | **可保留当前迭代 CDF** | 所有运行均有重启记录，最多 25 次，$J=64$ 不触发 |
 | E08 | safeguard on/off `tab:refinement-safeguard` | 4 对、8 次完整求解；零拒绝、零额外迭代 | **本次变更不要求重跑** | 130 次受限调用均有步数；可推出单次重启最多 55 次，$J=64$ 不触发 |
@@ -125,18 +125,18 @@
 - 80 个扫描点是重新测量的结果。该项仍沿用历史 lower-middle 快照，不能将其改称当前 upper-middle 选择。
 - PDUOT 的 20 个点均可审计，最多 17 次重启，因而 $J=64$ 不裁剪。当前无需仅因新预算重跑，也不把外层 refinement safeguard 强加到独立受限问题比较中。
 
-**2026-11-11 新的正文替换计划（作者已确定）**：为避免与完整 UOT Pareto 重复，正文 restricted solver 比较改为 runtime CDF。只使用一个共同精度目标 **shared gap $10^{-6}$**，保留四个子图，分别对应 $(0.1,0.1)$、$(1,1)$、$(10,10)$、$(0.045,99.995)$；不再按两个精度目标增加面板。历史 Pareto 的上述数据与图保留归档，不重标为新 CDF 的实测数据。
+**2026-11-14 更新协议（作者已确定）**：为避免与完整 UOT Pareto 重复，正文 restricted solver 比较改为 runtime CDF。共同精度目标改为 **shared gap $10^{-4}$**，保留四个子图，分别对应 $(0.1,0.1)$、$(1,1)$、$(10,10)$、$(0.045,99.995)$。复用 E07 全部 433 个快照，共 1,732 次方法任务和 433 个独立受限 reference；单任务时限 1200 秒，各方法跨 penalty 固定配置。历史 Pareto 数据与图保留归档，不重标为新 CDF 实测数据。
 
 - 方法为 PDUOT、PDCS、MM、Sinkhorn。各方法在完全相同的受限 support、cost、边缘质量上求解，记录第一次经共同检查达到目标精度的累计求解耗时；横轴用 log 时间，纵轴为达到目标的算例比例。
 - 统一评价原始无熵受限 UOT 目标，不能用各方法原生 tolerance 或 Sinkhorn 的熵正则停止指标代替。每个快照使用独立受限 reference 的可行对偶下界 $D_{\mathrm{ref}}$，共同指标为：
 
 $$G(t)=\frac{P(t)-D_{\mathrm{ref}}}{\max\{|P(t)|,|D_{\mathrm{ref}}|,10^{-15}\}}.$$
 
-- reference 必须对应同一个受限问题，核验该 support 上的对偶可行性及足以区分 $10^{-6}$ 目标的精度；不能直接借用完整 UOT 的下界。若 reference 不够紧，记录 reference 不足，不能误判参评方法无法达到目标。
-- Sinkhorn 的输出也按原始无熵目标计算 gap；其 epsilon/continuation 策略在实验前固定，不逐算例根据结果挑选最佳设置。统一初始化协议、计时边界和检查频率，原生求解及共同停止检查计入耗时，编译/预热按既有协议排除；实验层实现，不要求修改生产代码。
+- reference 必须对应同一个受限问题，核验该 support 上的对偶可行性；固定 PDUOT KKT $10^{-8}$，另要求 reference self-gap 不超过 $10^{-6}$。不能直接借用完整 UOT 的下界。若 reference 不够紧，记录 reference 不足，不能误判参评方法无法达到目标。
+- Sinkhorn 按原始无熵目标计算 gap，先固定 epsilon $10^{-4}$、不使用 continuation；若 GPU 验证表明该设置不足，先统一修改配置再正式测量，不逐快照挑选。全部方法使用各自标准 cold start，不继承快照 warm state。PDUOT/PDCS 每 200 次迭代检查，MM/Sinkhorn 每 50 次检查。额外共同评价及其记录耗时单独扣除，同时保存实际 wall time；原生检查仍计入主耗时，编译/预热排除。
 - 建议复用 E07 的多 seed、多层/轮快照语料。各 penalty 已分别覆盖 8、7、5、8 个父 seed，满足至少五个父 seed 的要求；冻结各方法共同的问题清单并记录实际规模、父 seed、层和轮次。任何筛选在比较前按与方法表现无关的规则确定，不因求解失败删题。
 - 各 penalty 的 CDF 分母保留全部计划算例，超时、OOM、未达到目标的算例不能从分母删除，曲线可以低于 100%。GPU 污染/监控失效保留为需补测状态，不称为算法失败；同一父问题的多层/轮快照不能视为独立 seed。
-- 仍需实现共同 gap 检查与首次达标计时、核查 reference、冻结语料及运行协议，然后重新测量并替换正文图。旧精度扫描的最终点不能直接冒充首次达标时间。**当前只是更新计划，未启动 CDF 实验，未修改论文图或实验代码。**
+- 新建独立入口 `paper_experiments_uot/restricted_solver_runtime_cdf/`，已实现共同 gap 检查、首次达标净计时、reference 验收、全语料冻结与 CDF 汇总，复用共享 GPU 污染监控和进程回收。CUDA 检查入口使用 batch 内源码副本，生产 solver 文件保持原样。已完成 433 个快照的 dry-run 校验及 CPU 测试；GPU smoke 和正式测量仍待执行，正文图尚未替换。旧精度扫描的最终点不能冒充首次达标时间。
 
 ### E06：系统组件消融 A–E
 
