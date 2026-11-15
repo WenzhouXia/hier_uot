@@ -85,12 +85,18 @@
 \newtheorem{definition}{Definition}
 \theoremstyle{plain}
 
-\icmltitlerunning{Scalable Active-Support Optimization for UOT}
+% CN: 原页眉短标题，保留供参考。
+% EN: Previous running title, retained for reference.
+% \icmltitlerunning{Scalable Active-Support Optimization for UOT}
+\icmltitlerunning{A Sparse Primal--Dual Method for Large-Scale UOT}
 
 \begin{document}
 
 \twocolumn[
-    \icmltitle{Scalable Active-Support Optimization for Unbalanced Optimal Transport}
+    % CN: 原标题，保留供参考。
+    % EN: Previous title, retained for reference.
+    % \icmltitle{Scalable Active-Support Optimization for Unbalanced Optimal Transport}
+    \icmltitle{A Sparse Primal--Dual Method for Large-Scale Unbalanced Optimal Transport}
 
     \begin{icmlauthorlist}
         \icmlauthor{Anonymous Authors}{anon}
@@ -109,17 +115,17 @@
 % 问题背景和难点：说明 UOT 的作用以及无熵离散问题的规模瓶颈。
 Unbalanced optimal transport (UOT) compares distributions while allowing their total mass to vary, yet its discrete formulation still involves quadratically many transport variables.
 % 我们的主要思路
-Exploiting the existence of sparse optimal couplings, we develop a linear-memory active-support algorithm for large-scale UOT, which alternates restricted solves on the sparse active support with support updates that identify missing transport variables.
+Exploiting the existence of sparse optimal couplings, we develop \ours, a sparse primal--dual method for large-scale UOT, which optimizes over a dynamically maintained active support using linear memory.
 % CN: 突出反复非线性受限求解的瓶颈及 PDUOT 的作用。
 % EN: Highlight repeated nonlinear restricted solves and the role of PDUOT.
-For these repeated nonlinear restricted solves, we design a GPU-friendly first-order solver that provides high-accuracy primal--dual solutions across marginal penalty strengths.
+To efficiently solve the resulting nonlinear UOT subproblems, we design \subsolver, a GPU-friendly first-order solver that computes high-accuracy couplings and dual potentials for guiding active-support updates.
 % CN: 分别陈述内层收敛与非精确受限求解下的外层有限终止。
 % EN: State inner convergence and finite outer termination with inexact restricted solves.
-Theoretically, we establish global and local linear convergence of this solver, as well as finite termination of support refinement at a prescribed full-space KKT tolerance with inexact restricted solves.
+Theoretically, we establish global convergence and a local linear rate for \subsolver, whose stopping rules ensure finite termination of \ours's support refinement to a prescribed KKT tolerance despite inexact restricted solves.
 % CN: 以扩展及规模、效率和下游任务证据收口。
 % EN: Close with extensions and evidence on scale, efficiency and downstream tasks.
 We further extend the method to sparse entropic UOT and unbalanced fused Gromov--Wasserstein problems.
-Experiments demonstrate efficient scaling to million-point problems on a single GPU and broad applicability across ground costs and marginal penalties.
+Experiments demonstrate efficient scaling to million-point problems on a single GPU and broad applicability across ground costs, marginal penalty types, and penalty strengths.
 Downstream evaluations on biological alignment tasks further show substantial speedups with competitive task performance.
 \end{abstract}
 
@@ -173,25 +179,27 @@ This leaves open how to solve large-scale UOT problems with linear memory and ef
 
 \paragraph{Our approach.}
 UOT admits sparse optimal couplings, motivating optimization over a small active support.
-We introduce \ours, a \textbf{S}calable \textbf{A}ctive-support solver for \textbf{L}arge-scale \textbf{U}nbalanced optimal \textbf{T}ransport.
+We introduce \ours, a \textbf{S}parse primal--du\textbf{A}l method for \textbf{L}arge-scale \textbf{U}nbalanced optimal \textbf{T}ransport.
 It alternates optimization on the active support with support updates to identify missing transport variables.
 
 A central computational bottleneck is the repeated solution of nonlinear restricted UOT subproblems.
 To address this bottleneck, we develop \subsolver, a GPU-efficient first-order primal--dual solver that returns both the coupling and dual potentials for subsequent support updates.
+We establish convergence guarantees for its adaptive iteration and design stopping rules that ensure finite support refinement to a prescribed KKT tolerance with inexact restricted solves.
 Following \hello's dual-guided hierarchy~\citep{xia2026dual}, we use dual potentials from smaller problems to initialize the active support and dual violations to guide support updates.
 To guarantee linear working memory, we combine budgeted pruning with support sparsification that preserves both transported marginals and transport cost.
 
 Our contributions are summarized as follows:
 \begin{itemize}
-    \item \textit{Scalable active-support optimization:} We introduce \ours, which solves large-scale UOT through restricted optimization and dynamic support refinement using linear memory.
-Experiments demonstrate million-point scalability and applicability across cost and marginal penalty types.
-\item \textit{GPU-efficient restricted solver:} For repeated restricted subproblem solves, we develop \subsolver, a GPU-friendly first-order solver that efficiently provides high-accuracy primal--dual solutions across a wide range of marginal penalty strengths. 
+    \item We introduce \ours, a sparse primal--dual method for solving large-scale UOT using linear memory.
+Experiments demonstrate million-point scalability on a single GPU and applicability across costs and penalty types.
+    \item \textit{GPU-efficient restricted solver:} At its core is \subsolver, a GPU-friendly first-order solver developed for nonlinear restricted UOT subproblems.
+It efficiently computes high-accuracy primal--dual solutions across a wide range of marginal penalty strengths.
    \item \textit{Convergence guarantees:} We establish global convergence and a local linear rate for the full \subsolver algorithm.
-    For \ours, we prove finite termination at a prescribed full-space KKT tolerance with inexact restricted solves under the implemented stopping rules.
+    Its stopping rules further ensure that \ours's support refinement reaches a prescribed full-space KKT tolerance in finitely many rounds despite inexact restricted solves.
     \item \textit{Extensions and applications:} We extend \ours to approximate entropic UOT and solve unbalanced fused Gromov--Wasserstein (UFGW) problems, with large-scale biological experiments showing substantial speedups and competitive downstream performance.
 \end{itemize}
 
-\section{Active-Support Optimization for UOT}
+\section{Sparse Primal--Dual Method for UOT}
 \label{sec:method}
 
 \subsection{Overall Framework}
@@ -642,8 +650,8 @@ Panel E shows a roughly fivefold runtime reduction from retaining structural edg
 
 \input{experiments_extensions}
 \section{Conclusion}
-\ours combines dual-guided edge localization with a GPU-parallel restricted KL-UOT solver to solve large transport problems under a linear storage budget.
-The analysis connects shared-side response stability to hierarchical initialization and establishes convergence guarantees for the solver with adaptive restart and protected weight updates, and for safeguarded refinement under stated conditions.
+\ours solves large-scale UOT using linear memory by combining \subsolver with dynamic active-support updates.
+We establish global convergence and a local linear rate for \subsolver with adaptive restarts and protected primal-weight updates, and finite termination of support refinement to a prescribed KKT tolerance under the stated stopping conditions.
 Experiments evaluate unregularized accuracy, scaling, and component contributions, while sparse entropic refinement and UFGW extend the framework to biological alignment tasks.
 
 The support budget controls storage, while complete pricing still requires quadratic arithmetic per scan.

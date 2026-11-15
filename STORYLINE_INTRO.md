@@ -4,12 +4,12 @@
 
 ## 1. 整体定位
 
-论文标题确定为 **Scalable Active-Support Optimization for Unbalanced Optimal Transport**，不加算法名前缀。
+2026-11-15 标题更新：**A Sparse Primal–Dual Method for Large-Scale Unbalanced Optimal Transport**，不加算法名前缀。原标题已在 `main.tex` 中注释保留。新标题指 PDUOT 与 active-support 更新构成的完整方法；摘要、Our approach、四条贡献、Method 总标题与结论已同步调整。后文保留此前叙事讨论记录，历史提纲不代表当前正文状态。
 算法展示名确定为 **Salut**（大小写固定），正文通过 `\ours` 统一渲染，派生算法名复用主宏。
-缩写来自 **S**calable **A**ctive-support optimization for **L**arge-scale **U**nbalanced optimal **T**ransport。
+名称 Salut 保留：**S**parse、primal–dual 中的 **a**、**L**arge-scale、**U**nbalanced、**T**ransport。正文已同步更新缩写展开。
 注释和 Markdown 叙述统一使用稳定小名 `hier_uot`；历史数据路径、配置键、命令和 provenance 中的 `shuttle` 保留其技术标识含义。
 
-论文以 scalable active-support optimization for KL-UOT 为主线：直接在维护的支持上求解 restricted UOT，通过支持初始化与更新组织计算，在支持预算内达到完整问题的停止条件。
+当前论文以 sparse primal–dual method for large-scale UOT 为整体定位：从稀疏最优解出发，在动态维护的 active support 上优化，以 PDUOT 为核心求解非线性受限问题，并通过其停止规则连接内层收敛与外层有限容差终止。Active-support 初始化与更新组织稀疏计算并控制存储；Spar 保留在 PDUOT 迭代之外。
 
 PDUOT、active-support initialization 和 active-support update 是整体方法的组件。介绍技术贡献时优先强调高效的 restricted-UOT 求解与两项收敛保证；hierarchy 用于改善初始化，dual-guided hierarchy 是采用的具体实现方式，来源在相应位置明确交代。
 
