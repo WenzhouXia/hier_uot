@@ -18,6 +18,7 @@ results are literal technical identifiers and must remain valid.
 - `theory/`: standalone refinement and PDUOT convergence notes and diagnostics.
 - `RELATED_WORK_ALGORITHM_MAP.md`: related-work research notes.
 - `STORYLINE_INTRO.md`: introduction storyline and revision outline.
+- `STORYLINE_METHOD.md`: method storyline and Chinese paragraph outline.
 - `SPARSE_SINKHORN_BASELINE_SURVEY.md`: standalone copy of the baseline survey.
 
 ## Template

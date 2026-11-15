@@ -1,5 +1,55 @@
-\section{Additional Experiment Protocols}
+\section{Datasets and Evaluation Protocols}
 \label{app:extension-experiment-protocols}
+
+\subsection{Benchmark Data}
+\label{app:benchmark-data}
+
+\paragraph{TOME mouse embryogenesis.}
+% CN: 预处理设置来自 data/tome_embryogenesis/E11.5_E12.5/preprocessing.json；采样与缩放见 src/hierarchical_ot/benchmarks/tome_data_generator.py。
+% EN: Preprocessing settings: data/tome_embryogenesis/E11.5_E12.5/preprocessing.json; sampling and scaling: src/hierarchical_ot/benchmarks/tome_data_generator.py.
+We construct UOT problems between cells from developmental stages E11.5 and E12.5, represented in a common 30-dimensional PCA space.
+Expression counts are normalized to a library size of $10^4$ and log-transformed, with 2,000 highly variable genes selected using the Seurat-v3 procedure.
+Selected features are standardized and clipped at 10 before PCA.
+For each seed, cells are sampled independently without replacement from each stage, and all compared methods use the same sampled inputs.
+The main solver comparisons, restricted-solver snapshots, and entropic UOT comparisons use this benchmark.
+
+\paragraph{Zhuang MERFISH.}
+% CN: 预处理与采样设置来自 data/zhuang_merfish/cache/Zhuang-ABCA-1_to_Zhuang-ABCA-2/pca_30/metadata.json 及 src/hierarchical_ot/benchmarks/zhuang_{preprocessing,data_generator}.py。
+% EN: Preprocessing and sampling: data/zhuang_merfish/cache/Zhuang-ABCA-1_to_Zhuang-ABCA-2/pca_30/metadata.json and src/hierarchical_ot/benchmarks/zhuang_{preprocessing,data_generator}.py.
+The scalability benchmark uses two whole-brain samples, Zhuang-ABCA-1 and Zhuang-ABCA-2~\citep{zhang2023wholebrainmerfish}, with a common 30-dimensional PCA representation of 1,122 measured genes.
+Counts are normalized to a total of 1,000 per cell and log-transformed; gene standardization and PCA are fitted jointly across both samples.
+Within each seed, nested subsets are drawn from fixed permutations of the two samples, reaching $m=n=1{,}048{,}576$.
+
+\paragraph{Costs and reference masses.}
+Unless otherwise specified, we use uniform reference masses $a_i=1/m$, $b_j=1/n$, and squared-Euclidean costs on the input features.
+For each sampled problem, both point clouds are scaled by the same factor so that the mean cost $(mn)^{-1}\sum_{i,j}C_{ij}$ equals one.
+The four standard marginal-penalty settings are $(\rho_a,\rho_b)\in\{(0.1,0.1),(1,1),(10,10),(0.045,99.995)\}$.
+Task-specific representations, growth priors, and cost settings for the downstream applications are described below.
+
+\subsection{Metrics and Measurements}
+\label{app:experiment-metrics}
+
+\paragraph{Runtime and memory.}
+Unless otherwise specified, \runtime measures wall-clock time from prepared CPU inputs to synchronized solver output, including input transfer, cost construction, hierarchy construction, initialization, and native stopping checks when applicable.
+Compilation, explicit warmup, common post-solve evaluation, and serialization are excluded.
+\gpumem is peak active GPU allocation in GiB, including inputs, workspace, and outputs.
+Method-specific measurement conventions are given in Appendix~\ref{app:implementation-details}.
+
+\paragraph{Primal accuracy.}
+For UOT comparisons, we evaluate all returned couplings using the objective $\Phi$ in~\eqref{eq:primal-uot}, including those obtained with entropic regularization or low-rank constraints.
+Using the same feasible dual bound $D_{\mathrm{ref}}$ for every method and parameter setting on an instance, we report
+\begin{equation}
+\sharedgap=\frac{\Phi(\mathbf X)-D_{\mathrm{ref}}}{\max\{|\Phi(\mathbf X)|,|D_{\mathrm{ref}}|,10^{-15}\}}.
+\label{eq:experimental-shared-gap}
+\end{equation}
+This measures primal accuracy independently of each solver's returned dual variables.
+For complete UOT problems, a separate \ours solve at KKT tolerance $10^{-8}$ supplies reference potentials, which undergo FP64 full-space c-transforms, potential translation, and a numerical safety shift followed by an independent dual-feasibility audit.
+Restricted-solver comparisons construct the bound on the common restricted problem instead.
+The entropic and UFGW evaluations use their respective objectives, as specified below.
+
+\paragraph{Reporting.}
+Seeds and repeat counts are specified for each experiment.
+In tables, bold marks the best displayed values within each comparison, including ties.
 
 \subsection{Unregularized UOT Comparisons}
 The complete-problem Pareto figure varies stopping tolerances for \ours, \mm, and \hellouot, entropic strength for \sinkhorn, and rank for \ulot.
@@ -8,9 +58,7 @@ The current figure uses means over available valid paired runtime and shared-gap
 % CN: 当前图及各点覆盖记录来自 paper_experiments_uot/accuracy_runtime_pareto/results/20261111_202336/{plot_selection.json,pareto_aggregate.csv}；plot_count、plot_seeds、plot_complete 记录有效覆盖，最终五 seed 汇总待完成。
 % EN: Current plotting and coverage records are paper_experiments_uot/accuracy_runtime_pareto/results/20261111_202336/{plot_selection.json,pareto_aggregate.csv}; plot_count, plot_seeds, and plot_complete record valid coverage, pending the complete five-seed summary.
 
-The million-point scaling figure uses seed 42 and one measurement per configuration.
-Each problem is solved on a single A100 GPU, with timing from input upload through hierarchy construction, initialization, and solving; compilation, prewarming, and common evaluation are excluded.
-Memory is peak active allocation rather than allocator reservation.
+The million-point scaling figure uses seed 42 and one measurement per configuration on a single A100 GPU.
 The gray linear and quadratic slope guides have arbitrary vertical offsets and are not fitted models or complexity bounds.
 
 \subsection{Restricted-Solver Snapshots}

@@ -1,6 +1,6 @@
 # hier_uot 论文实验进展
 
-更新时间：2026-11-12。范围：当前正文、附录引用的实验，以及已明确提出的补实验。本文件记录实测结果、数据来源和待办，不代表已启动重跑。
+更新时间：2026-11-15。范围：当前正文、附录引用的实验，以及已明确提出的补实验。本文件记录实测结果、数据来源和待办，不代表已启动重跑。
 
 项目根目录：`/home/xiawenzhou/project/hierarchical_ot`。论文位置用 LaTeX label 标识，避免图表编号变化后失效。
 
@@ -55,7 +55,7 @@
 | E16 UFGW solver/轨迹 | 两种 epsilon 均为 seed 0 | **需补四个 seed** | 保留 seed 0，追加四个独立 STARmap 采样；两方法配对、每次固定 10 sweeps，不按 seed 重新调参 |
 | E17 temporal transport | 19 个时间对、114 个方法配置，seed 42 | **需补四个求解/初始化 seed** | 每个时间对固定数据和已选 penalty，所有参评方法配对扩 seed；时间对数量不替代 seed，固定数据下不能称新增独立采样输入 |
 | E18 MOSTA alignment | 七个时间对、14 个方法配置，seed 0 | **需补四个求解/初始化 seed** | 固定已选参数后配对测量，不随新 seed 重新搜索最佳参数；文献公布的单值只能作外部参考，不能伪造为五 seed 测量 |
-| E19 runtime breakdown | 当前未展示 | **恢复为正式结果时五 seed** | 与所属主实验配对，先统一互不重叠的计时分解 |
+| E19 runtime breakdown | 附录已插入 16 个单 seed profile 的预览图 | **正式结果需五 seed** | 四规模、四 penalty；监控关闭，保留 profiling preview 标记 |
 | E20 额外 entropic baselines | 当前未展示/未完成 | **正式启用时五 seed** | 对相同输入、目标和精度统一比较，不提前记为完成 |
 | E21 附录维度扩展 Pareto | 新增计划，尚无指定正式结果 | **作者明确指定单 seed 例外** | 四个维度 × 四组 penalty，16 个 Pareto 面板；只比较 hier_uot 与 Sinkhorn，具体维度待确定 |
 
@@ -69,7 +69,7 @@
 |---|---|---|---|---|
 | E01 | UOT 时间、显存、精度主表 `tab:uot-comparison` | 论文保留 12 个历史数值 | **待重跑＋待核对** | 原批次未找到；旧协议未启用 safeguard；确认共同下界及计时来源 |
 | E02 | 完整 UOT runtime–accuracy `fig:uot-runtime-accuracy` | 当前新批次 `20261111_202336` 为 $n=32768$、seed 42、五方法；旧图尚未替换 | **正在重跑；需补至五 seed** | 新批次显式启用 safeguard 和 GPU 监控；需补四个 seed，并保留全部成功/失败分母 |
-| E03 | 百万点 scaling 与精度表 `fig:uot-large-scale`、`tab:uot-scaling-accuracy` | 找到图像实际匹配的新归档：20/20 求解与 gap 有效 | **待重跑＋需先统一数据版本** | 当前图、正文统计和精度表混用了不同批次；新归档仍关闭 safeguard |
+| E03 | 百万点 scaling 与精度表 `fig:uot-large-scale`、`tab:uot-scaling-accuracy` | 图、正文统计、精度表及来源已统一到 `20261103_181943_paper_data` | **仍待最终协议重跑及补 seed** | 当前 20/20 求解与 gap 有效；归档仍关闭 safeguard |
 | E04 | HELLO-UOT 对比 `tab:hello-uot-direct`、`tab:hello-uot-complete`、`fig:hello-uot-trajectories` | 12 个实例，24 次原生求解；12 个独立 reference 通过审计 | **重跑 hier_uot 部分** | hier_uot 旧批次关闭 safeguard；HELLO-UOT 无需仅因该开关重跑 |
 | E05 | 受限求解器 runtime CDF，替换现有 `fig:restricted-runtime-accuracy`（最终 label 待定） | 独立入口已实现；433 个快照通过 dry-run；GPU smoke 和正式测量待执行 | **代码完成，待 GPU 验证和测量** | 四个 penalty 子图，统一 shared gap $10^{-4}$；额外共同检查耗时单独扣除，保留全部计划分母 |
 | E06 | 系统组件消融 A–E `tab:component-settings-mock` | A/B/D/E 实测 pilot；C 为后端集成 pilot | **待重跑；C 先补实现** | A/B/D 对齐 safeguard；E 正式重跑；C 先补 PDCS warm-start mapping |
@@ -85,9 +85,11 @@
 | E16 | UFGW solver 与轨迹 `tab:ufgw-solvers`、`fig:ufgw-objective-time` | 4/4 配置完成规定的 10 sweeps | **重跑 hier_uot 两行及轨迹** | 缺完整内层控制器记录；另有 POT 精度核对待办 |
 | E17 | temporal transport 与 timing breakdown `fig:temporal-runtime`、`fig:temporal-timing-breakdown` | 汇总记录 114/114 配置；原始记录并不完整 | **重跑 hier_uot 相关配置＋核对图源** | 缺完整内层记录；timing 旧目录缺失，当前图与可用归档 PDF 字节不同 |
 | E18 | MOSTA spatial alignment `tab:ufgw-application` | 7 个时间对、两方法，14/14 成功 | **重跑 hier_uot+BCD** | 缺完整内层记录；保留已选配置，moscot low-rank 基线不因预算变更重跑 |
-| E19 | 通用 runtime breakdown `tab:uot-runtime-breakdown` | 独立入口已实现；My4090 完成 12 个单 seed 预览配置 | **预览完成；正式五 seed 待跑** | 图中展示 initialization、restricted solves、pricing、other，support maintenance 并入 other；原始五项计时保留，同步边界与嵌套扣除，保留普通运行配对诊断 |
+| E19 | 通用 runtime breakdown `fig:uot-runtime-breakdown` | My4090 完成 16 个单 seed profile 及配对普通运行，附录预览图已接入 | **预览已展示；正式五 seed 待跑** | 四规模 4096/16384/65536/262144，四 penalty；support maintenance 并入 Other；原始五项计时与关闭监控记录保留 |
 | E20 | Schmitzer/LCN 等额外 entropic baselines | 尚无用于该节的正式结果 | **已移除 / 待补实验** | 不将占位或计划写成已完成；full Sinkhorn warm-start 对比也尚待补做 |
 | E21 | 附录不同维度 runtime–accuracy Pareto，label 待定 | 新增计划 | **待补实验；单 seed** | 四个维度 × 四组 penalty 的 $4\times4$ 大图；仅比较 hier_uot 与 Sinkhorn |
+| E22 | 跨问题设置的 generality 比较，label 待定 | 2026-11-14 新方案；非均匀权重已有收敛 pilot | **待讨论并实现；未启动正式网格** | 8 行 × 4 列：cost、数据集、维度、reference masses 和 marginal penalty；方法覆盖及图文安排见下文，维度部分拟与 E21 合并 |
+| E23 | 更多 UOT baselines，`fig:uot-supplementary-baselines` | ETM、POT L-BFGS-B、MultiScaleOT 已有独立 pilot | **附录 pilot 占位已接入；正式测量待补** | 三组 $2\times2$ 图横向并排；按方法分别选规模/维度，ETM 计划 $n=16384$，POT 保留小规模，MultiScaleOT 使用 $d=3$ |
 
 ## 结果路径与具体待办
 
@@ -95,20 +97,24 @@
 
 **E01** 的论文注释来源为 `paper_experiments_uot/main_scaling/results/20261025_170426/summary_table.csv`。本次核对该目录在当前 checkout 及检查的 managed worktrees 中均不存在，因此现有表格数值只能视为待恢复来源的历史数据。下一步恢复归档；无法恢复则重跑正式比较。
 
-**E02** 的论文注释仍写 `paper_experiments_uot/accuracy_runtime_pareto/results/20261025_201833/`，该路径不存在。现有归档为 [20261025_201833_没有pduot](/home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/accuracy_runtime_pareto/results/20261025_201833_没有pduot)。旧批次使用 `normalize_subproblem_masses=True`，未记录 `pduot_mode`，且归档 PDF 与论文图的身份尚未确认。不能仅改目录名就宣称与当前算法一致。
+**E02 旧批次** 的历史论文注释曾写 `paper_experiments_uot/accuracy_runtime_pareto/results/20261025_201833/`，该路径不存在。现有归档为 [20261025_201833_没有pduot](/home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/accuracy_runtime_pareto/results/20261025_201833_没有pduot)。旧批次使用 `normalize_subproblem_masses=True`，未记录 `pduot_mode`，且归档 PDF 与论文图的身份尚未确认。不能仅改目录名就宣称与当前算法一致。
 
 这两项已有 safeguard 重跑要求；新的正式批次应保存源码版本、显式开关、独立下界和统一计时口径。
 
-**E02 当前新批次**：[20261111_202336](/home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/accuracy_runtime_pareto/results/20261111_202336)。快照为 $n=m=32768$、四组 penalty、seed 42、一次运行；方法为 hier_uot、HELLO-UOT、Sinkhorn、MM、ULOT，HELLO-UOT 扫五档联动阈值。该批次不代表五 seed 已完成，也尚未替换论文旧图。下一步通过保留旧观测的扩展式续跑增加四个 seed；当前运行中的队列不会随 YAML 修改而扩展。
+**E02 当前新批次**：[20261111_202336](/home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/accuracy_runtime_pareto/results/20261111_202336)。2026-11-14 已固定当前 `pareto_aggregate.json` 并重画论文主图，方法为 hier_uot、HELLO-UOT、Sinkhorn、MM、ULOT；93 个有效曲线点分别有 3–5 个有效 seed，仍不是全部完成的五 seed 汇总。固定绘图输入及来源 SHA256 保存于 `figures/plot_sources/experiment_figures_20261114.json`，复现入口为 `scripts/refresh_experiment_figures.py`；重画不修改运行中的 batch 汇总或原始观测。
 
-### E03：百万点 scaling —— 当前存在数据版本混用
+**E02 附录补充 baseline：ETM pilot 已接入并完成**。`common/etm.py` 等价实现作者公开的 ETM-Approx 递推，并用 HELLO 按原成本构造 coupling，恢复共同总质量；标为 ETM-Approx+HELLO，不标为 ETM-Refine。配置为 `accuracy_runtime_pareto/config_etm_my4090.yaml`：TOME E11.5→E12.5、PCA30、n=4096、seed=42、四组 KL rho，FP64、固定 1000 轮，epsilon 扫描 1e-2/1e-3/1e-4/1e-5，每配置时限 3600 秒。结果为 [20261114_etm_pilot_v7_my4090](/home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/accuracy_runtime_pareto/results/20261114_etm_pilot_v7_my4090)：16 档 ETM、12 档 hier_uot 全部有效，4 个全层 FP64 reference 验收通过；已回传原始记录、外部 reference 与路径映射，可在 im2 重汇总。四组中 hier_uot 均取得更短耗时和更低 gap。仅为 RTX 4090 单 seed pilot，不混入 A100 正式汇总，未修改论文图。
 
-- 论文注释指向 `paper_experiments_uot/main_scaling/results/20261102_150232_shuttle_zhuang_large/`，该目录本次未找到。
+同机独立计时中，ETM-Approx 的 NumPy→CUDA 等价实现，在 n=1024/4096 时分别从 16.678/284.564 秒降至 0.175/2.592 秒，约 95.2/109.8 倍；仅比较预先给定成本后的边际估计，不包括 coupling，也不将该加速比外推到 online 大规模实现。21 项 CUDA 等价性/精确 LP 校验通过，官方递推最大绝对差 2.58e-14。原始数据见 [port_speed.json](/home/xiawenzhou/project/hierarchical_ot/experiments/etm_validation/results/20261114_etm_pilot_v7_my4090/port_speed.json)。后续 baseline 的进展和分开展示方案统一记录于 E23。
+
+### E03：百万点 scaling —— 图、正文与精度表已统一归档
+
+- 2026-11-14 已将正文图与精度表的来源注释统一为 `paper_experiments_uot/main_scaling/results/20261103_181943_paper_data/`，替换原先无法找到的旧来源。
 - 实际可用归档：[20261103_181943_paper_data](/home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/main_scaling/results/20261103_181943_paper_data)。包含 `summary.json`、`summary.csv`、`scaling_statistics.json`、`scaling_accuracy.csv`、`scaling_accuracy.tex` 和逐次 `cases/*/shuttle_repeat0/metrics.json`。
 - 已逐字节确认：论文 [uot_zhuang_scaling.pdf](/home/xiawenzhou/project/hierarchical_ot/papers/hier_uot/figures/uot_zhuang_scaling.pdf) 与该归档的 `scaling.pdf` 完全相同。
 - 新归档的 `summary.json` 有 20/20 成功求解、20/20 有效 shared gap；百万点四组耗时约 135.66、144.99、204.39、137.29 秒。
-- 正文仍写 147.7–762.2 秒、19/20 个 reference 可用；论文 [精度表源码](/home/xiawenzhou/project/hierarchical_ot/papers/hier_uot/figures/uot_zhuang_scaling_accuracy.tex) 也与新归档数值不同，并保留百万点 $(10,10)$ 的缺失项。
-- **下一步**：先选定同一批次，统一正文数值、斜率、精度表、图注和来源注释。不能继续把“缺失 reference 仍在计算”当作已经核实的实时状态。
+- 正文已统一为百万点耗时 135.7–204.4 秒、峰值显存低于 6.57 GiB、runtime 拟合斜率 0.94–1.48；精度表已逐字对齐该批 `scaling_accuracy.tex`，20/20 个 reference 有效。
+- **下一步**：数据版本已对齐；继续保留最终 safeguard 协议及五 seed 补测待办。
 - 新归档明确 `refinement_forcing_check=False`，所以统一版本后仍需按最终 safeguard 协议重跑 hier_uot。
 
 ### E04：HELLO-UOT 直接对比
@@ -205,7 +211,7 @@ $$G(t)=\frac{P(t)-D_{\mathrm{ref}}}{\max\{|P(t)|,|D_{\mathrm{ref}}|,10^{-15}\}}.
 
 - 可用归档：[20261102_005354_paper_data](/home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/moscot_time/results/20261102_005354_paper_data)，有 `summary.json`、`summary.csv`、`summary_table.csv`、`manifest.json`、`temporal_runtime_accuracy.pdf` 和 `extended_data_fig1a_runtime.pdf`。
 - 汇总记载 19 个时间对、114/114 配置；当前归档并非每项都有完整原始 metrics，不能把汇总行数当作原始日志完整性证明。
-- 主文图使用上述归档；附录 timing 来源注释仍指向不存在的 `results/20261102_005354/`。当前论文 `figures/moscot_time_runtime.pdf` 与可用归档的 `extended_data_fig1a_runtime.pdf` 不同，需核对是合法重画还是数据版本不一致。
+- 2026-11-14 已从该归档的固定 `summary_table.csv` 重画主文和 timing 图，更新 Salut-Sinkhorn 图例与 timing 来源注释；固定输入及 SHA256 见 `figures/plot_sources/experiment_figures_20261114.json`，未重新汇总缺失的原始运行。
 - 需重跑 hier_uot–Sinkhorn 相关配置，保留作者逐时间对校准的 penalty，并更新主图及 timing breakdown。Full-rank、low-rank 基线不因权重预算变更重跑。不要把 coupling 计算时间与 downstream evaluation 时间混作一个指标。
 
 ### E18：MOSTA spatiotemporal alignment
@@ -214,9 +220,11 @@ $$G(t)=\frac{P(t)-D_{\mathrm{ref}}}{\max\{|P(t)|,|D_{\mathrm{ref}}|,10^{-15}\}}.
 - 历史 BCD 配置选择来源为同实验 `results/20261031_203031_my4090/selection.json`；选择结果也应随新批次保存。
 - 保留每个时间对已选参数，重跑 hier_uot+BCD；不因本次控制器变更重做 moscot low-rank 基线或自动重新搜索全部参数。
 
-### E19–E20：未展示或尚未完成的实验
+### E19–E20：耗时分解预览与待补实验
 
 E19 附录图已确定采用双栏 $1\times4$ 布局，support maintenance 在图中并入 Other，原始分项保留。2026-11-14 已在 My4090 启动独立补充批次 `paper_experiments_uot/runtime_breakdown/results/20261114_runtime_breakdown_n262144_my4090/`：$n=262144$、四组既有 penalty、seed 42，4 个 profile 与 4 个普通配对运行，沿用预览的关闭 GPU 污染监控设置。配置为 `config_n262144_my4090.yaml`；启动时首组 $(0.1,0.1)$ 正在执行，尚无完成结论。原有小规模批次保持不变，未启动五 seed 网格。
+
+2026-11-15 已回传并汇总该大规模批次：4/4 个 profile 及其普通对照均完成并收敛；profile 总耗时按四组 penalty 顺序为 22.74、25.36、32.22、22.09 秒。已与原先 12 个小规模 profile 合并为四规模 × 四 penalty 的附录预览图 `fig:uot-runtime-breakdown`（`app:runtime-breakdown`），support maintenance 并入 Other。固定绘图输入及来源指纹为 `figures/plot_sources/runtime_breakdown_pilot.json`，复现脚本为 `scripts/plot_runtime_breakdown.py`。原始批次各自保留，未将不同批次覆盖或重标；图注明确单 seed、RTX 4090、关闭污染监控及 profiling preview。本轮仅接入现有结果，未启动新测量。
 
 - **通用 runtime breakdown**：旧路径 `paper_experiments_uot/accuracy_runtime_pareto/results/20261025_222731/` 与 `paper_experiments_uot/component_ablation/results/20261102_193809/` 仅作为历史线索，未在本轮确认为正式来源。恢复前需用共同源码和正式 GPU 协议重跑，核对初始化、restricted solve、scan、update 和其他时间不重叠。
 
@@ -225,7 +233,7 @@ E19 附录图已确定采用双栏 $1\times4$ 布局，support maintenance 在�
 - **full Sinkhorn warm-start 加速**：若要作为中心结论，需要补 cold-start 与 hier_uot 初始化 full Sinkhorn 的端到端比较，计入初始化成本；现有 sparse refinement 对比不能代替它。
 - **general marginal penalty 附录**：当前暂时移除，不作为已完成的正文实验或理论贡献登记。
 
-### E21：附录维度扩展 Pareto
+### E21：附录维度扩展 Pareto（原计划，拟并入 E22）
 
 - **作者已确定**：放附录，采用 $4\times4$ 面板；每个面板是一个 runtime–shared-gap Pareto 图。只比较 hier_uot 与 Sinkhorn，使用一个 seed，以控制实验量；这是五 seed 默认规则的明确例外，不改变其他正式比较的要求。
 - **建议布局**：行对应既有四组 penalty $(0.1,0.1)$、$(1,1)$、$(10,10)$、$(0.045,99.995)$；列对应四个维度。采用共享方法图例，并让跨维度的坐标范围尽量可比较。
@@ -234,13 +242,98 @@ E19 附录图已确定采用双栏 $1\times4$ 布局，support maintenance 在�
 - 若沿用两方法各五档扫描，共为 16 个实例、160 个方法任务和 16 个 reference；这是计划数量，不是已完成测量。
 - 图注明确为单 seed 维度扩展，只展示不同维度下的观测趋势，不提供跨 seed 误差条或稳定性结论。当前未创建配置、未运行、未接入论文图。
 
+### E22：跨问题设置的 generality 比较与实验章节排布
+
+2026-11-14 已确认实现协议。新入口为 `paper_experiments_uot/generality/`；正式配置已写入，小规模 smoke 在 my4090 完成。下列是实验设计，不是正式性能结论。E21 的维度计划合并到此处，不重复运行。
+
+**章节职责与标题**：建议将正文 `Unregularized UOT` 改为 `UOT Solver Performance`，介绍默认问题上的精度与规模能力；熵正则方法在各自介绍处说明所求目标即可。其后安排 `Generality across Problem Settings`，回答性能是否依赖特定几何、维度或权重。再接 `Restricted UOT Solvers`、`Component Analysis`、两项 extensions 与 downstream applications。这里的 generality 表示求解器的适用范围与性能稳健性。
+
+**图的总体布局**：四列固定为既有 penalty 配置 $(0.1,0.1)$、$(1,1)$、$(10,10)$、$(0.045,99.995)$，每行只改变一种问题设置。默认参考行为 TOME、$d=30$、平方欧氏 cost、均匀 unit-total masses 和 KL penalty；该行已有主 Pareto，不在完整扩展图中重复。
+
+| 行 | 改变的因素 | 建议设置，其余沿用参考行 | 计划比较方法 | 当前需要补齐的实现 |
+|---|---|---|---|---|
+| 1 | Ground cost | $c(x,y)=\|x-y\|_2$ | hier_uot、Sinkhorn、MM | 为 baseline、目标评价和 reference 接入同一 norm cost；不能只改 hier_uot 的 cost 参数 |
+| 2 | Ground cost | $c(x,y)=\|x-y\|_1$ | hier_uot、Sinkhorn、MM | 同上 |
+| 3 | Ground cost | $c(x,y)=\|x-y\|_\infty$ | hier_uot、Sinkhorn、MM | 同上 |
+| 4 | Dataset / geometry | Gaussian→ImageNet latent features，$d=30$ | hier_uot、Sinkhorn、MM、HELLO-UOT | 真实 VAE latent，沿用已有 generator，50,000 样本 PCA；不做 post-PCA standardization |
+| 5 | Low dimension | TOME，$d=4$ | hier_uot、Sinkhorn、MM、HELLO-UOT | 使用实际 PCA 特征；与默认及高维行使用相同采样细胞 |
+| 6 | High dimension | TOME，$d=2048$ | hier_uot、Sinkhorn、MM、HELLO-UOT | 使用已有实际 PCA2048 缓存，不由低维特征拼接或补零 |
+| 7 | Reference masses | 沿用 HELLO：两侧独立 `uniform(0.01,1)`，分别归一化到 1 | hier_uot、Sinkhorn、MM、HELLO-UOT | 独立 RNG `seed+1_000_003`，依次生成源和目标质量；所有方法与 reference 使用同一数组 |
+
+**行数与范围**：先实现七行 KL-UOT，即 28 个 Pareto 面板，默认行沿用已有主图。平方 L2 penalty 单独保留为后续扩展，本轮不实现、不运行；其前置问题见下文。维度两行固定 $n$。现有 PCA4/30 使用 2000 HVGs，PCA2048 使用 2048 HVGs，因此高维行是适用范围实验，不能称为严格仅改变维度的消融。
+
+**正文与附录分工**：完整 $7\times4$ 图放附录。正文保留默认 Pareto 与 scaling，generality 简洁总结各设置下精度与耗时的关系，并引用完整曲线；如需要正文代表性 Pareto，再单独选择设置。不强制构造共同精度的耗时/加速比摘要。失败、OOM、超时与缺失 reference 均保留统计分母。
+
+**HELLO-UOT 的覆盖范围核查**：
+
+- 当前论文 adapter `paper_experiments_uot/common/hello_uot.py` 调用历史 FCFW 实现，预热和 cost validation 固定 `l2^2`；实际 FCFW 在 `src/hierarchical_ot/hello/variants/fcfw.py` 中以 `_BilinearCost.from_squared_euclidean` 构造 cost，OTT initializer 也固定 `SqEuclidean`。
+- 因而保持平方欧氏 cost 和 KL penalty 时，换数据、维度和正的非均匀 masses 可以纳入 HELLO-UOT：接口已有质量参数，外层使用实际 reference masses。仍需逐类 smoke test，不能把接口支持视为已经测过新配置。
+- 三个 norm-cost 行不能直接调用现有 HELLO-UOT 得到正确比较。HELLO 的 balanced solver 支持更广的 cost，不等于现有 UOT 外层、initializer、oracle 与证书已经全部支持这些 cost。理论上可研究接入通用 cost oracle，但需要实现与验证；当前不登记为可直接运行，也不宣称 HELLO-UOT 在算法上不可能处理 norm costs。
+- 当前 FCFW 外层是 KL-UOT，平方 L2 penalty 需要更换外层目标、响应和校正问题，不能作为改一个参数即可纳入的原版 HELLO-UOT。
+
+**Sinkhorn、MM 与 L2 penalty 的边界**：
+
+- `common/ott.py`、`common/methods.py` 和 `common/reference.py` 已接入三种 norm cost；未显式指定时保持历史平方欧氏行为。成本类型进入 executable 签名、实例身份与 reference 验收，原始目标的稀疏评价也使用实际 cost。数值可运行性由独立 smoke 验证。
+- 已检查当前 POT `ot.unbalanced.mm_unbalanced`：`div='l2'` 对应 half-squared L2 penalty，可以作为 L2 行 MM 的实现来源；现有自写 KL-MM 更新不能直接复用。
+- 现有 OTT 的 KL-UOT `tau` 缩放不是平方 L2 penalty 的求解器。L2 行若加入 Sinkhorn，必须使用对应 marginal proximal 的 generalized Sinkhorn，并明确其 coupling 正则化与公共原目标评价；未验证前只承诺 hier_uot 与 L2-MM。
+- 平方 L2 penalty 正在单独完成理论与实现：`original_plus` 已接入双侧闭式 proximal、coordinate gain 与 decrease-or-fidelity safeguard；附录 `theory/l2_penalty_extension.tex` 给出相应内外层收敛结果。GPU 正确性与 kernel 优化记录在根仓库 `experiments/l2_pduot_optimization/`；这些开发验证不替代正式 Pareto 实验。
+- L2 safeguard 使用稀疏二次目标差与 primal-consistent readout，支持零 transported marginals；不关闭检查来绕过验收。正式实验的目标/对偶评价、reference 审计及 L2-MM adapter 仍待单独接入。
+- 已完成单独 L2-MM pilot：根仓库 `experiments/l2_mm_pilot/results/20261114_l2_mm_n4096_my4090/`，My4090、TOME E11.5–E12.5 PCA30、$n=4096$、seed42。四组有效系数 $(0.1,0.1),(1,1),(10,10),(0.1,10)$，实际系数乘以 $n$；两种方法各三档原生容差，另有每组独立全层 FP64 reference 与对偶可行性审计，28/28 任务完成。较高精度区域 hier_uot 更快且 shared gap 更小；MM 粗精度端更快。原始测量、监控与完整 Pareto 已回传，尚未作为正式多 seed 实验或接入公共 adapter，没有替换论文图表。
+- KL 和平方 L2 penalty 在相同数值 $\rho$ 下不具有相同的有效强度，尤其单位总质量下该差别随 $n$ 变化。四列可保留对应的弱、默认、强和非对称设置，但 L2 行的系数约定及校准规则须事先固定、列明实际 $\rho$，不机械照搬 KL 四组数值后声称强度匹配。
+
+**公平比较与正式实验规模**：
+
+- 正式固定 $n=m=16384$、单 seed 42、repeat 0。每种方法及 reference 的完整任务时限为 1200 秒；不把此前 pilot 重标为本实验。正式共 500 次方法测量、28 个独立 reference。
+- 同 seed 下 TOME 各行复用相同采样细胞，非均匀权重使用独立随机流。成本单位统一为平均成本 1：平方欧氏使用精确全配对均值，其余 norm 使用 65,536 个独立随机配对估计；按成本齐次次数缩放共同坐标，保存原始均值与变换系数，所有方法和 reference 使用同一归一化输入。
+- 使用每个实际问题独立构造、审计的 dual reference，所有方法通过原目标 shared gap 比较。L2 行需使用 L2 原目标及对应可行对偶，不能沿用 KL 下界。
+- 曲线保留方法各自的五档 tolerance/epsilon 扫描，在相同原始目标与独立下界下比较实际取得的精度和耗时；允许一个方法同时更快、更精确，不要求先达到某个共同 gap。相同 native tolerance 不等于相同精度，不外推未测时间。
+- HELLO-UOT 的端到端时间包含其 Sinkhorn 初始化和所有 balanced-oracle 调用；额外记录这两部分，便于解释路线差异。
+- 对 hier_uot 记录每层与 finest-level refinement 轮数、实际 full-scan 次数、pricing 时间及占总时间比例、支持峰值和最终 shared gap。正文不用再加完整诊断大表，附录按行汇总即可。
+- 小规模 smoke 保留全部七行与实际 $d=2048$，使用 $n=128$、一组 penalty、每方法一档，共 25 次方法测量和 7 个 reference。单独降低粗层阈值到 16 以覆盖层间初始化与支持更新。my4090 smoke 关闭 GPU 外来进程监控，不能作为正式性能证据；正式实验保持默认监控。本轮只运行 smoke，不启动 500 次正式测量。
+
+**已有 pilot 的作用**：2026-11-14 的 `general_cost/results/20261114_marginals_{uniform,lognormal1,lognormal3,unequal}_my4090` 在 TOME PCA30、$n=4096/16384$、四组 KL penalty、seed 42 上共 32/32 收敛，原问题 KKT 均不超过 $10^{-6}$。这证明所测正权重配置可运行，不能替代新七行协议的正式比较。固定 epsilon 下 Sinkhorn 自身的变慢比例与跨方法 Pareto 优势是不同的统计。
+
+**新入口的 smoke**：`paper_experiments_uot/generality/results/20261114_generality_smoke_final_my4090` 在 RTX 4090 完成 25/25 次方法测量与 7/7 个独立 reference；25 个 shared gap 均有效，最大 reference KKT 为 $9.93\times10^{-9}$ 以下。全部输入、reference、原始日志与结果已回传，并在 im2 原样重定位汇总。监控关闭，结果仅用于流程与收敛检查，正式 500 次测量尚未启动。
+
+首次尝试的 `finest_fp64` reference 在 norm 粗层出现约 $1.4\times10^{-8}$ 的停止停滞，已保留中止日志；随后完成批次临时使用全层 FP64 reference。2026-11-14 按作者要求，后续 reference 已恢复为 `finest_fp64`，不再以全层 FP64 绕过粗层停止问题。粗层停止逻辑与最终 finest-level FP64 证书精度分开处理；恢复后的 reference 配置尚未重新完成 smoke，历史 7/7 成功不能视为该配置已验证。旧 OTT 的 infinity-norm cost 接口兼容问题已修复。
+
+**对应审稿意见的证据分工**：
+
+1. 新数据集、cost、维度和质量行回答“优势是否只存在于某种 30 维细胞嵌入”。定价次数和时间占比进一步回答性能对完整扫描与问题几何的敏感性；只增加 Pareto 行数不能替代这些诊断。
+2. 新数据、维度和非均匀质量行包含 HELLO-UOT，用完整端到端 Pareto 曲线比较精度与耗时。只在新配置上胜过 Sinkhorn/MM，不能直接回应“相对 HELLO-UOT 的路线优势能否推广”。
+3. L2 penalty 行建立更广的 penalty 适用能力，但不替代 KL-UOT 上与最近邻方法的比较。
+4. 泛化图不能单独证明相对 HELLO 的原创性。它补强的是求解路线的实用价值；方法与理论的新内容仍须由正文讲清。
+5. 附件中另外两项疑问仍单独保留：同 support、同 warm start、共同精度下的 PDUOT/PDCS 对照；能触发 safeguard 并改变后续行为的诊断例子。不能将泛化实验完成写成这些问题已解决。
+
+若各设置下的精度与耗时优势成立，尤其最近邻 HELLO-UOT 的比较成立，这组设计能回应适用范围与性能可复现性的质疑；不能预先把计划当作结果，也不能据此保证模拟审稿中的某个分数。
+
+### E23：更多 UOT baselines——按方法分开展示
+
+2026-11-15 确定：ETM、POT L-BFGS-B 和 MultiScaleOT 放入独立附录比较，不强制使用相同规模或维度。每个方法各一组 $2\times2$ Pareto 图，对应四组既有 KL penalty；三组横向并排，形成 $1\times3$ 的组合图。每组内 hier_uot 与该 baseline 使用相同输入和独立 reference，不能跨组直接解读运行时间差异。
+
+| Baseline | 后续计划 | 已有 pilot 与实现 | 论文安排 |
+|---|---|---|---|
+| ETM-Approx+HELLO | TOME PCA30，优先 $n=16384$；若 $n=32768$ 可完成且结果适合，再考虑加入正文 | PyTorch/CUDA FP64 等价实现 ETM-Approx，末尾 balanced OT 改用 HELLO；$n=4096$、四组 rho、四档 epsilon 已完成；后续大规模实现使用 online cost | 当前附录第一组使用 $n=4096$ pilot 占位，后续替换为 $n=16384$；不能把计划写成已完成 |
+| POT L-BFGS-B | 保留小规模；以 $n=4096$ 为起点，必要时用 $n=1024$ 补完整四组扫描 | 官方 POT 0.9.7.post1 CPU FP64，coupling 正则为零；$n=4096$ pilot 仅完成两个 baseline 配置后按作者要求停止 | 当前附录第二组保留实际有效点，未完成的 penalty 面板明确标记；不将原生停止等同于原 UOT 小 gap |
+| MultiScaleOT | TOME PCA3，$d=3$，当前 $n=4096$ 可用于布局预览；后续规模另定 | 官方 0.3.8 算法的稀疏迭代移植为 PyTorch/CUDA FP64；保留 CPU 层级、截断、吸收、epsilon schedule 和停止规则；四组 rho × 三档 epsilon，12/12 成功 | 附录第三组使用 GPU 移植版对比 hier_uot，维度单独标注；不将当前低维实现范围写成 UOT 问题定义的限制 |
+
+**来源与实测范围**：
+
+- ETM：`accuracy_runtime_pareto/results/20261114_etm_pilot_v7_my4090/summary.csv`；小规模边际估计阶段的 95.2–109.8 倍加速见上文 `port_speed.json`。补充 $n=32768$ 的短程测试：$\rho=(1,1)$、epsilon=0.01、5 轮，官方 NumPy 106.940 s、CUDA online 2.181 s，约 49.0 倍；两侧势最大差 $4.54\times10^{-15}$。数据为 `experiments/etm_online_profile/results/20261115_short32768_my4090/metrics.json`；NumPy 使用预建成本，CUDA 重算分块成本，未用到的 slack 输出与 HELLO 均排除。第二遍按作者要求中止，仅首遍是有效测量。论文采用“边际估计获得几十倍加速”的概括，不将其写成整个 ETM+HELLO 流程的加速比。
+- POT：`accuracy_runtime_pareto/results/20261115_pot_lbfgsb_pilot_v2_my4090/{summary.csv,stop_summary.json}`；仅两个完成点，后续队列已取消，不伪造剩余曲线。
+- MultiScaleOT：`accuracy_runtime_pareto/results/20261115_lowdim_my4090/lowdim_baselines/{summary.json,multiscale_equivalence.json,multiscale_torch_manifest.json}`。同机 CPU/GPU 加速 2.21–5.02 倍，包含 CPU 结构、控制和传输；12 个配置的最终支持完全一致，最大 coupling 元素差 $9.25\times10^{-16}$。该阶段已有独立 reference 与 GPU 监控，不混入 A100 主图。
+- 三组均为 RTX 4090 主机上的 seed 42 pilot；正式比较的 seed/repeat 尚未追加，本轮只修改文档和图文，不启动实验。
+- FRLC 修复探索、GeomLoss online 和 NFFT 尚不纳入这张三组图；保留各自验证/失败日志，不将候选调查记为正式性能结果。
+
+**当前占位**：附录 `app:uot-supplementary-baselines` / `fig:uot-supplementary-baselines` 使用实际 pilot 数据预览三组并排布局，POT 未完成面板保留 pending 标记；图注明确为 provisional pilot。固定绘图数据与来源指纹保存在 `figures/plot_sources/supplementary_baselines_pilot.json`，复现脚本为 `scripts/plot_supplementary_baselines.py`。附录 `app:implementation-extra-baselines` 说明 ETM 和 MultiScaleOT 的移植范围及实测加速。
+
 ## 下一轮工作顺序
 
-1. 先修复 E03 图、正文和精度表的数据版本混用，并恢复/确认 E01、E02、E17 的来源关系。
+1. E03 图、正文和精度表的数据版本已统一，E02/E17 重画已有固定来源；继续恢复或确认 E01 的来源。
 2. 对齐最终协议，重跑主表、完整问题 Pareto、scaling、HELLO-UOT 中的 hier_uot、组件消融及敏感性；复用仍然有效且已审计的独立 reference。
 3. 用现有 PDUOT 快照补 E09 的 $J$ 敏感性 CDF；PDCS matched warm start 则先完成实现验证，再跑 E06-C。
 4. 更新 entropic、UFGW 和下游 hier_uot 相关结果，最后统一正文统计、图表、caption 与 provenance。
-5. 确定 E21 四个维度后，补单 seed 的附录维度扩展图；与五 seed 主 Pareto 分开登记来源和统计范围。
+5. 按 E22 七行配置完成 norm-cost adapters 和 HELLO-UOT 新输入的 smoke，再安排正式任务。L2 penalty 路径单独讨论与验证。
 
 这些是待办顺序，不表示已经申请 GPU 或启动任务。本会话禁止使用 7 号卡；正式计时按项目实验规范安排资源。
 

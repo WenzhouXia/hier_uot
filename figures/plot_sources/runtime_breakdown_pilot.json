@@ -1,0 +1,303 @@
+{
+  "status": "profiling_preview",
+  "sources": [
+    {
+      "path": "paper_experiments_uot/runtime_breakdown/results/20261114_runtime_breakdown_preview_my4090/summary_table.json",
+      "sha256": "ee8237545a92b313e9a77530d9adf47da11b28449159b5b2c2949112ecc3b2c2"
+    },
+    {
+      "path": "paper_experiments_uot/runtime_breakdown/results/20261114_runtime_breakdown_n262144_my4090/summary_table.json",
+      "sha256": "d8d9d3093ccb8bf3576fd1e1669a37a732d655ded6de48f957c2a4626b0f31fa"
+    }
+  ],
+  "groups": [
+    {
+      "n": 4096,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.01889549707993865,
+        "restricted_solves": 0.42804999207146466,
+        "pricing": 0.009171967161819339,
+        "support_maintenance": 0.005077966954559088,
+        "other": 0.005915237823501229
+      },
+      "runtime_sec": 0.46711066109128296,
+      "sample_std_sec": null
+    },
+    {
+      "n": 16384,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.09531241445802152,
+        "restricted_solves": 0.9231021308805794,
+        "pricing": 0.06865849858149886,
+        "support_maintenance": 0.007980947149917483,
+        "other": 0.017118175979703665
+      },
+      "runtime_sec": 1.1121721670497209,
+      "sample_std_sec": null
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.8101149485446513,
+        "restricted_solves": 1.1157499805558473,
+        "pricing": 0.9280705240089446,
+        "support_maintenance": 0.014545380370691419,
+        "other": 0.04715020046569407
+      },
+      "runtime_sec": 2.9156310339458287,
+      "sample_std_sec": null
+    },
+    {
+      "n": 262144,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 11.153463785070926,
+        "restricted_solves": 3.586749238660559,
+        "pricing": 7.803392524132505,
+        "support_maintenance": 0.014627612428739667,
+        "other": 0.1772854255978018
+      },
+      "runtime_sec": 22.73551858589053,
+      "sample_std_sec": null
+    },
+    {
+      "n": 4096,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.01961612608283758,
+        "restricted_solves": 0.7404978941194713,
+        "pricing": 0.012043033028021455,
+        "support_maintenance": 0.008898473577573895,
+        "other": 0.007343521108850837
+      },
+      "runtime_sec": 0.7883990479167551,
+      "sample_std_sec": null
+    },
+    {
+      "n": 16384,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.0856116907671094,
+        "restricted_solves": 0.8451149126049131,
+        "pricing": 0.07098445622250438,
+        "support_maintenance": 0.010025742463767529,
+        "other": 0.01795341889373958
+      },
+      "runtime_sec": 1.029690220952034,
+      "sample_std_sec": null
+    },
+    {
+      "n": 65536,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.8085621439386159,
+        "restricted_solves": 1.9453022191300988,
+        "pricing": 0.9310775729827583,
+        "support_maintenance": 0.01585917081683874,
+        "other": 0.05333455000072718
+      },
+      "runtime_sec": 3.754135656869039,
+      "sample_std_sec": null
+    },
+    {
+      "n": 262144,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 11.18449891731143,
+        "restricted_solves": 6.485797869041562,
+        "pricing": 7.497922652168199,
+        "support_maintenance": 0.012840706622228026,
+        "other": 0.17492155474610627
+      },
+      "runtime_sec": 25.355981699889526,
+      "sample_std_sec": null
+    },
+    {
+      "n": 4096,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.019341861363500357,
+        "restricted_solves": 1.6617653060238808,
+        "pricing": 0.015285072848200798,
+        "support_maintenance": 0.013399650109931827,
+        "other": 0.00902489572763443
+      },
+      "runtime_sec": 1.7188167860731483,
+      "sample_std_sec": null
+    },
+    {
+      "n": 16384,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.0868910108692944,
+        "restricted_solves": 2.719276449410245,
+        "pricing": 0.13499669102020562,
+        "support_maintenance": 0.025607648538425565,
+        "other": 0.02715330314822495
+      },
+      "runtime_sec": 2.9939251029863954,
+      "sample_std_sec": null
+    },
+    {
+      "n": 65536,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.8036177598405629,
+        "restricted_solves": 5.088968851836398,
+        "pricing": 1.4073454656172544,
+        "support_maintenance": 0.03535461565479636,
+        "other": 0.06548457103781402
+      },
+      "runtime_sec": 7.400771263986826,
+      "sample_std_sec": null
+    },
+    {
+      "n": 262144,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 11.15662850230001,
+        "restricted_solves": 12.939192043151706,
+        "pricing": 7.882745687384158,
+        "support_maintenance": 0.035582322627305984,
+        "other": 0.2058826165739447
+      },
+      "runtime_sec": 32.220031172037125,
+      "sample_std_sec": null
+    },
+    {
+      "n": 4096,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.0197078010533005,
+        "restricted_solves": 0.9922013205941767,
+        "pricing": 0.009198346873745322,
+        "support_maintenance": 0.004975483985617757,
+        "other": 0.005936455447226763
+      },
+      "runtime_sec": 1.032019407954067,
+      "sample_std_sec": null
+    },
+    {
+      "n": 16384,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.09624002361670136,
+        "restricted_solves": 0.534773156279698,
+        "pricing": 0.06717403326183558,
+        "support_maintenance": 0.006378913996741176,
+        "other": 0.018682537833228707
+      },
+      "runtime_sec": 0.7232486649882048,
+      "sample_std_sec": null
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 0.8264040870126337,
+        "restricted_solves": 1.0998112738598138,
+        "pricing": 0.9266825425438583,
+        "support_maintenance": 0.012432110030204058,
+        "other": 0.06994129647500813
+      },
+      "runtime_sec": 2.935271309921518,
+      "sample_std_sec": null
+    },
+    {
+      "n": 262144,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "planned": 1,
+      "valid": 1,
+      "mean": {
+        "initialization": 11.163474558386952,
+        "restricted_solves": 3.0841897251084447,
+        "pricing": 7.667264038929716,
+        "support_maintenance": 0.009728708071634173,
+        "other": 0.16967787453904748
+      },
+      "runtime_sec": 22.094334905035794,
+      "sample_std_sec": null
+    }
+  ]
+}

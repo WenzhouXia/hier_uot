@@ -1,0 +1,872 @@
+{
+  "status": "provisional_pilot",
+  "seed": 42,
+  "groups": [
+    {
+      "title": "ETM-Approx+HELLO",
+      "baseline": "etm",
+      "n": 4096,
+      "d": 30,
+      "rows": [
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 0.20447031501680613,
+          "shared_gap": 7.157426072083212e-05,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 0.5293620810844004,
+          "shared_gap": 1.7359081437397687e-07,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 1.5062398810405284,
+          "shared_gap": 1.2907701092841008e-09,
+          "parameter": 1e-08
+        },
+        {
+          "method": "etm",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 38.767619649879634,
+          "shared_gap": 0.006691898081044378,
+          "parameter": 0.01
+        },
+        {
+          "method": "etm",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 40.18132909596898,
+          "shared_gap": 0.0001307741918015896,
+          "parameter": 0.001
+        },
+        {
+          "method": "etm",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 20.50331533397548,
+          "shared_gap": 0.0064002682186804554,
+          "parameter": 0.0001
+        },
+        {
+          "method": "etm",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 16.46441446687095,
+          "shared_gap": 0.14247641742025804,
+          "parameter": 1e-05
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 0.22099186992272735,
+          "shared_gap": 0.00021210287289925343,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 0.8594567109830678,
+          "shared_gap": 5.109918577895128e-08,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 2.8768406249582767,
+          "shared_gap": 8.329540705664685e-10,
+          "parameter": 1e-08
+        },
+        {
+          "method": "etm",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 19.527468709042296,
+          "shared_gap": 0.0006935840957651204,
+          "parameter": 0.01
+        },
+        {
+          "method": "etm",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 16.85119619080797,
+          "shared_gap": 0.0010013806518357727,
+          "parameter": 0.001
+        },
+        {
+          "method": "etm",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 15.958654880989343,
+          "shared_gap": 0.10465950417288361,
+          "parameter": 0.0001
+        },
+        {
+          "method": "etm",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 18.385580792091787,
+          "shared_gap": 0.17386752122782734,
+          "parameter": 1e-05
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 0.3375165059696883,
+          "shared_gap": 0.00012765884941745052,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 1.803153770044446,
+          "shared_gap": 5.426906252885398e-07,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 8.112806526944041,
+          "shared_gap": 1.9885235148742352e-08,
+          "parameter": 1e-08
+        },
+        {
+          "method": "etm",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 21.731987121980637,
+          "shared_gap": 8.045161100403543e-05,
+          "parameter": 0.01
+        },
+        {
+          "method": "etm",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 18.96823007799685,
+          "shared_gap": 0.0052225749599134124,
+          "parameter": 0.001
+        },
+        {
+          "method": "etm",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 21.557512521045282,
+          "shared_gap": 0.030439069469250946,
+          "parameter": 0.0001
+        },
+        {
+          "method": "etm",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 29.84506377298385,
+          "shared_gap": 0.03972751874766885,
+          "parameter": 1e-05
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 0.20422711200080812,
+          "shared_gap": 0.009067474513099485,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 1.0933900498785079,
+          "shared_gap": 6.553363782418872e-07,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 3.289810071932152,
+          "shared_gap": 1.7265050402093328e-09,
+          "parameter": 1e-08
+        },
+        {
+          "method": "etm",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 21.472427136963233,
+          "shared_gap": 0.0031243673598968435,
+          "parameter": 0.01
+        },
+        {
+          "method": "etm",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 62.28250097902492,
+          "shared_gap": 0.00015474736564601537,
+          "parameter": 0.001
+        },
+        {
+          "method": "etm",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 22.271070987917483,
+          "shared_gap": 0.018666220201999224,
+          "parameter": 0.0001
+        },
+        {
+          "method": "etm",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 22.960644112201408,
+          "shared_gap": 0.28559335382748113,
+          "parameter": 1e-05
+        }
+      ],
+      "source": "paper_experiments_uot/accuracy_runtime_pareto/results/20261114_etm_pilot_v7_my4090/summary.csv",
+      "sha256": "a6ccab8d030c098285d5e1d9e08912d30598c7f92615675121aa8c8b345d02f4"
+    },
+    {
+      "title": "POT L-BFGS-B",
+      "baseline": "pot_lbfgsb",
+      "n": 4096,
+      "d": 30,
+      "rows": [
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 0.19353314908221364,
+          "shared_gap": 7.157426072083212e-05,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 0.5164787650573999,
+          "shared_gap": 1.7359081421006898e-07,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 1.5130716930143535,
+          "shared_gap": 1.2907699453761403e-09,
+          "parameter": 1e-08
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 237.05149050801992,
+          "shared_gap": 0.027142423842714217,
+          "parameter": 1e-08
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 270.1498904910404,
+          "shared_gap": 0.020161942165816002,
+          "parameter": 1e-12
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "process_failed",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-15
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-08
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-08
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-12
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-15
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-08
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-08
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-12
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-15
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-08
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-08
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-12
+        },
+        {
+          "method": "pot_lbfgsb",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "pending",
+          "runtime_sec": 0.0,
+          "shared_gap": 0.0,
+          "parameter": 1e-15
+        }
+      ],
+      "source": "paper_experiments_uot/accuracy_runtime_pareto/results/20261115_pot_lbfgsb_pilot_v2_my4090/summary.csv",
+      "sha256": "702b2210c06f1d2c7d15de6f4f6813f509fa20d938d4553c17124a8479782c15"
+    },
+    {
+      "title": "MultiScaleOT",
+      "baseline": "multiscale_torch",
+      "n": 4096,
+      "d": 3,
+      "rows": [
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 0.17848420795053244,
+          "shared_gap": 0.0008463430274134687,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 0.5412581639830023,
+          "shared_gap": 2.3119192560491874e-05,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 2.301171558909118,
+          "shared_gap": 6.648138087517018e-11,
+          "parameter": 1e-08
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 0.21134069096297026,
+          "shared_gap": 0.0008619292119148763,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 1.2456003741826862,
+          "shared_gap": 7.472599579786837e-07,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 5.938450417947024,
+          "shared_gap": 1.2068751390401515e-10,
+          "parameter": 1e-08
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 0.5952017821837217,
+          "shared_gap": 0.00047195187737413664,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 3.1634864050429314,
+          "shared_gap": 3.09192987142793e-06,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 16.443862673826516,
+          "shared_gap": 4.373161761457237e-10,
+          "parameter": 1e-08
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 0.1821471550501883,
+          "shared_gap": 0.09382755255707562,
+          "parameter": 0.0001
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 0.6590839920099825,
+          "shared_gap": 3.898558626270364e-05,
+          "parameter": 1e-06
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 2.4572195392102003,
+          "shared_gap": 7.209852633618761e-10,
+          "parameter": 1e-08
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 5.509529635077342,
+          "shared_gap": 0.001561003961844574,
+          "parameter": 0.0001
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 5.523830996127799,
+          "shared_gap": 0.063865980913711,
+          "parameter": 0.001
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 4.648584385868162,
+          "shared_gap": 0.5203991612657648,
+          "parameter": 0.01
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 5.257152314065024,
+          "shared_gap": 0.0016749325913935592,
+          "parameter": 0.0001
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 5.399877318879589,
+          "shared_gap": 0.06893870437281371,
+          "parameter": 0.001
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 4.753045188961551,
+          "shared_gap": 0.5391243094463884,
+          "parameter": 0.01
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 43.86985392216593,
+          "shared_gap": 0.00023391328178388034,
+          "parameter": 0.0001
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 29.690285922959447,
+          "shared_gap": 0.00883351911344609,
+          "parameter": 0.001
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 14.040907024173066,
+          "shared_gap": 0.1162456218624009,
+          "parameter": 0.01
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 9.828444284852594,
+          "shared_gap": 0.0005001063438043657,
+          "parameter": 0.0001
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 8.179646373027936,
+          "shared_gap": 0.019702627099078152,
+          "parameter": 0.001
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 5.487555445171893,
+          "shared_gap": 0.23264336678898095,
+          "parameter": 0.01
+        }
+      ],
+      "source": "paper_experiments_uot/accuracy_runtime_pareto/results/20261115_lowdim_my4090/lowdim_baselines/summary.json",
+      "sha256": "4a12d7081b234c70ea6c2a02d6bc7fb7f8f035466184babcceffb7fac9f79891"
+    }
+  ]
+}

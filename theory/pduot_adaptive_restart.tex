@@ -17,10 +17,9 @@ Applying~\eqref{eq:pduot-uniform-sharpness} at $\mathbf a_{j+1}=T_j\mathbf t_j$,
 \operatorname{dist}_{\mathbf P_j}(\mathbf a_{j+1},\mathcal S)^2+e_j^2\leq d_j^2,\qquad \alpha_0\operatorname{dist}_{\mathbf P_j}(\mathbf a_{j+1},\mathcal S)\leq e_j.
 \end{equation*}
 With $q_0=(1+\alpha_0^2)^{-1/2}<1$, metric comparison then gives
-\begin{equation}
-\label{eq:pduot-adaptive-contraction}
+\begin{equation*}
 d_{j+1}\leq e^{c_0b_{j+1}/2}q_0d_j.
-\end{equation}
+\end{equation*}
 Since $b_j\to0$, for any $q\in(q_0,1)$ the right-hand factor is at most $q$ in all sufficiently late epochs.
 Moreover $\|\mathbf a_{j+1}-\mathbf a_j\|_2\leq2d_j/\sqrt{\underline\lambda}$ by the within-epoch distance bound.
 Summing these geometrically decreasing increments proves R-linear convergence to the actual limit, uniformly for all iterates and mapped points within each late epoch, when indexed by epoch.
@@ -28,15 +27,13 @@ Summing these geometrically decreasing increments proves R-linear convergence to
 For the work bound, let the sufficient-reduction factor be $\vartheta\in(0,1)$ and let $h$ bound the gap between restart checks, including the first check of each epoch.
 The anchor baseline is evaluated under the current metric.
 The Halpern estimate~\eqref{eq:pduot-halpern-bound} and uniform sharpness give
-\begin{equation}
-\label{eq:pduot-epoch-bound}
+\begin{equation*}
 \mathcal R_j(\mathbf z^{j,k})\leq\frac{d_j}{k+1}\leq\frac{\mathcal R_j(\mathbf a_j)}{\alpha_0(k+1)}.
-\end{equation}
+\end{equation*}
 Thus the practical sufficient-reduction condition
-\begin{equation}
-\label{eq:pduot-proved-restart}
+\begin{equation*}
 \mathcal R_j(\mathbf z^{j,k})\leq\vartheta\mathcal R_j(\mathbf a_j)
-\end{equation}
+\end{equation*}
 holds once $k+1\geq1/(\alpha_0\vartheta)$.
 Every sufficiently late epoch therefore has at most $H=\lceil1/(\alpha_0\vartheta)\rceil+h$ primary PDHG evaluations; additional restart triggers can only shorten it.
 A final infinite epoch from a nonsolution is impossible, because its residual tends to zero and eventually passes the sufficient-reduction test.

@@ -12,10 +12,9 @@ Let $q^\star$ be the finer optimal target marginal and $p^\star=q^\star/\|q^\sta
 From a coarse target potential $g^0$, form $q^0_j=b_j\exp(-g^0_j/\rho_b)$, $M_0=\|q^0\|_1$, and $p=q^0/M_0$.
 The coarse potential need not be exactly optimal.
 For a target potential $\mathbf g$, the normalized response is
-\begin{equation}
-\label{eq:hierarchy-response-shape}
+\begin{equation*}
 p_j(\mathbf g)=\frac{b_j e^{-g_j/\rho_b}}{\sum_k b_k e^{-g_k/\rho_b}}
-\end{equation}
+\end{equation*}
 This separates the response shape from total transported mass and is invariant under scalar translations of $\mathbf g$.
 We use $H^2(p,z)=\sum_j(\sqrt{p_j}-\sqrt{z_j})^2$ and $J(p,z)=\operatorname{KL}(p\mid z)+\operatorname{KL}(z\mid p)$ for probability vectors.
 
@@ -74,10 +73,9 @@ For any two finite target potentials $g^0,g^1$ with a common positive reference 
 $$Z_s=\sum_j b_j e^{-g_j^s/\rho_b},\qquad p_j^s=\frac{b_j e^{-g_j^s/\rho_b}}{Z_s},\qquad s\in\{0,1\},$$
 and remove scalar translations by setting $\bar g^s=g^s+\rho_b\log Z_s\,\mathbf1$.
 Then
-\begin{equation}
-\label{eq:hierarchy-weighted-potential}
+\begin{equation*}
 \sum_j\sqrt{p_j^0p_j^1}\,(\bar g_j^1-\bar g_j^0)^2\leq4\rho_b^2H^2(p^0,p^1).
-\end{equation}
+\end{equation*}
 No uniform positive lower bound on the response entries is required.
 \end{corollary}
 \begin{proof}

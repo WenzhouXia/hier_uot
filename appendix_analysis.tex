@@ -191,6 +191,26 @@ $\beta=20$ & \textbf{12.05} & 1.660 & \underline{14.03} & \textbf{1.628} & 20.21
 \end{tabular}
 \end{table}
 
+\section{Runtime Breakdown}
+\label{app:runtime-breakdown}
+
+Figure~\ref{fig:uot-runtime-breakdown} partitions the instrumented end-to-end runtime into initialization, restricted solves, pricing, and other work, with nested timing scopes counted once.
+Restricted solves account for most runtime at smaller sizes, while initialization and pricing take a larger share at $n=262{,}144$.
+
+\begin{figure}[htbp]
+\centering
+% CN: 数据来源：paper_experiments_uot/runtime_breakdown/results/20261114_runtime_breakdown_preview_my4090/summary_table.json 提供 n=4096/16384/65536；20261114_runtime_breakdown_n262144_my4090/summary_table.json 提供 n=262144，16/16 个 profile 成功。
+% EN: Sources: paper_experiments_uot/runtime_breakdown/results/20261114_runtime_breakdown_preview_my4090/summary_table.json for n=4096/16384/65536; 20261114_runtime_breakdown_n262144_my4090/summary_table.json for n=262144; all 16 profiles succeeded.
+% CN: 固定绘图数据与 SHA256：figures/plot_sources/runtime_breakdown_pilot.json；复现入口：scripts/plot_runtime_breakdown.py。
+% EN: Frozen plot inputs and SHA256: figures/plot_sources/runtime_breakdown_pilot.json; reproduce with scripts/plot_runtime_breakdown.py.
+\includegraphics[width=\linewidth]{figures/uot_runtime_breakdown_pilot.pdf}
+\caption{\textbf{Runtime breakdown of \ours (profiling preview).}
+TOME E11.5$\to$E12.5 with $m=n\in\{2^{12},2^{14},2^{16},2^{18}\}$ and $d=30$; panels correspond to the four indicated marginal-penalty settings.
+Other includes support maintenance, and labels above the bars give total runtime in seconds.
+All runs reach the original UOT KKT tolerance $10^{-6}$, using seed 42 with one run per configuration on RTX 4090; GPU contamination monitoring was disabled for this preview.}
+\label{fig:uot-runtime-breakdown}
+\end{figure}
+
 % \xwz{Temporarily omit the historical runtime-breakdown section; rerun and audit non-overlapping timers before restoring.}
 % \section{Runtime Breakdown}
 % \label{app:runtime-breakdown}
@@ -253,6 +273,8 @@ These trajectories describe progress under the fixed sweep budget rather than ce
 % EN: Left panel: /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/ufgw_solver_comparison/results/20261110_ufgw_starmap_n16384/objective_time_n16384_eps0_rhoa0.1_rhob0.1_alpha0.4.pdf; raw curves: cases/n16384_rhoa0.1_rhob0.1_eps0_seed0/{shuttle,pot}_repeat0/trajectory.json in the same batch.
 % CN: 原始 objective 与 inset 纵轴范围见同批 trajectory_plot_data.json；主图与 inset 均不平移或归一化数值。
 % EN: Raw objectives and inset vertical limits are recorded in trajectory_plot_data.json in the same batch; neither view shifts or normalizes values.
+% CN: 两图均从 figures/plot_sources/experiment_figures_20261114.json 的固定轨迹重画，入口为 scripts/refresh_experiment_figures.py；仅更新 Salut 系列显示名称。
+% EN: Both panels are redrawn from pinned trajectories in figures/plot_sources/experiment_figures_20261114.json via scripts/refresh_experiment_figures.py, updating the Salut display names only.
 \begin{subfigure}[t]{0.49\textwidth}
 \centering
 \includegraphics[width=\linewidth]{figures/ufgw_objective_time_eps0.pdf}

@@ -9,7 +9,7 @@ An exact restricted oracle is assumed to return its solution; finite outer termi
 \paragraph{Restricted-to-full recovery.}
 \begin{proposition}[Restricted-to-full recovery]
 \label{prop:restricted-recovery}
-Let $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ satisfy the KKT conditions of~\eqref{eq:restricted-uot} on $\mathcal{N}$.
+Let $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ satisfy the KKT conditions of~\eqref{eq:restricted-uot-vector} on $\mathcal{N}$.
 If $\widehat f_i+\widehat g_j\leq C_{ij}$ for every $(i,j)\in[m]\times[n]$, then extending $\widehat{\mathbf{x}}$ by zero outside $\mathcal{N}$ yields a global primal solution of~\eqref{eq:primal-uot}, and $(\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ is a global dual solution of~\eqref{eq:dual-uot}.
 \end{proposition}
 
@@ -74,10 +74,9 @@ Taking the minimum over the finitely many such edgewise sets proves the claim.
 \subsection{Inexact Restricted Solves}
 
 For inexact solves, let $\mathbf X^k$ be the returned coupling, $\Delta_k=\Phi(\mathbf X^k)-\Phi(\mathbf X^{k+1})$, and define the feasible coordinate gain
-\begin{equation}
-\label{eq:refinement-coordinate-gain}
+\begin{equation*}
 G_k=\max_{e\in\mathcal V_k\setminus\mathcal N_k}\max_{t\geq0}\{\Phi(\mathbf X^k)-\Phi(\mathbf X^k+t\mathbf E_e)\},
-\end{equation}
+\end{equation*}
 with $G_k=0$ for an empty candidate set.
 Write $v_k=\max_{i,j}[\sigma^k_{ij}]_+$ and $a_k=\max_{(i,j)\in\mathcal N_k}[\sigma^k_{ij}]_+$ for full and active score maxima.
 The one-sided marginal-gradient error is
@@ -94,7 +93,7 @@ where a zero transported marginal contributes zero to its one-sided error.
 \label{thm:refinement-explicit}
 Use $\ell_2$ stopping measures with a restricted tolerance $\varepsilon_{\mathrm r}>0$ and a full-space tolerance $\tau>0$.
 Set $d_k=\varepsilon_{\mathrm r}^2(1+|\Phi(\mathbf X^k)|)$.
-Suppose each restricted call returns in finite time with all three restricted stopping measures at most $\varepsilon_{\mathrm r}$ and, except for the first call at each level, satisfies
+Suppose each restricted call returns in finite time with all three restricted stopping measures at most $\varepsilon_{\mathrm r}$, and consecutive refinement outputs satisfy
 \begin{equation}
 \label{eq:refinement-output-conditions}
 \begin{gathered}
@@ -147,8 +146,8 @@ The fixed nominal tolerance alone does not imply the controlled-output assumptio
 \subsection{Local Stopping Implementation}
 \label{app:refinement-local-stopping}
 
-Algorithm~\ref{alg:pduot} presents the base iteration and stopping test.
-The convergence-controlled variant augments its stopping predicate with the following local conditions while preserving the iteration and restart structure.
+The \checkstop operator in Algorithm~\ref{alg:pduot} supplements the restricted KKT tests in Appendix~\ref{app:stopping-criterion} with the following local safeguard conditions.
+% These additional conditions apply to refinement calls after the first restricted solve at each level; the first call and standalone solves use only the restricted KKT tests.
 Let $\mathbf x^0$ be the current call's warm-start coupling after insertion and zero-flow pruning, and let $\mathbf x$ be a mapped point on this same support.
 The padded anchor $\mathbf x^0$ has the preceding coupling's objective.
 Write $\mathbf s=\mathbf c_{\mathcal N}-\mathbf A_{\mathcal N}^{\top}(\mathbf f,\mathbf g)$ and $\mathbf w=\mathbf s-\boldsymbol\lambda$, where the primal projection supplies $\boldsymbol\lambda\geq0$ with $\langle\boldsymbol\lambda,\mathbf x\rangle=0$.
@@ -166,7 +165,7 @@ The generalized KL identity gives
 \begin{equation*}
 \Phi(\mathbf x^0)-\Phi(\mathbf x)=B-\langle\mathbf w,\mathbf x-\mathbf x^0\rangle\geq L.
 \end{equation*}
-For a noninitial call, let $v$ and $G$ be the preceding scan maximum and coordinate gain.
+Let $v$ and $G$ be the preceding scan maximum and coordinate gain.
 After the original restricted KKT test passes, require
 \begin{equation}
 \label{eq:refinement-implemented-gate}

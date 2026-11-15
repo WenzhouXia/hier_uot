@@ -11,7 +11,7 @@ from paper_experiments_uot.common.metrics import relative_gap
 from paper_experiments_uot.common.plot_style import apply_paper_style
 
 
-def main():
+def main(output=None):
     """
     CN: 从已完成的固定结果重画论文图，仅简化 log 刻度，不启动任何求解。
     EN: Redraw paper figures from completed pinned results, simplifying log ticks without starting any solves.
@@ -24,12 +24,14 @@ def main():
 
     batch = PROJECT/'paper_experiments_uot/hello_uot_comparison/results/20261111_formal_four_rho'
     paper = Path(__file__).resolve().parents[1]
+    figures = Path(output) if output is not None else paper/'figures'
+    figures.mkdir(parents=True, exist_ok=True)
     manifest = json.loads((batch/'manifest.json').read_text())
     summaries = json.loads((batch/'summary.json').read_text())
     apply_paper_style()
     colors = {'shuttle': '#EE6A5F', 'hello_uot': '#4878A8'}
     markers = {'shuttle': 'o', 'hello_uot': 's'}
-    labels = {'shuttle': 'SHUTTLE', 'hello_uot': 'HELLO-UOT'}
+    labels = {'shuttle': 'Salut', 'hello_uot': 'HELLO-UOT'}
     for n in (32768, 65536, 131072):
         cases = [c for c in manifest['cases'] if c['num_samples'] == n]
         fig, axes = plt.subplots(1, len(cases), figsize=(7.1, 2.05), squeeze=False)
@@ -66,7 +68,7 @@ def main():
         fig.legend(handles=legend, loc='upper center', bbox_to_anchor=(.52, 1.015),
                    ncol=2, frameon=False, fontsize=7.2)
         fig.subplots_adjust(left=.085, right=.99, bottom=.24, top=.76, wspace=.67)
-        stem = paper/'figures'/f'hello_uot_gap_time_n{n}'
+        stem = figures/f'hello_uot_gap_time_n{n}'
         for suffix in ('pdf', 'png'):
             fig.savefig(stem.with_suffix('.'+suffix), dpi=300)
         plt.close(fig)

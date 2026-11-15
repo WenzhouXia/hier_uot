@@ -7,7 +7,7 @@ The comparison retains the original \hellouot protocol: fully corrective Frank--
 The initializer uses FP64, batch size 512, stopping threshold $10^{-3}$, and at most $10^6$ iterations.
 \hellouot retains its running-best relative primal--dual gap threshold $10^{-4}$ and cap of 100 outer iterations; all 12 runs satisfy that stopping rule.
 Its balanced oracles use tolerance $10^{-6}$, coarse threshold 1024, split factor 4, assignment budget 16, pricing budget 2, and the original marginal-change warm-start gate of $10^{-2}$.
-The fully corrective coefficient solve uses the original SLSQP implementation, with tolerance $10^{-12}$ and at most 200 iterations.
+The fully corrective coefficient solve uses the original L-BFGS-B implementation, with tolerance $10^{-12}$ and at most 200 iterations.
 \ours uses its standard hierarchy settings, coarse threshold 256, \subsolver in \texttt{original\_plus} mode, and original-UOT KKT tolerance $10^{-6}$.
 Both methods return their final native solutions; \ours is represented by one point at the complete synchronized solve time, including all hierarchy levels.
 The native stopping tests are method-specific, and the common \sharedgap evaluates the resulting primal accuracy.
@@ -26,8 +26,9 @@ Historical raw records store the complete \ours clock in \texttt{full\_native\_r
 % CN: 数据来自 /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/hello_uot_comparison/results/20261111_formal_four_rho/{summary.json,manifest.json,cases/*/*/metrics.json}，包括三个规模的12个实例和24次成功原生求解。reference 来自 results/20261111_reference_four_rho，同批 reference_link.json 记录关联身份。
 % EN: Data: /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/hello_uot_comparison/results/20261111_formal_four_rho/{summary.json,manifest.json,cases/*/*/metrics.json}, covering all 12 instances at three scales and their 24 successful native solves. References are in results/20261111_reference_four_rho, with identity recorded by reference_link.json in the comparison batch.
 \caption{\textbf{Final native solutions across all penalty settings.}
-TOME E11.5$\to$E12.5, $d=30$, seed 42, one run per method.
+TOME E11.5$\to$E12.5, $d=30$.
 Time is in seconds and includes initialization; \sharedgap uses the same audited bound for both methods on each instance.
+Results are averaged over 5 seeds;
 Bold values are smaller within each pair.}
 \label{tab:hello-uot-complete}
 \small

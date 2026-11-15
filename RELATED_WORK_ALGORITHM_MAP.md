@@ -6,6 +6,8 @@
 
 2026-11-12 增补 Auricchio et al. 的 cost-truncation/PFW 论文（Section 2.15），并更新 Sections 3、4、9 的分类和叙事建议；其余条目保留各自的核对范围，不代表全量重新核验。当前引言叙事以 [STORYLINE_INTRO.md](STORYLINE_INTRO.md) 为准。
 
+2026-11-14 系统补查见 Section 10，新增 GeomLoss、POT L-BFGS-B、Bregman proximal、dynamic-penalty BPD、NFFT 及更多软件/模型路线；当前代码可获取性、候选资格与未核实项以 Section 10 为准。
+
 ## 1. 分类前先区分的几个概念
 
 | 信息 | 要问的问题 | 不能混淆的内容 |
@@ -287,3 +289,82 @@ active-set 不专属于 dual，column generation 也不是不用 dual 的 primal
 - **不能说：** 首次对 UOT 使用 active-set、首次使用 dual 选边、首次用 sparse support，或者整个 UOT 文献没有 column generation。
 - **未确认：** 本次未找到并核实一个与固定 KL-UOT 逐边 restricted master + full-space pricing 完全同构、且先于本工作的独立算法；这不是不存在的证明。搜索覆盖当前原始论文、引用线索、arXiv metadata 的 active-set / column-generation / working-set / constraint-generation / greedy 等关键词。通用搜索部分受限，不能将零结果当成全面 full-text 检索。
 - **创新性判断：** 即使最终没有找到完全对应的 KL 先例，把通用 constraint generation 应用于这组 KKT 也不是自动很强的贡献。需要把新增机制及其必要性、理论条件和大规模实测结果讲清楚，尤其区分从 HELLO 继承的部分。
+
+## 10. 系统补查：离散 UOT 求解路线、公开实现与比较资格（2026-11-14）
+
+本节补充并覆盖前文关于“是否有可用代码”的历史判断；前文逐篇机制说明仍保留。此前将新增基线概括为“只有 ETM 和 FRLC”过早，漏查了 GeomLoss、POT L-BFGS-B，并遗漏了与原目标直接相关的 Bregman proximal、动态 penalty 等文献路线。
+
+### 10.1 范围、筛选口径与检索记录
+
+核心问题为两个有限加权点云上的 static marginal-penalized UOT，主要是 KL，兼顾平方 L2 marginal penalty。允许 coupling 正则化、熵正则化、低秩表示与可追溯的成本近似；统一对返回的非负 coupling 计算原 UOT objective 和独立参考下界的 shared gap。参数不必与本文 rho 一一对应，可以扫描近似参数。CPU 实现不是排除理由，但须注明执行方式。
+
+不纳入本组高维实验：只能接受规则网格、一维专用 oracle、默认高维实现存在明确障碍且需要重新开发、改变为 BP 插入/删除或 MMD marginal 模型，以及没有直接产生当前两个有限点集之间 coupling 的连续生成/动态流模型。后几类仍列入领域版图，不据此称其工作不相关或不开源。Point-cloud surface PDE solver 不等于任意维点云之间的离散 coupling solver。
+
+检索同时沿四个入口推进：已有论文与综述的参考文献；按机制搜索 scaling/low-rank/sparse/gradient/proximal/Newton/ADMM/oracle；作者论文页与仓库；POT、OTT、GeomLoss 和 Julia/R 软件接口。搜索语句包括 `unbalanced optimal transport solver algorithms github KL regularization sparse gradient methods`、`unbalanced optimal transport proximal quasi newton`、`GEM-UOT implementation code`、`Safe Screening for Unbalanced Optimal Transport code`、`inexact Bregman unbalanced github`、`Dynamic Penalty Updating UOT`、`unbalanced optimal transport Newton/semismooth/ADMM/coordinate descent`，并补查 2025–2026 的算法结果。
+
+GitHub repository search 对完整短语 `"unbalanced optimal transport"` 返回 62 个仓库，已浏览结果的名称与描述并对相关线索进一步检查；该检索只覆盖仓库索引，不等于搜索全部源码。另对 `"GEM-UOT"`、`"IBPUOT"`、`"safe screening" transport`、`"gradient extrapolation" transport`、`Bregman unbalanced` 做 repository search，未找到对应候选。JMLR 论文页无代码链接、全文无 GitHub 链接也不构成“未开源”的证明。未使用需登录的 GitHub 全量 code search；没有联系作者索取未公开代码，没有审完全部出版商补充材料。
+
+核查级别分开记录：**源码核查**表示实际读取输入、更新或输出；**文献核查**表示读过论文对应问题/算法部分；**线索核查**仅确认论文或仓库存在。下列“候选”均未表示安装、数值正确性、运行速度或对照实验已验证。本轮没有运行 GPU 实验，也没有修改 `.tex` 或 `.bib`。
+
+### 10.2 完整候选版图与处理决定
+
+| 路线/方法 | 原始来源与公开实现 | 目标/输入/输出及核查范围 | 当前处理 |
+|---|---|---|---|
+| Generalized Sinkhorn / Chizat scaling | [原论文](https://arxiv.org/abs/1607.05816)、[POT](https://pythonot.github.io/gen_modules/ot.unbalanced.html)、[OTT](https://ott-jax.readthedocs.io/solvers/_autosummary/ott.solvers.linear.sinkhorn.Sinkhorn.html) | KL-UOT 加熵，成本矩阵或点云，coupling 可恢复 | 已覆盖基本路线 |
+| Stabilization、epsilon continuation、translation-invariant Sinkhorn | [Séjourné 2022](https://proceedings.mlr.press/v151/sejourne22a.html)、[fast_uot](https://github.com/thibsej/fast_uot) | 一般点云成本；现有 OTT 固定 epsilon 基线已开启 `recenter_potentials`，不是新增算法家族 | 不为换库重复增加曲线 |
+| GeomLoss online / annealed Sinkhorn | [官方库](https://github.com/jeanfeydy/geomloss)、[接口文档](https://www.kernel-operations.io/geomloss/api/pytorch-api.html) | 源码核查：一般维点云、KL marginal relaxation、PyTorch/KeOps、可恢复 coupling；online 不要求网格 | **新增候选**。虽然同属 Sinkhorn，其 annealing 与实现路线值得与现有 OTT 明确对照，不能因同族自动删除 |
+| GeomLoss multiscale | 同上 | 稀疏/聚类 truncation；legacy auto 仅在低维等条件下选用，并非 API 硬限制所有高维输入 | 本组优先 online；不未经验证把 multiscale 的低维加速承诺扩展到 PCA30 |
+| Schmitzer MultiScaleOT | [官方代码](https://github.com/bernhard-schmitzer/MultiScaleOT) | 源码核查：点云、KL、稀疏 coupling 均有；默认 hierarchy 枚举 $2^d$ 子盒 | 按作者决定排除 PCA30 比较；不改造 hierarchy、不另加低维专属实验 |
+| GPU Domain Decomposition UOT | [论文](https://arxiv.org/abs/2410.08859)、[代码](https://github.com/OTGroupGoe/DomainDecomposition) | 源码核查：公开 GPU-UOT 路径依赖二维规则网格、cell reshape 和 padding | 排除当前点云直接比较 |
+| Spar-Sink | [JMLR 原文](https://jmlr.org/papers/v24/22-1311.html)、[代码](https://github.com/Mengyu8042/Spar-Sink) | 采样/重加权 kernel 的 entropic UOT；已有 adapter，coupling 可评价 | 已用于 entropic 扩展；原 UOT gap 下的 epsilon 扫描可复用实现，但不是已完成结果 |
+| NFFT accelerated UOT | [JSC 2024 原文](https://link.springer.com/article/10.1007/s10915-024-02586-2)、[FastUOTMMD](https://github.com/rajmadan96/FastUOTMMD) | 源码核查：KL+熵、点云、两侧 eta；NFFT 函数只实现 1/2/3 维，否则 `error("High dimension")` | 排除 PCA30；不能仅凭摘要“high-dimensional”列为高维候选 |
+| Nyström / LCN sparse-kernel approximation | [LCN 代码](https://github.com/gasteigerjo/lcn) | 源码核查：快速 unbalanced 路线为 BP 插入/删除模型；独立标准 KL dense Sinkhorn 不代表 LCN-KL 算法已实现 | 按作者决定排除 BP 模型，不因 coupling 正则化排除 |
+| Anderson / momentum Sinkhorn | [OTT API](https://ott-jax.readthedocs.io/solvers/_autosummary/ott.solvers.linear.sinkhorn.Sinkhorn.html) | 已有库中的加速控制选项；本轮仅查 API，未核查 UOT 特定组合与实测收益 | 可选的强 Sinkhorn 配置核验，不另算一篇新 UOT 方法 |
+| ULOT | [NeurIPS 2023 原文](https://proceedings.neurips.cc/paper_files/paper/2023/hash/a439259e78294c38d157a51a2c40486b-Abstract-Conference.html)、OTT LRSinkhorn | 低秩 coupling、KL marginal penalty；成本表示另计 | 正文已比较 |
+| FRLC | [官方代码](https://github.com/raphael-group/FRLC) | 源码核查：点云成本、PyTorch、unbalanced 更新、完整 coupling/因子输出；外边际共用 tau_out | 保留候选；free mass 与 penalty 映射须验证，非对称接口需额外适配 |
+| MM | [Chapel 2021 代码](https://github.com/lchapel/UOT-though-penalized-linear-regression)、POT | 原 KL/L2 UOT、任意成本矩阵、完整 coupling | 已比较；不是尚缺的新方法 |
+| L-BFGS-B | [POT 源码](https://pythonot.github.io/_modules/ot/unbalanced/_lbfgs.html) | 源码核查：原 KL/L2 目标或可选 coupling 正则、两侧 penalty、完整 coupling；转 NumPy 后调用 SciPy | **新增小规模 CPU 对照候选**；通用优化器，不包装为 UOT 新专用算法 |
+| GEM-UOT / GEM-RUOT | [JMLR 2023](https://jmlr.org/papers/v24/22-1158.html) | KL marginal + coupling L2 正则，梯度外推与稀疏输出；未找到可获取的作者实现 | 保留文献，代码待确认；不能当作原目标上稀疏计算，也不能断言未开源 |
+| IBPUOT / AIBPUOT | [Chen et al. 2024](https://arxiv.org/html/2402.16978) | 文献核查：原始双侧 KL-UOT、不精确 Bregman proximal point、内层 scaling、外层加速及收敛；任意有限成本矩阵 formulation | **新增相关文献**；未找到可获取实现。与本文不精确求解/收敛定位相关，不能只因代码未找到而漏引其路线 |
+| Dynamic-penalty accelerated BPD/MM | [Su–Kasai, IJCNN 2024](https://doi.org/10.1109/IJCNN60899.2024.10650530)、[作者机构记录](https://waseda.elsevierpure.com/en/publications/accelerating-unbalanced-optimal-transport-problem-using-dynamic-p/) | 摘要级核查：MM 的 Bregman proximal descent 解释、动态 penalty 与 Nesterov 加速，针对大 penalty 的性能退化 | **新增文献线索**，完整算法与代码尚未核实；不能笼统暗示此前没有处理 MM 大 penalty 的研究 |
+| Inexact penalty precursor | [Su–Kasai, JSAI 2023](https://www.jstage.jst.go.jp/article/pjsai/JSAI2023/0/JSAI2023_2U6IS1c02/_article/-char/ja/) | 会议短文/前序工作线索，可能与上一条有重叠 | 保留追溯，不重复算独立基线；代码未确认 |
+| ETM | [官方代码](https://github.com/XeniaLLL/ETM)、[NeurIPS 原文](https://proceedings.neurips.cc/paper_files/paper/2025/file/97a36b5f6db9e6703e4154cf0c582214-Paper-Conference.pdf) | 源码核查：公开 UOT demo 为 Approx 型迭代加 coupling 构造；未见论文 Refine 的 L-BFGS 阶段 | 保留实际公开版本候选；不能标成已获得完整 Refine 实现 |
+| Translation-invariant FW / HELLO-UOT | [Séjourné 2022](https://proceedings.mlr.press/v151/sejourne22a.html)、本地 HELLO | 一维 FW 专用实现不作为高维基线；HELLO 使用高维 balanced oracle | HELLO-UOT 已比较 |
+| L2 regularization path | Chapel 官方代码、[POT regpath](https://pythonot.github.io/gen_modules/ot.regpath.html) | 原 L2 marginal UOT 的整条参数路径；输出 coupling | L2 附录候选；路径任务与单个参数求解需说明 |
+| Adapted network simplex | [论文](https://arxiv.org/html/2610.13847)、论文链接 AdNS-UOT 当前 404 | 稀疏 primal-dual tree/forest，KL 和 L2 | 相关文献保留；不能获取对应发布代码，暂不实验 |
+| Cost truncation + PFW | [Auricchio et al. 2026](https://arxiv.org/html/2611.10268v1) | KL/L2 等边际惩罚、成本截断压缩与 pairwise FW；当前版本无数值实验，未确认代码 | 最近邻理论路线保留调研；按此前决定不列实验候选 |
+| Safe screening | [公开稿](https://arxiv.org/html/2307.00247)、[期刊](https://doi.org/10.1016/j.neucom.2025.132308) | KL/L2 的 solver-independent 加速，需搭配 MM/BFGS；文章描述 Matlab，但未定位可获取代码 | 代码待确认，不将其视为单独底层求解器 |
+| Adaptive semi-dual gradient / ANAG | [Genans, COLT 2026](https://proceedings.mlr.press/v336/genans26a.html)、[作者页](https://ferdinand-genans.github.io/research/) | entropic KL-UOT 的 stochastic/full-batch gradient 理论；本次论文页和作者页未发现代码 | 新近文献覆盖，暂不列可执行候选 |
+| Dense PDHG research prototype | [gagazzotti/rPD-UOT](https://github.com/gagazzotti/rPD-UOT) | 源码核查 `kl.py::pdhg_uot_kl`：NumPy dense coupling、Lambert-W KL prox、两侧 rho、返回 P/u/v；README 只有 first commit | 代码存在，但没有明确对应论文/稳定发布身份，不等于 AdNS-UOT 已开源；不列主补充基线，可作研究对照 |
+| Generic conic/QP solvers | PDCS、Clarabel/MOSEK 等；本地 PDCS adapter | 显式 KL epigraph / L2 QP 转化，返回 coupling | PDCS 已用于 restricted 实验；其他通用 solver 可做小规模核验，不必在 UOT-native 相关工作逐项列举 |
+| RegOT sparse Newton / SSNS / SPLR | [公开库](https://github.com/yixuan/regot-python) | 源码核查 README 与 QROT dual：本次确认的是 balanced EROT/QROT solver，未确认 KL marginal relaxation 接口 | 不将 balanced Newton solver 自动列为现成 UOT solver；需改算法则超出直接比较 |
+| Pearson marginal / semismooth Newton | [Phung–Tran 预印本](https://arxiv.org/abs/2503.15105) | 本次搜索确认论文；平方/Pearson marginal 与 coupling quadratic regularization、mesh/interface 理论，尚未核实全部版本和代码 | L2 相关文献线索，非已审查 KL 基线；不能据搜索摘要作性能判断 |
+| Julia/R UOT packages | [OptimalTransport.jl](https://juliaoptimaltransport.github.io/OptimalTransport.jl/stable/)、[UnbalancedOptimalTransport.jl](https://github.com/ericphanson/UnbalancedOptimalTransport.jl)、[R unbalancedTransport](https://github.com/larskruse/unbalancedTransport) | 官方文档/README 核查：generalized scaling/Sinkhorn、部分输出 coupling；不代表新增优化机制 | 说明领域有公开实现；不只为语言/软件库不同重复实验 |
+| Original ICML2020 Sinkhorn code | [lntk/uot](https://github.com/lntk/uot) | 已确认作者仓库和论文对应关系；属于已覆盖 scaling 路线 | 不必另加曲线 |
+| Neural continuous UEOT / semi-couplings | [LightUOT](https://github.com/milenagazdieva/LightUnbalancedOptimalTransport)、[NUBOT](https://github.com/FrederikeLuebeck/nubot)、[UOT generative model](https://github.com/jaemoo-choi/Unbalanced-Optimal-Transport-Generative-Model) | README/论文范围核查：学习连续输运、生成模型或重加权 map；未确认直接输出固定有限两点集的矩阵 | 领域有开源；不属于当前可直接用离散 shared gap 的 coupling solver，不在本轮另设计离散化 |
+| Tree / sliced / structured-MMD UOT | [treegkr](https://github.com/joisino/treegkr)、[UOT-Lasso](https://github.com/Tran-Thu-Le/P2025-UOT-Lasso)、[sliced UOT](https://github.com/clbonet/Slicing_Unbalanced_Optimal_Transport)、[Sparse-UOT](https://github.com/Piyushi-0/Sparse-UOT) | 改 ground/model、切片距离或 MMD penalty/稀疏约束；不是简单加 coupling regularization | 按作者范围不列当前比较；不是没有开源 |
+| Dynamic / surface PDE UOT | [ACUOT](https://github.com/mao1756/acuot)、[ADMM-TRBF-SUOT](https://github.com/Poker-Pan/ADMM-TRBF-SUOT)、[urOMT](https://github.com/xinan-nancy-chen/urOMT) | 动态 WFR、密度/速度/source 或曲面切向 RBF；“点云”是曲面离散，并非两个任意高维经验分布的原 KL coupling | 排除当前离散基线，不把动态模型统称原问题正则近似 |
+
+### 10.3 新增实现的关键审查证据
+
+**GeomLoss。** 当前 upstream checkout 为 `00e493f36bd6cc8471526e59afc07193a1926e47`。Legacy `src/geomloss/_legacy/samples_loss.py` 支持 `reach`（KL rho）、`potentials=True`、`debias=False` 与 `online`；auto 在高维大样本退回 online，并非拒绝高维点云。Legacy 平方成本是 $\|x-y\|^2/2$，rho/epsilon 与本文单位需统一。当前新版 `ot/_implementations/sample.py::solve_sample` 接受点云、weights、`reg`、`unbalanced`，`OTResultSample._plan/_lazy_plan` 明确构造 coupling；`_plan` 乘 $a\otimes b$，不能只把 density 当 flow。当前 scalar rho 接口不直接支持本文所有非对称配置。比较应关闭 debias，使用实际耦合的原 UOT objective，不拿 Sinkhorn divergence 标量代替 primal 值。新版与 legacy 不混用系数换算，先冻结版本。此前没有核对 GeomLoss 就将剩余候选缩到两项，是遗漏。
+
+**POT L-BFGS-B。** `ot/unbalanced/_lbfgs.py` 的 `lbfgsb_unbalanced` 接收任意 M、两侧 `reg_m`、`regm_div='kl'/'l2'` 与 `reg=0`；内部转 NumPy、维护完整 coupling，调用 SciPy `minimize(..., method='L-BFGS-B', bounds=Bounds(0,np.inf))` 并返回 coupling。它有资格作为小规模 CPU 对照，不因不是新专用算法而从“可比较方法”清单删除。不能把它误报成 GPU solver，也不能将 coupling `reg_div='l2'` 与 L2 marginal `regm_div='l2'` 混淆。
+
+**NFFT-UOT。** `FastUOTMMD` checkout 为 `90e4a95a9e16b65711955caf12bd3fcd4c438d1a`。`src/UOT_NFFT.jl::UOTSinkhornKLNFFTStabilized` 接受点坐标和两侧 eta，返回 f/g；明确按 1、2、3 维分支构造 FASTSUM，其他维数直接抛 `High dimension`。同仓库普通 dense Sinkhorn 支持一般维数，但退回该函数已失去 NFFT 加速机制，不能冒充高维 NFFT 比较。
+
+**rPD-UOT。** 与已失效 AdNS-UOT 链接属于同一作者账号，但仓库身份不同。`kl.py` 的确是原双侧 KL-UOT dense PDHG：每轮维护 P、行列求和与 Lambert-W proximal，返回 primal/dual。作者 README 未说明稳定算法名或论文关系，因此只能称公开研究 prototype，不据此重新宣布 network simplex 代码可用。
+
+### 10.4 理论与叙事上的补查结果
+
+新增 Bregman proximal 与动态 penalty MM 文献意味着，不能仅对比 vanilla MM 后就概括“现有直接方法没有处理高 penalty 的技巧”，也不能把“允许 inexact inner solves”单独作为没有先例的创新。本文仍应具体定位 PDUOT 的受限求解结构、自适应控制的分析，以及预算内 active-support refinement 的输出条件与有限终止。IBPUOT 的 inner scaling subproblem 与本文 restricted-UOT solve 不同，不能因都叫 inexact 就把两者理论视为相同。
+
+现有四段 related work 的大类仍可保留，但第三段在最终清稿时应检查是否需要用一个合并引用补上 Bregman proximal/BPD 路线。先核实 Su–Kasai 完整算法再决定具体措辞；本轮不改正文、不动引用库。
+
+### 10.5 当前建议与仍未解决的检索边界
+
+1. **可进入接入评估**：ETM 官方实际版本、FRLC、GeomLoss online（含其 annealing）；POT L-BFGS-B 为可选小规模 CPU 对照。前面两项不再被当作穷尽候选。
+2. **可复用现有代码拓展评价**：Spar-Sink 的原 UOT gap 曲线；它已在 entropic 节比较，不表示已经完成该新任务。额外耦合正则的方法可以用原目标 gap 比较，不因目标变化自动排除。
+3. **值得补文献但当前不能安排官方实现实验**：IBPUOT/AIBPUOT、dynamic-penalty BPD/MM、GEM-UOT、safe screening、ANAG、AdNS-UOT。证据状态是“未找到/无法获取”，不是“确认未开源”。
+4. **按适用范围排除**：MultiScaleOT 默认高维 hierarchy、GPU grid DomDec、NFFT 的 1–3 维实现、一维/树/PDE/连续生成模型、BP/MMD 模型。排除原因逐项写明，不能合并成“不是原目标”。
+5. 本轮扩大检索后未确认一个可直接接入、支持高维点云并返回 coupling 的额外专用 UOT Newton/GPU 稀疏 solver；这不证明不存在。出版商 supplementary、未索引仓库、近期更新和未联系的作者代码仍可能带来新增项。未来补查只需沿这些明确空缺推进，不能将本清单称为全领域零遗漏的证明。

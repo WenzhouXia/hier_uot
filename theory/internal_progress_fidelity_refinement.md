@@ -51,7 +51,7 @@ $$L_{k-1}\ge G_{k-1}/2,\qquad L_{k-1}\ge d_k\quad\text{or}\quad\max\{a_k,\Omega_
 
 这里后半部分是逻辑“或”：本轮已有足够原目标进展，就不计算昂贵的 log-response gate；只有低进展时才计算。
 若门槛失败，就继续同一次原始 PDUOT 迭代，不重新启动 solver、不做 full scan、不改变下一次调用的 tolerance。
-每层第一次 solve 没有上轮 scan，可保持原行为；它只贡献有限个初始步骤。
+检查的适用范围统一见论文附录 Local Stopping Implementation。
 
 与旧全节点条件不同，可靠性门槛是上轮 raw maximum 的一半，不是一开始就压到最终外层 tolerance 对应的尺度。
 半因子是固定 proof constant；下面的四分之三只用于证明中的分类，不是运行时额外阈值或 residual 窗口。

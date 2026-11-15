@@ -16,10 +16,51 @@ The shared lower-bound construction additionally uses FP64 cost evaluation and a
 % \xwz{Protocol audit: verify the actual cost policy and source version of every historical table/figure before finalization; this paragraph describes the current experiment configurations. Retain per-artifact provenance rather than assuming historical defaults match.}
 
 The \emph{refinement safeguard} is enabled by default through \texttt{refinement\_forcing\_check}; this switch also enables the sufficient-progress check, even when \texttt{refinement\_progress\_check} is false.
-After the first restricted solve at each level, it supplements the native KKT test with the local decrease and pricing-fidelity conditions in Appendix~\ref{app:refinement-convergence}.
+It supplements the native KKT test with the local decrease and pricing-fidelity checks defined in Appendix~\ref{app:refinement-local-stopping}.
 The checks use the costs evaluated at that level, with FP64 arithmetic for the bounds; enabling them does not change the cost-precision policy.
 The protected adaptive-solver convergence result and the conditional refinement-termination result retain the numerical scope stated in their proofs.
 Appendix~\ref{app:refinement-safeguard} reports the measured cost of these checks.
+
+\subsection{Main UOT Baselines}
+\label{app:implementation-uot-baselines}
+
+\paragraph{\mm.}
+We use GPU multiplicative majorization--minimization updates for KL-UOT~\citep{chapel2021unbalanced} and sweep the native stopping tolerance.
+The coupling and cost matrix are stored densely in FP64.
+
+\paragraph{\sinkhorn.}
+We use the OTT-JAX implementation of unbalanced \sinkhorn~\citep{chizat2018scaling}, with FP64 log-domain updates and potential recentering.
+The complete-UOT Pareto comparison uses dense costs and sweeps the entropic strength; the entropic extension uses online cost evaluation and sweeps the native stopping threshold.
+Compilation is performed in a separate process before measurement, followed by independent warmup and a fresh timed solve.
+
+\paragraph{\ulot and \hellouot.}
+\ulot constrains the coupling to a nonnegative low-rank factorization~\citep{scetbon2023unbalanced}; its rank is varied in the runtime--accuracy comparison.
+\hellouot uses fully corrective Frank--Wolfe with balanced \hello oracles~\citep{xia2026dual}; Appendix~\ref{app:hello-uot-comparison} gives its initialization and stopping settings.
+
+\subsection{Supplementary UOT Baselines}
+\label{app:implementation-extra-baselines}
+
+\paragraph{\etm.}
+We reimplement the authors' public \etm-Approx iterations~\citep{liu2026solving} in PyTorch/CUDA with FP64 arithmetic and replace the final balanced OT solver with \hello, preserving the estimated transported marginals and their common total mass.
+We denote this variant by \etm-Approx+\hello and sweep the entropic strength with a fixed budget of 1,000 marginal-estimation iterations.
+% CN: 加速数据来自 experiments/etm_online_profile/results/20261115_short32768_my4090/metrics.json 的首遍完整测量：n=32768，5 轮，rho=(1,1)，epsilon=0.01；NumPy 106.940 s，CUDA 2.181 s。NumPy 预建成本，CUDA online；省略未使用的 slack 输出，均不含 HELLO；第二遍按作者要求停止。
+% EN: Speedup: first completed measurement in experiments/etm_online_profile/results/20261115_short32768_my4090/metrics.json: n=32768, five iterations, rho=(1,1), epsilon=0.01; NumPy 106.940 s, CUDA 2.181 s. NumPy uses prepared costs and CUDA uses online costs; unused slack output and HELLO are excluded. The second repeat was stopped at the author's request.
+On RTX 4090, GPU marginal estimation is tens of times faster than the official NumPy implementation in our pilot measurements.
+End-to-end comparisons include marginal estimation and \hello coupling construction.
+
+\paragraph{\potlbfgsb.}
+We use POT 0.9.7.post1's CPU L-BFGS-B solver in FP64, with KL marginal penalties and zero coupling regularization.
+We sweep its native tolerance with at most 1,000 iterations and evaluate the returned coupling using the shared original-UOT gap.
+Runtime includes dense cost construction and optimization.
+
+\paragraph{\multiscaleot.}
+We use the KL soft-marginal solver in \multiscaleot 0.3.8~\citep{schmitzer2019stabilized} on three-dimensional point clouds, with separate marginal penalties and squared-Euclidean costs.
+We reimplement its sparse scaling iterations in PyTorch/CUDA FP64, retaining the official CPU hierarchy, kernel truncation, absorption rules, epsilon schedule, and stopping checks.
+% CN: 加速与等价性数据来自 paper_experiments_uot/accuracy_runtime_pareto/results/20261115_lowdim_my4090/lowdim_baselines/multiscale_equivalence.json；四组 rho、三个 epsilon，包含 CPU 结构及数据传输。
+% EN: Speedups and equivalence: paper_experiments_uot/accuracy_runtime_pareto/results/20261115_lowdim_my4090/lowdim_baselines/multiscale_equivalence.json; four rho pairs and three epsilon values, including CPU structures and transfers.
+Across 12 configurations at $n=4{,}096$, this implementation is 2.2--5.0$\times$ faster than the official CPU solver on RTX 4090, with identical final supports and maximum coupling-entry difference below $10^{-15}$.
+We sweep the final entropic strength over $10^{-2},10^{-3},10^{-4}$, using hierarchy depth four, truncation threshold $10^{-20}$, and the native error goal $10^{-8}$.
+Runtime includes CPU setup, GPU iterations, and data transfers.
 
 \subsection{\pdcs}
 \label{app:implementation-pdcs}

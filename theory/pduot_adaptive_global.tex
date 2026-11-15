@@ -1,9 +1,8 @@
 \paragraph{Metric changes under the weight budget.}
 Write $s=\log w$ and
-\begin{equation}
-\label{eq:pduot-variable-metric}
+\begin{equation*}
 \mathbf P(s)=\begin{pmatrix}e^{-s}\overline{\mathbf D}_x^{-1}&-\mathbf A_{\mathcal N}^{\top}\\-\mathbf A_{\mathcal N}&e^s\overline{\mathbf D}_y^{-1}\end{pmatrix},\qquad T_s=(\mathbf P(s)+\mathcal M)^{-1}\mathbf P(s).
-\end{equation}
+\end{equation*}
 Let $\chi=\|\overline{\mathbf D}_y^{1/2}\mathbf A_{\mathcal N}\overline{\mathbf D}_x^{1/2}\|_2<1$ and $c_0=(1-\chi)^{-1}$.
 If $\mathbf D(s)$ is the block-diagonal part of $\mathbf P(s)$, then $\mathbf P(s)\succeq(1-\chi)\mathbf D(s)$ and, for every nonzero $\mathbf h$,
 \begin{equation*}
@@ -15,10 +14,9 @@ Integration gives
 e^{-c_0|t-s|}\mathbf P(s)\preceq\mathbf P(t)\preceq e^{c_0|t-s|}\mathbf P(s).
 \end{equation}
 For an integer $J\geq1$, the budget in~\eqref{eq:pduot-weight-budget} satisfies
-\begin{equation}
-\label{eq:pduot-summable-budget}
+\begin{equation*}
 \sum_{j=1}^{\infty}|s_j-s_{j-1}|\leq\sum_{j=1}^{\infty}b_j\leq LJ\left(1+\frac{1}{p-1}\right)<\infty.
-\end{equation}
+\end{equation*}
 Consequently $s_j$ converges, and $\mathbf P_j:=\mathbf P(s_j)$ converges to a positive definite matrix.
 The compact weight interval also gives constants $0<\underline\lambda\leq\overline\lambda<\infty$ with $\underline\lambda\mathbf I\preceq\mathbf P_j\preceq\overline\lambda\mathbf I$ for all $j$.
 

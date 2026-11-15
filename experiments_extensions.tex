@@ -92,6 +92,8 @@ For each tested rank, \ourssparsink achieves higher \transitionacc\ on 16 of the
 \centering
 % CN: 三联图来自 paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/temporal_runtime_accuracy.pdf；数据为同目录 summary.csv、summary_table.csv；114/114 已完成。
 % EN: Triptych source: paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/temporal_runtime_accuracy.pdf; data: summary.csv and summary_table.csv in the same batch; 114/114 complete.
+% CN: 本次从 figures/plot_sources/experiment_figures_20261114.json 的固定汇总输入重画，入口为 scripts/refresh_experiment_figures.py；图例使用 Salut-Sinkhorn。
+% EN: Redrawn from the pinned aggregate inputs in figures/plot_sources/experiment_figures_20261114.json via scripts/refresh_experiment_figures.py, with the Salut-Sinkhorn legend.
 \includegraphics[width=\linewidth]{figures/moscot_time_runtime_accuracy.pdf}
 \caption{\textbf{Temporal transport on mouse embryogenesis.}
 (a) Coupling computation plus downstream evaluation time; (b) curated transition accuracy; (c) germ-layer accuracy.
@@ -102,14 +104,6 @@ One run per configuration across 19 time pairs on A100 GPUs.}
 \end{figure}
 
 \paragraph{Spatial alignment.}
-% \xwz{RERUN REQUIRED FOR THE WEIGHT-BUDGET CHANGE: the selected hier_uot+BCD measurements do not retain complete inner-call restart counts or traces. Rerun that method at the recorded selected settings with J=64, p=1.01 before claiming results from the protected default, and refresh Table tab:ufgw-application. The moscot low-rank baseline is unaffected. Audit: experiments/primal_weight_budget_20261111/report/history_J64_audit.json.}
-We follow the MOSTA spatiotemporal alignment task in moscot~\citep{klein2025mapping}, combining gene-expression features and spatial coordinates to infer transitions between adjacent embryonic stages.
-We aggregate the inferred coupling by cell type, normalize each source-type row, and report the fraction of transition probability assigned to biologically allowed pairs as \transitionacc.
-Table~\ref{tab:ufgw-application} compares \ourssparsink coupled with BCD against moscot low-rank UFGW using the authors' selected parameters, with both methods measured on A100 GPUs.
-BCD parameters are selected from 20 configurations per pair (Appendix~\ref{app:extension-experiment-protocols}).
-The BCD variant uses the tensorized-KL two-coupling relaxation, whereas moscot uses a low-rank single-coupling model; each method is evaluated through the same downstream metric.
-\ourssparsink with BCD is $1.24$--$5.02$ times faster and achieves higher transition accuracy on six of seven time pairs; on E12.5--E13.5, its accuracy is lower by $0.132$ percentage points.
-
 \begin{table}[t]
 \centering
 % CN: 两方法实测精度与正式 runtime_sec 均来自 paper_experiments_uot/moscot_spatiotemporal/results/20261101_213655_selected_compare_im2/{summary.csv,summary.json,cases/*/*/metrics.json}，14/14 成功且收敛。BCD 参数来源：results/20261031_203031_my4090/selection.json；ULFGW 使用本次 config.yaml 的作者最优参数。表格四舍五入，加速比按未舍入耗时计算。
@@ -118,7 +112,7 @@ The BCD variant uses the tensorized-KL two-coupling relaxation, whereas moscot u
 Columns give the source embryonic day (E) of each adjacent time pair.
 \ours is \ourssparsink + BCD; \moscot is low-rank UFGW.
 \transitionacc\ is in percent.
-BCD selects the best accuracy among 20 settings per pair; \moscot uses the authors' settings.
+Both BCD and \moscot use parameters selected following the procedure described in the \moscot paper.
 Time excludes downstream evaluation.
 One run per pair on A100 GPUs.}
 \label{tab:ufgw-application}
@@ -141,3 +135,11 @@ Metric & Method & 9.5 & 10.5 & 11.5 & 12.5 & 13.5 & 14.5 & 15.5 \\
 
 \smallskip
 \end{table}
+% \xwz{RERUN REQUIRED FOR THE WEIGHT-BUDGET CHANGE: the selected hier_uot+BCD measurements do not retain complete inner-call restart counts or traces. Rerun that method at the recorded selected settings with J=64, p=1.01 before claiming results from the protected default, and refresh Table tab:ufgw-application. The moscot low-rank baseline is unaffected. Audit: experiments/primal_weight_budget_20261111/report/history_J64_audit.json.}
+We follow the MOSTA spatiotemporal alignment task in moscot~\citep{klein2025mapping}, combining gene-expression features and spatial coordinates to infer transitions between adjacent embryonic stages.
+We aggregate the inferred coupling by cell type, normalize each source-type row, and report the fraction of transition probability assigned to biologically allowed pairs as \transitionacc.
+Table~\ref{tab:ufgw-application} compares \ourssparsink coupled with BCD against moscot low-rank UFGW using the authors' selected parameters, with both methods measured on A100 GPUs.
+BCD parameters are selected from 20 configurations per pair (Appendix~\ref{app:extension-experiment-protocols}).
+The BCD variant uses the tensorized-KL two-coupling relaxation, whereas moscot uses a low-rank single-coupling model; each method is evaluated through the same downstream metric.
+\ourssparsink with BCD is $1.24$--$5.02$ times faster and achieves higher transition accuracy on six of seven time pairs; on E12.5--E13.5, its accuracy is lower by $0.132$ percentage points.
+
