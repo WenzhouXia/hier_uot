@@ -1,7 +1,21 @@
-# hier_uot theory notes
+# hier_uot theory
 
+## Manuscript files
+
+- `pduot_convergence.tex`: two formal results aligned with the main-text informal theorem: global convergence under mapped-point restarts and summable metric changes, and local linear convergence under bounded-gap residual-reduction checks. The local KKT error bound is part of the second proof.
+- `refinement_convergence.tex`: finite termination with inexact solves (formal theorem and uniform-gain lemma), followed by a proposition establishing finite attainability of the complete stopping rule and preservation under sparsification. Exact-oracle termination is a short supporting argument.
+- `inter_level_response_stability.tex`: shared-side response stability, its proof, and the weighted potential-stability corollary used to explain dual propagation.
+
+The `Stop` definition and call context are in `../main_appendix.tex`, under `app:refinement-local-stopping`.
+Finite attainability and preservation under sparsification are proved in `refinement_convergence.tex`, under `app:refinement-stop-attainability`; numerical scope is stated with the implementation details.
+Compile the manuscript from the paper root with `latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex`.
+
+## Research notes
+
+- `notes/finite_refinement_original.md`: original four-part B.2, including the full exact-oracle theorem and proof, before the 2026-11-15 reorganization.
+- `../notes/component_mechanism_analysis_record.md`: the original F source and inter-level theory before the 2026-11-15 compression. Preserves auxiliary inheritance bounds, response prediction and certification, the sampling counterexample, and synthetic diagnostics with their data sources; these are excluded from the compiled manuscript.
+- `notes/support_induced_iteration_lower_bound.md`: fixed-map weighted Hall-deficit lower bound, archived verbatim from the manuscript on 2026-11-15. Its TeX fragment uses manuscript equation references and is not a standalone article or part of the compiled convergence proof.
 - `internal_progress_fidelity_refinement.md`: current same-call PDUOT progress-or-fidelity scheme, exact/inexact finite-refinement statements, default-off production integration (`bbb6d0c`), complete 135-run comparison, and finite-precision limitations.
-- `refinement_convergence.tex`: manuscript appendix proving exact finite optimality and conditional inexact finite-tolerance termination, including the coordinate-gain lemma and local stopping implementation.
 - `objective_forced_accuracy_refinement.md`: new simpler candidate: insufficient nonterminal objective progress tightens only the next restricted tolerance; no altered objective, pricing, rollback, retry, or stabilization mode. Conditional finite-termination argument, 30 ordinary and 5 thin-support solves, and one constructed triggered-path integration test.
 - `dual_stabilization_exploration_record.md`: consolidated historical record and current decision: the author considers the stabilization branch too complex; it remains experimental and is not adopted for production.
 - `dual_stabilization_recommendation.md`: concise recommended hybrid scheme, paper-presentation skeleton, conditional finite-refinement statement, integrated experimental evidence, and numerical limitations.
@@ -10,9 +24,10 @@
   Its opening section gives the complete proposal; Sections 17--18 record the localized-controller validation and assessment against the author's four criteria.
 - `fixed_accuracy_coordinate_resolution.md`: relative coordinate-step bounds independent of the absolute flow floor, with explicit floating-point limitations.
 - `residual_accuracy_halving_bound.md`: earlier residual-triggered tolerance-halving route and its conditional bound on the number of halvings.
-- `pduot_convergence_theory.tex`: fixed-metric PDUOT convergence and local sharpness.
-- `hieruot_inexact_refinement_theory.tex`: original one-edge descent and objective-safeguarded outer refinement analysis.
-- `refinement_without_objective_safeguard.tex`: follow-up analysis dated 2026-10-19, removing trial-objective acceptance through restricted-value descent and computable inner errors.
+- `notes/pduot_convergence_theory.tex`: fixed-metric PDUOT convergence and local sharpness.
+- `notes/hieruot_inexact_refinement_theory.tex`: original one-edge descent and objective-safeguarded outer refinement analysis.
+- `notes/refinement_without_objective_safeguard.tex`: follow-up analysis dated 2026-10-19, removing trial-objective acceptance through restricted-value descent and computable inner errors.
+- `notes/weight_budget_convergence.tex` and `notes/mapped_restart_convergence.tex`: standalone adaptive-metric and mapped-restart derivations.
 - `curvature_aware_pricing_notes.md`: earlier discussion of curvature-aware edge scores.
 
 ## Follow-up result
@@ -55,7 +70,7 @@ Fenchel identity error was 6.17e-16.
 These checks validate the algebra numerically, not production convergence or
 the sharpness of the error estimates on real hierarchy snapshots.
 
-Build any note from this directory with:
+Build standalone TeX notes from `theory/notes/` with:
 
 ```bash
 latexmk -pdf -interaction=nonstopmode -halt-on-error refinement_without_objective_safeguard.tex

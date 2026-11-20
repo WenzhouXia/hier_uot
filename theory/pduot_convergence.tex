@@ -1,0 +1,242 @@
+\subsubsection{Global Convergence}
+\label{app:pduot-global}
+
+We give formal versions of the two conclusions in Theorem~\ref{prop:pduot-convergence}.
+Throughout this section, fix the active support $\mathcal N$ and abbreviate $\mathbf c=\mathbf c_{\mathcal N}$.
+Convergence refers to the iteration continued without finite stopping, with exact proximal evaluations.
+
+\begin{theorem}[Global convergence of \subsolver]
+\label{thm:pduot-global}
+Assume that $\mathcal N$ covers every source and target node, the reference masses and penalty coefficients are strictly positive, and the transport costs are finite.
+Fix positive diagonal base steps satisfying $\chi:=\|\overline{\mathbf D}_y^{1/2}\mathbf A_{\mathcal N}\overline{\mathbf D}_x^{1/2}\|_2<1$.
+In Algorithm~\ref{alg:pduot}, use $\mathbf D_x=w_j\overline{\mathbf D}_x$ and $\mathbf D_y=\overline{\mathbf D}_y/w_j$ in epoch $j$, with $0<w_{\min}\leq w_j\leq w_{\max}<\infty$ and the summable log-weight budget~\eqref{eq:pduot-weight-budget}.
+Restarts may occur after any map evaluation and set the next anchor to that mapped point.
+Then, from any finite initial anchor, the iterates and mapped points converge to a common restricted KKT point $\mathbf z^\infty=(\mathbf x^\infty,\mathbf y^\infty)$.
+The primal projection multipliers also converge, to the restricted dual slack $\mathbf c+\mathbf A_{\mathcal N}^{\top}\mathbf y^\infty$.
+\end{theorem}
+Within a restart epoch, Algorithm~\ref{alg:pduot} applies reflected Halpern iteration:
+\begin{equation}
+\label{eq:halpern}
+\mathbf z^{k+1}=\frac{1}{k+2}\mathbf z^{\mathrm a}+\frac{k+1}{k+2}(2\pduotmap\mathbf z^k-\mathbf z^k).
+\end{equation}
+Here $\mathbf z^{\mathrm a}$ is the fixed epoch anchor and $\mathbf z^0=\mathbf z^{\mathrm a}$.
+For a positive definite matrix $\mathbf{P}$, write $\|\mathbf{z}\|_\mathbf{P}=(\mathbf{z}^\top \mathbf{P}\mathbf{z})^{1/2}$ and $\operatorname{dist}_\mathbf{P}(\mathbf{z},S)=\inf_{u\in S}\|\mathbf{z}-\mathbf{u}\|_\mathbf{P}$.
+Define the restricted KKT mapping
+\begin{equation}
+\label{eq:pduot-kkt-map}
+\mathcal M(\mathbf{x},\mathbf{y})=\begin{pmatrix}\mathbf{c}+\mathbf{A}_{\mathcal N}^\top \mathbf{y}+N_{\mathbb R_+^{|\mathcal N|}}(\mathbf{x})\\ \nabla G^*(\mathbf{y})-\mathbf{A}_{\mathcal N}\mathbf{x}\end{pmatrix},
+\end{equation}
+where $N_{\mathbb R_+^{|\mathcal N|}}$ is the convex normal-cone mapping.
+The zeros of $\mathcal M$ are precisely the restricted KKT points, with $\mathbf{y}=-(\mathbf{f},\mathbf{g})$.
+The mapping $\mathcal M$ is maximally monotone: $\partial F\times\partial G^*$ is maximally monotone, and the remaining linear map $(\mathbf{x},\mathbf{y})\mapsto(\mathbf{A}_{\mathcal N}^\top \mathbf{y},-\mathbf{A}_{\mathcal N}\mathbf{x})$ is skew-symmetric and defined everywhere.
+
+For fixed positive diagonal steps, define the PDHG metric
+\begin{equation*}
+\mathbf{P}=\begin{pmatrix}\mathbf{D}_x^{-1}&-\mathbf{A}_{\mathcal N}^\top\\-\mathbf{A}_{\mathcal N}&\mathbf{D}_y^{-1}\end{pmatrix}.
+\end{equation*}
+
+\begin{proof}
+\textit{KKT existence and the fixed-metric map.}
+The restricted primal objective is continuous on the nonnegative orthant and coercive: both transported marginal totals equal $\|\mathbf x\|_1$, so the KL penalties grow superlinearly in $\|\mathbf x\|_1$, whereas the finite transport costs contribute a linear term.
+It therefore attains a minimum $\mathbf x^\star$.
+Suppose its source marginal $r_i^\star$ is zero.
+Choose an incident active edge $e=(i,j)$ and add flow $t>0$ on that edge.
+The source KL change divided by $t$ is $\rho_a(\log(t/a_i)-1)$, which tends to $-\infty$ as $t\downarrow0$.
+The cost quotient is finite, while the target KL quotient tends either to the finite value $\rho_b\log(q_j^\star/b_j)$ if $q_j^\star>0$, or to $-\infty$ otherwise.
+The total quotient is therefore negative for sufficiently small $t$, contradicting optimality.
+The target argument is symmetric, so $\mathbf{r}^\star,\mathbf{q}^\star>0$.
+Setting $\mathbf y^\star=\nabla G(\mathbf A_{\mathcal N}\mathbf x^\star)$, the primal first-order optimality condition and conjugacy give $0\in\mathcal M(\mathbf x^\star,\mathbf y^\star)$, so the restricted KKT solution set is nonempty.
+The step-size condition makes $\mathbf P$ positive definite by the Schur complement.
+For $\widehat{\mathbf{z}}=T\mathbf{z}$, the two proximal optimality conditions in~\eqref{eq:pduot-map} are
+\begin{equation*}
+\mathbf{D}_x^{-1}(\mathbf{x}-\widehat{\mathbf{x}})-\mathbf{A}_{\mathcal N}^\top \mathbf{y}\in\partial F(\widehat{\mathbf{x}}),\qquad
+\mathbf{D}_y^{-1}(\mathbf{y}-\widehat{\mathbf{y}})+\mathbf{A}_{\mathcal N}(2\widehat{\mathbf{x}}-\mathbf{x})=\nabla G^*(\widehat{\mathbf{y}}).
+\end{equation*}
+Rearranging gives
+\begin{equation}
+\label{eq:pduot-resolvent}
+\mathbf{P}(\mathbf{z}-T\mathbf{z})\in\mathcal M(T\mathbf{z}),\qquad T=(\mathbf{P}+\mathcal M)^{-1}\mathbf{P}.
+\end{equation}
+Monotonicity applied to the images of two points $\mathbf{z},\mathbf{u}$ yields
+\begin{equation*}
+\|T\mathbf{z}-T\mathbf{u}\|_\mathbf{P}^2\leq\langle T\mathbf{z}-T\mathbf{u},\mathbf{z}-\mathbf{u}\rangle_\mathbf{P}.
+\end{equation*}
+Thus $T$ is firmly nonexpansive, $R:=2T-\mathbf{I}$ is nonexpansive, and $\operatorname{Fix}R=\operatorname{Fix}T=\mathcal M^{-1}(0)$.
+Equation~\eqref{eq:halpern}, initialized at $\mathbf{z}^0=\mathbf{z}^{\mathrm a}$, is the Halpern iteration for $R$ with coefficients $1/(k+2)$.
+The Halpern convergence theorem~\citep{wittmann1992approximation} and the residual estimate of \citet[Theorem~2.1]{lieder2021convergence}, applied to $R$ in the $\mathbf P$ inner product, give convergence to a fixed point and
+\begin{equation*}
+\|\mathbf{z}^k-R\mathbf{z}^k\|_\mathbf{P}\leq\frac{2\operatorname{dist}_\mathbf{P}(\mathbf{z}^{\mathrm a},\operatorname{Fix}R)}{k+1}.
+\end{equation*}
+Since $\mathbf{z}^k-R\mathbf{z}^k=2(\mathbf{z}^k-T\mathbf{z}^k)$, we obtain
+\begin{equation}
+\label{eq:pduot-halpern-bound}
+\|\mathbf z^k-T\mathbf z^k\|_{\mathbf P}\leq\frac{\operatorname{dist}_{\mathbf P}(\mathbf z^{\mathrm a},\operatorname{Fix}T)}{k+1}.
+\end{equation}
+Continuity of $T$ gives convergence of the mapped points to the same limit in a final infinite epoch.
+
+The degree-based steps in~\eqref{eq:pduot-metric} satisfy the required norm condition without estimating a spectral norm.
+Indeed, Cauchy--Schwarz at each node gives, for any edge vector $\mathbf{h}$,
+\begin{equation*}
+\|\overline{\mathbf{D}}_y^{1/2}\mathbf{A}_{\mathcal N}\overline{\mathbf{D}}_x^{1/2}\mathbf{h}\|_2^2
+=\frac{\zeta^2}{2}\sum_v\frac{1}{d_v}\left(\sum_{e\ni v}\mathbf{h}_e\right)^2
+\leq\frac{\zeta^2}{2}\sum_v\sum_{e\ni v}\mathbf{h}_e^2
+=\zeta^2\|\mathbf{h}\|_2^2.
+\end{equation*}
+Each edge has two endpoints, and the reciprocal factors $w$ in $\mathbf{D}_x$ and $\mathbf{D}_y$ cancel in the scaled incidence matrix.
+Hence its norm is at most $\zeta<1$ for every fixed $w>0$.
+\par\smallskip\noindent\textit{Metric changes under the weight budget.}
+Write $s=\log w$ and
+\begin{equation*}
+\mathbf P(s)=\begin{pmatrix}e^{-s}\overline{\mathbf D}_x^{-1}&-\mathbf A_{\mathcal N}^{\top}\\-\mathbf A_{\mathcal N}&e^s\overline{\mathbf D}_y^{-1}\end{pmatrix},\qquad T_s=(\mathbf P(s)+\mathcal M)^{-1}\mathbf P(s).
+\end{equation*}
+Set $c_0=(1-\chi)^{-1}$.
+If $\mathbf D(s)$ is the block-diagonal part of $\mathbf P(s)$, then $\mathbf P(s)\succeq(1-\chi)\mathbf D(s)$ and, for every nonzero $\mathbf h$,
+\begin{equation*}
+\left|\frac{d}{ds}\log(\mathbf h^\top\mathbf P(s)\mathbf h)\right|\leq\frac{\mathbf h^\top\mathbf D(s)\mathbf h}{\mathbf h^\top\mathbf P(s)\mathbf h}\leq c_0.
+\end{equation*}
+Integration gives
+\begin{equation}
+\label{eq:pduot-metric-comparison}
+e^{-c_0|t-s|}\mathbf P(s)\preceq\mathbf P(t)\preceq e^{c_0|t-s|}\mathbf P(s).
+\end{equation}
+For an integer $J\geq1$, the budget in~\eqref{eq:pduot-weight-budget} satisfies
+\begin{equation*}
+\sum_{j=1}^{\infty}|s_j-s_{j-1}|\leq\sum_{j=1}^{\infty}b_j\leq LJ\left(1+\frac{1}{p-1}\right)<\infty.
+\end{equation*}
+Consequently $s_j$ converges, and $\mathbf P_j:=\mathbf P(s_j)$ converges to a positive definite matrix.
+The compact weight interval also gives constants $0<\underline\lambda\leq\overline\lambda<\infty$ with $\underline\lambda\mathbf I\preceq\mathbf P_j\preceq\overline\lambda\mathbf I$ for all $j$.
+
+\par\smallskip\noindent\textit{Convergence under mapped-point restarts.}
+Suppose first that infinitely many restarts occur.
+Index epochs by $j\geq0$, with anchor $\mathbf a_j$, fixed map $T_j:=T_{s_j}$, and final Halpern iterate $\mathbf t_j$.
+The next anchor is $\mathbf a_{j+1}=T_j\mathbf t_j$.
+Both $T_j$ and $2T_j-\mathbf I$ fix every $\mathbf z^\star\in\mathcal S:=\mathcal M^{-1}(0)$ and are nonexpansive in $\mathbf P_j$.
+Induction in~\eqref{eq:halpern} therefore bounds every iterate and mapped point in epoch $j$ by the anchor's $\mathbf P_j$-distance to $\mathbf z^\star$.
+Firm nonexpansiveness at the final iterate gives, with $e_j=\|\mathbf t_j-T_j\mathbf t_j\|_{\mathbf P_j}$,
+\begin{equation}
+\label{eq:pduot-epoch-descent}
+\|\mathbf a_{j+1}-\mathbf z^\star\|_{\mathbf P_j}^2+e_j^2\leq\|\mathbf a_j-\mathbf z^\star\|_{\mathbf P_j}^2.
+\end{equation}
+Set $r_j=e^{c_0b_{j+1}}$, $\Gamma_j=\prod_{i=0}^{j-1}r_i$, and $E_j=\|\mathbf a_j-\mathbf z^\star\|_{\mathbf P_j}^2$.
+Equations~\eqref{eq:pduot-metric-comparison}--\eqref{eq:pduot-epoch-descent} imply
+\begin{equation*}
+\frac{E_{j+1}}{\Gamma_{j+1}}\leq\frac{E_j}{\Gamma_j}-\frac{e_j^2}{\Gamma_j},\qquad 1\leq\Gamma_j\leq\Gamma_\infty<\infty.
+\end{equation*}
+Thus the anchors are bounded, $E_j$ has a limit for every solution $\mathbf z^\star$, and $\sum_je_j^2<\infty$.
+The resolvent inclusion gives $\mathbf P_j(\mathbf t_j-\mathbf a_{j+1})\in\mathcal M(\mathbf a_{j+1})$.
+Its left-hand side tends to zero by $e_j\to0$ and the uniform spectral bounds.
+Closedness of the maximal monotone graph puts every cluster point of the anchors in $\mathcal S$.
+Choose one such point $\mathbf z^\infty$.
+The energy $E_j$ relative to this point has a limit and a subsequence tending to zero, so the whole anchor sequence converges to $\mathbf z^\infty$.
+The within-epoch distance bound and uniform spectral bounds give chronological convergence of all Halpern iterates and mapped points to the same limit.
+If only finitely many restarts occur, the last epoch has fixed weight, and the Halpern convergence theorem gives the same conclusion.
+
+The primal projection multiplier satisfies
+\begin{equation*}
+\boldsymbol\lambda=\mathbf c+\mathbf A_{\mathcal N}^{\top}\mathbf y-\mathbf D_x^{-1}(\mathbf x-\widehat{\mathbf x}).
+\end{equation*}
+Since $\mathbf D_x^{-1}$ is uniformly bounded, these multipliers also converge, to $\mathbf c+\mathbf A_{\mathcal N}^{\top}\mathbf y^\infty$.
+\end{proof}
+
+\subsubsection{Local Linear Convergence}
+\label{app:pduot-restart}
+
+\begin{theorem}[Local linear convergence of \subsolver]
+\label{thm:pduot-local}
+Under the assumptions of Theorem~\ref{thm:pduot-global}, let $\mathcal R_j(\mathbf z)=\|\mathbf z-T_j\mathbf z\|_{\mathbf P_j}$ be the fixed-point residual in epoch $j$.
+Assume that restart checks have a uniformly bounded gap of at most $h$ PDHG evaluations, including the first check of each epoch.
+For a fixed $\vartheta\in(0,1)$, restart whenever $\mathcal R_j(\mathbf z)\leq\vartheta\mathcal R_j(\mathbf a_j)$, evaluating the anchor baseline under the current metric; other restart triggers are allowed.
+Then the iterates, mapped points, and primal projection multipliers converge locally R-linearly in the number of PDHG evaluations.
+Specifically, there exist $C>0$, $\gamma\in(0,1)$, and $N_0$ such that, at evaluation $N\geq N_0$,
+\begin{equation*}
+\|\mathbf z_N-\mathbf z^\infty\|_2+\|\widehat{\mathbf z}_N-\mathbf z^\infty\|_2+\|\boldsymbol\lambda_N-\boldsymbol\lambda^\infty\|_2\leq C\gamma^{N-N_0}.
+\end{equation*}
+\end{theorem}
+
+\begin{proof}
+
+\textit{Local KKT error bound.}
+\label{app:pduot-sharpness}
+Introduce the transported marginal vector $\mathbf m=(\mathbf r,\mathbf q)$ and write the restricted problem as
+\begin{equation*}
+\min_{\mathbf m,\mathbf x}\;G(\mathbf m)+F(\mathbf x)\quad\text{s.t.}\quad\mathbf A_{\mathcal N}\mathbf x-\mathbf m=0.
+\end{equation*}
+This problem satisfies the structured polyhedricity assumption of \citet[Assumptions~1.2--1.3]{yuan2020discerning}.
+Indeed, the extended-valued KL function $G$ is proper, closed, and convex, is differentiable on the positive orthant, and has
+\begin{equation*}
+\nabla^2G(\mathbf m)=\operatorname{diag}(\rho_a/\mathbf r,\rho_b/\mathbf q)\succ0.
+\end{equation*}
+Thus $G$ is strongly convex on every compact convex subset of its subdifferential domain, its gradient is locally Lipschitz on the positive orthant, and the gradient norm diverges when approaching a finite boundary point.
+In the notation of that assumption, take the smooth representation matrix to be the identity and the additional linear term to be zero.
+The function $F$ is convex piecewise linear-quadratic, since it is a linear function plus the indicator of the nonnegative orthant.
+Consequently, \citet[Theorem~59]{yuan2020discerning} gives metric subregularity of the lifted KKT mapping at every lifted KKT point, without rank or strict-complementarity assumptions.
+
+To transfer this bound to~\eqref{eq:pduot-kkt-map}, define, for $\mathbf m>0$,
+\begin{equation*}
+\mathcal K(\mathbf m,\mathbf x,\mathbf y)=\begin{pmatrix}\nabla G(\mathbf m)-\mathbf y\\ \mathbf c+\mathbf A_{\mathcal N}^{\top}\mathbf y+N_{\mathbb R_+^{|\mathcal N|}}(\mathbf x)\\ \mathbf m-\mathbf A_{\mathcal N}\mathbf x\end{pmatrix}.
+\end{equation*}
+Up to signs and ordering of the residual blocks, this is the KKT mapping in the cited theorem.
+Write $\mathcal S=\mathcal M^{-1}(0)$ and $\widetilde{\mathcal S}=\mathcal K^{-1}(0)$, and fix $\mathbf z^\star=(\mathbf x^\star,\mathbf y^\star)\in\mathcal S$.
+The projection of $\widetilde{\mathcal S}$ onto $(\mathbf x,\mathbf y)$ is exactly $\mathcal S$.
+For $\mathbf z=(\mathbf x,\mathbf y)$ near $\mathbf z^\star$, set $\mathbf m(\mathbf y)=\nabla G^*(\mathbf y)$.
+This positive vector depends continuously on $\mathbf y$, and $\nabla G(\mathbf m(\mathbf y))=\mathbf y$.
+The lifted error bound therefore yields, for some $\kappa>0$ and a neighborhood $\mathbf U$ of $\mathbf z^\star$,
+\begin{equation}
+\label{eq:pduot-kkt-error-bound}
+\begin{aligned}
+\operatorname{dist}_2(\mathbf z,\mathcal S)&\leq\operatorname{dist}_2((\mathbf m(\mathbf y),\mathbf x,\mathbf y),\widetilde{\mathcal S})\\
+&\leq\kappa\operatorname{dist}_2(0,\mathcal K(\mathbf m(\mathbf y),\mathbf x,\mathbf y))\\
+&=\kappa\operatorname{dist}_2(0,\mathcal M(\mathbf z)),\qquad \mathbf z\in\mathbf U.
+\end{aligned}
+\end{equation}
+This bound measures distance to the entire solution set and allows nonunique optimal couplings, cycles in the positive-flow support, and edges with both zero flow and zero slack.
+
+\par\smallskip\noindent\textit{Uniform fixed-point sharpness.}
+Global convergence places all sufficiently late iterates in the KKT error-bound neighborhood of $\mathbf z^\infty$ from~\eqref{eq:pduot-kkt-error-bound}.
+The uniform spectral bounds transfer that error bound to every late-epoch map, giving a common constant $\alpha_0>0$ such that
+\begin{equation}
+\label{eq:pduot-uniform-sharpness}
+\alpha_0\operatorname{dist}_{\mathbf P_j}(\mathbf z,\mathcal S)\leq\|\mathbf z-T_j\mathbf z\|_{\mathbf P_j}
+\end{equation}
+near the limit.
+Indeed, the resolvent inclusion and~\eqref{eq:pduot-kkt-error-bound} imply
+\begin{equation*}
+\operatorname{dist}_{\mathbf P_j}(T_j\mathbf z,\mathcal S)\leq\sqrt{\overline\lambda}\kappa\|\mathbf P_j(\mathbf z-T_j\mathbf z)\|_2\leq\kappa\overline\lambda\|\mathbf z-T_j\mathbf z\|_{\mathbf P_j}.
+\end{equation*}
+The triangle inequality gives $\alpha_0=(1+\kappa\overline\lambda)^{-1}$.
+Nonexpansiveness and uniform norm equivalence ensure that all $T_j\mathbf z$ remain in the error-bound neighborhood for $\mathbf z$ sufficiently near $\mathbf z^\infty$.
+
+\par\smallskip\noindent\textit{Contraction across epochs.}
+Write $d_j=\operatorname{dist}_{\mathbf P_j}(\mathbf a_j,\mathcal S)$.
+Nonexpansiveness gives $\mathcal R_j(T_j\mathbf t_j)\leq e_j$.
+Applying~\eqref{eq:pduot-uniform-sharpness} at $\mathbf a_{j+1}=T_j\mathbf t_j$, and taking a nearest solution to $\mathbf a_j$ in~\eqref{eq:pduot-epoch-descent}, yields
+\begin{equation*}
+\operatorname{dist}_{\mathbf P_j}(\mathbf a_{j+1},\mathcal S)^2+e_j^2\leq d_j^2,\qquad \alpha_0\operatorname{dist}_{\mathbf P_j}(\mathbf a_{j+1},\mathcal S)\leq e_j.
+\end{equation*}
+With $q_0=(1+\alpha_0^2)^{-1/2}<1$, metric comparison then gives
+\begin{equation*}
+d_{j+1}\leq e^{c_0b_{j+1}/2}q_0d_j.
+\end{equation*}
+Since $b_j\to0$, for any $q\in(q_0,1)$ the right-hand factor is at most $q$ in all sufficiently late epochs.
+Moreover $\|\mathbf a_{j+1}-\mathbf a_j\|_2\leq2d_j/\sqrt{\underline\lambda}$ by the within-epoch distance bound.
+Summing these geometrically decreasing increments proves R-linear convergence to the actual limit, uniformly for all iterates and mapped points within each late epoch, when indexed by epoch.
+
+\par\smallskip\noindent\textit{Rate per PDHG evaluation.}
+The Halpern estimate~\eqref{eq:pduot-halpern-bound} and uniform sharpness give
+\begin{equation*}
+\mathcal R_j(\mathbf z^{j,k})\leq\frac{d_j}{k+1}\leq\frac{\mathcal R_j(\mathbf a_j)}{\alpha_0(k+1)}.
+\end{equation*}
+Thus the practical sufficient-reduction condition
+\begin{equation*}
+\mathcal R_j(\mathbf z^{j,k})\leq\vartheta\mathcal R_j(\mathbf a_j)
+\end{equation*}
+holds once $k+1\geq1/(\alpha_0\vartheta)$.
+Every sufficiently late epoch therefore has at most $H=\lceil1/(\alpha_0\vartheta)\rceil+h$ PDHG evaluations; additional restart triggers can only shorten it.
+A final infinite epoch from a nonsolution is impossible, because its residual tends to zero and eventually passes the sufficient-reduction test.
+If an anchor is already a solution, every subsequent iterate equals it.
+Otherwise, after $N$ evaluations in the tail at least $\lfloor N/H\rfloor$ epochs have completed, giving a bound $Cq^{\lfloor N/H\rfloor}$ for the iterates and mapped points.
+The multiplier formula in the global proof and bounded $\mathbf D_x^{-1}$ give the same rate for $\boldsymbol\lambda_N$.
+\end{proof}
+
+The degree-based preconditioner in Appendix~\ref{app:pduot-controls} satisfies the global step-size condition, and its restart rule uses $\vartheta=0.2$ with periodic checks.
+The moderate-reduction and epoch-length triggers are additional restarts permitted by both theorems.

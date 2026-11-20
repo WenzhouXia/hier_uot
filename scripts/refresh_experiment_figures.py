@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -13,7 +14,7 @@ PAPER = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT))
 
 
-def refresh(snapshot: Path, output: Path) -> None:
+def refresh(snapshot: Path, output: Path, *, pareto_snapshot: Path | None = None) -> None:
     """
     CN: 从固定绘图输入重画论文图，不读取运行中指标或改写实验汇总。
     EN: Redraw paper figures from pinned plot inputs without reading live metrics or rewriting summaries.
@@ -27,11 +28,20 @@ def refresh(snapshot: Path, output: Path) -> None:
     from papers.hier_uot.scripts.plot_hello_uot_comparison import main as plot_hello
 
     data = json.loads(snapshot.read_text())
+    # CN: 主 Pareto 使用独立新快照，其他图继续采用原归档输入。
+    # EN: Use a separate current Pareto snapshot while retaining archived inputs for other figures.
+    if pareto_snapshot is not None:
+        pinned = json.loads(pareto_snapshot.read_text())
+        source_bytes = json.dumps(pinned['rows'], ensure_ascii=False, sort_keys=True).encode()
+        if hashlib.sha256(source_bytes).hexdigest() != pinned['rows_sha256']:
+            raise ValueError('Pinned Pareto rows checksum mismatch')
+        data['pareto'] = pinned
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='salut-paper-plots-') as temporary:
         staging = Path(temporary)
         with quiet_font_timestamp_warnings():
-            plot_pareto(data['pareto']['rows'], staging, methods=data['pareto']['methods'])
+            plot_pareto(data['pareto']['rows'], staging, methods=data['pareto']['methods'],
+                        mark_partial_memory=data['pareto'].get('mark_partial_memory', True))
             temporal = data['temporal']
             plot_temporal(staging, temporal['manifest'],
                           pd.read_csv(io.StringIO(temporal['summary_csv'])),
@@ -73,8 +83,10 @@ def main() -> None:
     parser.add_argument('--snapshot', type=Path,
                         default=PAPER / 'figures/plot_sources/experiment_figures_20261114.json')
     parser.add_argument('--output-dir', type=Path, default=PAPER / 'figures')
+    parser.add_argument('--pareto-snapshot', type=Path,
+                        default=PAPER / 'figures/plot_sources/pareto_final_20261119.json')
     args = parser.parse_args()
-    refresh(args.snapshot, args.output_dir)
+    refresh(args.snapshot, args.output_dir, pareto_snapshot=args.pareto_snapshot)
 
 
 if __name__ == '__main__':

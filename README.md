@@ -4,7 +4,7 @@ ICML 2027 manuscript for hier_uot.
 
 ## Naming
 
-The paper title is **Scalable Active-Support Optimization for Unbalanced Optimal Transport**.
+The paper title is **A Sparse Primal–Dual Method for Large-Scale Unbalanced Optimal Transport**.
 The algorithm display name is **Salut**, controlled by `\ours` in `main.tex`.
 Derived algorithm names reuse that macro.
 Comments and Markdown prose use the stable project name `hier_uot`.
@@ -13,9 +13,13 @@ results are literal technical identifiers and must remain valid.
 
 ## Layout
 
-- `main.tex`: main manuscript and appendix.
+- `main.tex`: document setup, shared macros, title, bibliography, and body/appendix entry points.
+- `main_body.tex`: abstract and complete main text.
+- `main_appendix.tex`: method details, stopping rules, extensions, implementations, protocols, and supplementary experiments.
 - `references.bib`: shared bibliography.
-- `theory/`: standalone refinement and PDUOT convergence notes and diagnostics.
+- `theory/`: three manuscript theory files: PDUOT convergence, finite refinement, and inter-level response stability.
+- `theory/notes/`: standalone historical theory drafts, outside the manuscript build.
+- `notes/`: historical experiment text, outside the manuscript build.
 - `RELATED_WORK_ALGORITHM_MAP.md`: related-work research notes.
 - `STORYLINE_INTRO.md`: introduction storyline and revision outline.
 - `STORYLINE_METHOD.md`: method storyline and Chinese paragraph outline.
@@ -45,6 +49,11 @@ Compile the current draft with:
 ```bash
 latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 ```
+
+Run manuscript builds from this directory; all input and figure paths are relative to it.
+The former `appendix_*.tex` files and `experiments_extensions.tex` are merged into the body and appendix.
+Squared-L2 definitions and theory are in `main_appendix.tex`, under `app:l2-penalty`.
+The historical `experiments_hello_uot.tex` file is preserved as `notes/experiments_hello_uot.tex`.
 
 ## Synchronization
 

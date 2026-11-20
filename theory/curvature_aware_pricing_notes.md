@@ -136,7 +136,7 @@ $$\Phi(X+t_eE_e)\leq\Phi(X)-\frac{(\sigma_e^X)^2}{2h_e(X)}.$$
 
 固定 metric、精确 proximal map 的 PDUOT 收敛到 restricted KKT point，因此通过继续 inner iterations，最终能同时满足 restricted residual 和相对于 one-edge trial 的 objective safeguard。这说明 inexact oracle 条件原则上可实现，但当前 PID primal-weight controller、完整 restart policy、阈值 pruning 和现有 termination certificate 尚未全部被定理覆盖。
 
-完整英文推导见 `papers/hier_uot/hieruot_inexact_refinement_theory.tex`。ETM 已有的 KL-UOT 等价变换和稀疏最优解结论只作为背景，不列为本文原创理论。
+完整英文推导见 `papers/hier_uot/theory/notes/hieruot_inexact_refinement_theory.tex`。ETM 已有的 KL-UOT 等价变换和稀疏最优解结论只作为背景，不列为本文原创理论。
 
 ## 9. PDUOT diagonal metric 诊断
 

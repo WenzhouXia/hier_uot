@@ -10,6 +10,7 @@
 *.toc
 /main.pdf
 /theory/*.pdf
+/theory/notes/*.pdf
 /.leaflink/
 
 # CN: 忽略预览图片，保留正文直接引用的 PNG 图。
@@ -17,3 +18,26 @@
 /figures/*.png
 !/figures/entropic_uot_accuracy_runtime_pareto_eps0.001.png
 /figures/hello_pareto_placeholder.pdf
+
+# CN: 同步 .leafignore 中的排除规则，保留本地文件。
+# EN: Mirror the exclusions in .leafignore while retaining local files.
+.git/
+.leaflink/
+main.pdf
+before.pdf
+theory/*.pdf
+figures/plot_sources/
+
+# CN: 保留主图源码、字体、许可证和当前布局，只排除依赖与生成的预览。
+# EN: Keep figure sources, fonts, licenses and the current layout; exclude dependencies and generated previews.
+figures/salut_overview_source/node_modules/
+figures/salut_overview_source/*.png
+figures/salut_overview_source/salut-layout-*.excalidraw
+
+# CN: 忽略配色与布局预览、旧版手绘试稿及 Python 缓存。
+# EN: Ignore palette/layout previews, the superseded hand-drawn draft and Python caches.
+/figures/salut_overview_*_preview.pdf
+/figures/salut_overview_handdrawn.pdf
+/figures/salut_overview_handdrawn.tex
+__pycache__/
+*.pyc

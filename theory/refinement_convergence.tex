@@ -1,47 +1,14 @@
-\section{Finite Refinement}
+\subsection{Finite Refinement}
 \label{app:refinement-convergence}
 
 All arguments in this section concern a fixed finite KL-UOT problem in exact arithmetic.
 Reference masses and penalties are positive, costs are finite and nonnegative, and each active support covers every node.
 The hierarchy has finitely many levels, so finite termination at each level implies finite termination of the hierarchy.
-An exact restricted oracle is assumed to return its solution; finite outer termination does not assert finite-step exact solution by a numerical inner iteration.
+Throughout, pricing is exact bidirectional top-$\gamma$ with $\gamma\geq1$, sparsification preserves transported marginals and cost, and pruning retains positive-flow and newly priced edges.
+A restricted KKT point extended by zero is globally optimal whenever its potentials satisfy every full-space dual inequality, since these supply exactly the missing KKT conditions.
 
-\paragraph{Restricted-to-full recovery.}
-\begin{proposition}[Restricted-to-full recovery]
-\label{prop:restricted-recovery}
-Let $(\widehat{\mathbf{x}},\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ satisfy the KKT conditions of~\eqref{eq:restricted-uot-vector} on $\mathcal{N}$.
-If $\widehat f_i+\widehat g_j\leq C_{ij}$ for every $(i,j)\in[m]\times[n]$, then extending $\widehat{\mathbf{x}}$ by zero outside $\mathcal{N}$ yields a global primal solution of~\eqref{eq:primal-uot}, and $(\widehat{\mathbf{f}},\widehat{\mathbf{g}})$ is a global dual solution of~\eqref{eq:dual-uot}.
-\end{proposition}
-
-Restricted KKT conditions provide marginal responses, active-edge feasibility, and complementarity; the full-space inequalities supply the remaining conditions.
-
-Assume exact bidirectional top-$\gamma$ pricing with $\gamma\geq1$, sparsification that preserves transported marginals and cost, and pruning that retains positive-flow and newly priced edges throughout this section.
-
-\subsection{Exact Restricted Solves}
-
-\begin{theorem}[Exact refinement]
-\label{thm:refinement-exact}
-If each restricted call returns an exact primal--dual solution and pricing stops only when all full-space dual inequalities hold, refinement terminates after finitely many rounds at a global primal--dual solution of KL-UOT.
-\end{theorem}
-
-A positive score at an exact restricted solution gives a feasible one-edge descent direction.
-Retaining that edge and the current positive support strictly decreases the next restricted optimal value.
-There are finitely many active supports, so the strictly decreasing sequence cannot revisit a support.
-
-\begin{proof}[Proof of Theorem~\ref{thm:refinement-exact}]
-Let $F(\mathcal N)$ be the optimal value on active support $\mathcal N$.
-At an exact restricted solution, every transported marginal is positive: if one were zero, adding flow on an incident active edge would have a negative infinite one-sided KL derivative and would decrease the objective.
-Consequently, the marginal KKT relations give $f_i=-\rho_a\log(r_i/a_i)$ and $g_j=-\rho_b\log(q_j/b_j)$.
-If pricing finds a positive score on an edge $e$, then $e$ is inactive and the derivative of $\Phi(\mathbf X+t\mathbf E_e)$ at $t=0$ is negative.
-There is therefore a $t>0$ such that $\Phi(\mathbf X+t\mathbf E_e)<F(\mathcal N)$.
-Sparsification preserves $\Phi(\mathbf X)$, its transported marginals, and the node potentials, so the same score and descent argument apply to the sparsified solution.
-Pruning retains its entire positive support and the newly priced edge, making this trial point feasible on the next support $\mathcal N^+$.
-It follows that $F(\mathcal N^+)<F(\mathcal N)$.
-Since there are at most $2^{mn}$ supports, the sequence of strictly decreasing restricted optimal values has finitely many terms.
-On termination, Proposition~\ref{prop:restricted-recovery} identifies the returned state as a global primal--dual solution.
-\end{proof}
-
-\subsection{Uniform Coordinate Gain}
+\subsubsection{Finite Termination with Inexact Solves}
+\label{app:refinement-inexact}
 
 For an edge $e=(i,j)$, define its gain at transported marginals $(r,q)$ by
 \begin{equation*}
@@ -51,31 +18,9 @@ This is a feasible primal improvement even when $r=0$ or $q=0$.
 For positive marginals, the primal-consistent score is $\sigma^\mathbf X_{ij}=-C_{ij}-\rho_a\log(r_i/a_i)-\rho_b\log(q_j/b_j)$.
 At a zero marginal, the corresponding score is interpreted as $+\infty$ for the purpose of the one-sided coordinate direction.
 
-\begin{lemma}[Positive gain at a fixed score margin]
-\label{lem:refinement-uniform-gain}
-Fix a finite objective sublevel set and a margin $\delta>0$.
-There is a constant $\Gamma_\delta>0$ such that every edge with primal-consistent score at least $\delta$ has coordinate gain at least $\Gamma_\delta$.
-\end{lemma}
-
-\begin{proof}
-Nonnegative transport costs and coercivity of scalar KL bound each transported marginal on the sublevel set.
-For a fixed edge, the score-margin condition is equivalently
+Let $\mathbf X^k$ be the returned coupling, $\Delta_k=\Phi(\mathbf X^k)-\Phi(\mathbf X^{k+1})$, and define the feasible coordinate gain
 \begin{equation*}
-r^{\rho_a}q^{\rho_b}\leq a_i^{\rho_a}b_j^{\rho_b}\exp(-C_{ij}-\delta),
-\end{equation*}
-which defines a closed set, including zero marginals, within these bounded marginal intervals.
-The coordinate minimizer lies in a common finite interval: for $t>\exp((\rho_a\log a_i+\rho_b\log b_j-C_{ij})/(\rho_a+\rho_b))$, the derivative of the coordinate objective is positive for every $r,q\geq0$.
-Continuity of scalar KL on nonnegative arguments therefore makes $g_e(r,q)$ continuous on the compact marginal domain.
-On the score-margin set it is strictly positive, since the initial derivative is at most $-\delta$, or is negative infinite at a zero marginal.
-Its minimum on every nonempty edgewise score-margin set is thus positive.
-Taking the minimum over the finitely many such edgewise sets proves the claim.
-\end{proof}
-
-\subsection{Inexact Restricted Solves}
-
-For inexact solves, let $\mathbf X^k$ be the returned coupling, $\Delta_k=\Phi(\mathbf X^k)-\Phi(\mathbf X^{k+1})$, and define the feasible coordinate gain
-\begin{equation*}
-G_k=\max_{e\in\mathcal V_k\setminus\mathcal N_k}\max_{t\geq0}\{\Phi(\mathbf X^k)-\Phi(\mathbf X^k+t\mathbf E_e)\},
+G_k=\max_{e=(i,j)\in\mathcal V_k\setminus\mathcal N_k}g_e(r_i^k,q_j^k),
 \end{equation*}
 with $G_k=0$ for an empty candidate set.
 Write $v_k=\max_{i,j}[\sigma^k_{ij}]_+$ and $a_k=\max_{(i,j)\in\mathcal N_k}[\sigma^k_{ij}]_+$ for full and active score maxima.
@@ -107,8 +52,27 @@ Then refinement terminates after finitely many rounds with restricted stopping m
 In particular, $\varepsilon_{\mathrm r}=\tau=\varepsilon$ gives the KKT stopping tolerance used in Algorithm~\ref{alg:ours}.
 \end{theorem}
 
+\begin{lemma}[Positive gain at a fixed score margin]
+\label{lem:refinement-uniform-gain}
+Fix a finite objective sublevel set and a margin $\delta>0$.
+There is a constant $\Gamma_\delta>0$ such that every edge with primal-consistent score at least $\delta$ has coordinate gain at least $\Gamma_\delta$.
+\end{lemma}
+
+\begin{proof}
+Nonnegative transport costs and coercivity of scalar KL bound each transported marginal on the sublevel set.
+For a fixed edge, the score-margin condition is equivalently
+\begin{equation*}
+r^{\rho_a}q^{\rho_b}\leq a_i^{\rho_a}b_j^{\rho_b}\exp(-C_{ij}-\delta),
+\end{equation*}
+which defines a closed set, including zero marginals, within these bounded marginal intervals.
+The coordinate minimizer lies in a common finite interval: for $t>\exp((\rho_a\log a_i+\rho_b\log b_j-C_{ij})/(\rho_a+\rho_b))$, the derivative of the coordinate objective is positive for every $r,q\geq0$.
+Continuity of scalar KL on nonnegative arguments therefore makes $g_e(r,q)$ continuous on the compact marginal domain.
+On the score-margin set it is strictly positive, since the initial derivative is at most $-\delta$, or is negative infinite at a zero marginal.
+Its minimum on every nonempty edgewise score-margin set is thus positive.
+Taking the minimum over the finitely many such edgewise sets proves the claim.
+\end{proof}
+
 \begin{proof}[Proof of Theorems~\ref{thm:refinement-explicit} and~\ref{thm:refinement}]
-The local safeguard~\eqref{eq:refinement-implemented-gate} implies the explicit output conditions~\eqref{eq:refinement-output-conditions}, as derived in Appendix~\ref{app:refinement-local-stopping}.
 Extend all couplings by zero to the full edge set.
 The first condition in~\eqref{eq:refinement-output-conditions} and $G_k\geq0$ give objective nonincrease, and sparsification and pruning preserve the current objective.
 All subsequent couplings therefore lie in the sublevel set determined by the first returned coupling $\mathbf X^0$.
@@ -139,70 +103,56 @@ Since $\eta_k\leq\sqrt{mn}\,v_k/(1+\|\mathbf C\|_F)$, this forces $\eta_k\leq\ta
 Each restricted call returns in finite time by hypothesis and satisfies the prescribed restricted stopping measures, proving the stated finite-tolerance termination.
 \end{proof}
 
-The proof permits nonmonotone full-space violation and arbitrarily small objective improvements on individual rounds.
-Its two alternatives use objective decrease and violation contraction together.
-The fixed nominal tolerance alone does not imply the controlled-output assumptions.
+\paragraph{Exact restricted solves.}
+If every call returns an exact restricted primal--dual optimum, a positive dual score gives a one-edge strict descent direction.
+Sparsification preserves the objective and marginals, and retaining that edge and the positive support makes the trial feasible on the next support.
+Thus the restricted optimal value strictly decreases at each nonterminal round and cannot revisit any of the finitely many supports.
+With exact full-space feasibility stopping, refinement therefore terminates at a global primal--dual optimum.
+This idealized result assumes an exact oracle; the numerical algorithm uses the finite-tolerance result above.
 
-\subsection{Local Stopping Implementation}
-\label{app:refinement-local-stopping}
+\subsubsection{Attainability of the Stopping Conditions}
+\label{app:refinement-stop-attainability}
 
-The \checkstop operator in Algorithm~\ref{alg:pduot} supplements the restricted KKT tests in Appendix~\ref{app:stopping-criterion} with the following local safeguard conditions.
-% These additional conditions apply to refinement calls after the first restricted solve at each level; the first call and standalone solves use only the restricted KKT tests.
-Let $\mathbf x^0$ be the current call's warm-start coupling after insertion and zero-flow pruning, and let $\mathbf x$ be a mapped point on this same support.
-The padded anchor $\mathbf x^0$ has the preceding coupling's objective.
-Write $\mathbf s=\mathbf c_{\mathcal N}-\mathbf A_{\mathcal N}^{\top}(\mathbf f,\mathbf g)$ and $\mathbf w=\mathbf s-\boldsymbol\lambda$, where the primal projection supplies $\boldsymbol\lambda\geq0$ with $\langle\boldsymbol\lambda,\mathbf x\rangle=0$.
-Let $(\mathbf r^0,\mathbf q^0)$ and $(\mathbf r,\mathbf q)$ be anchor and current marginals, and let $\widehat{\mathbf r}=\mathbf a\odot e^{-\mathbf f/\rho_a}$ and $\widehat{\mathbf q}=\mathbf b\odot e^{-\mathbf g/\rho_b}$.
-Define
-\begin{equation}
-\label{eq:refinement-positive-part-bound}
-\begin{aligned}
-B={}&\rho_a[\KL(\mathbf r^0\mid\widehat{\mathbf r})-\KL(\mathbf r\mid\widehat{\mathbf r})]\\
-&+\rho_b[\KL(\mathbf q^0\mid\widehat{\mathbf q})-\KL(\mathbf q\mid\widehat{\mathbf q})]+\langle\boldsymbol\lambda,\mathbf x^0\rangle,\\
-L={}&B-\sum_{e\in\mathcal N}[w_e(x_e-x_e^0)]_+.
-\end{aligned}
-\end{equation}
-The generalized KL identity gives
+The preceding theorem assumes finite restricted returns satisfying~\eqref{eq:refinement-output-conditions}.
+The following result connects that assumption to \subsolver and the stopping rule in Appendix~\ref{app:refinement-local-stopping}.
+
+\begin{proposition}[Finite attainability and preservation]
+\label{prop:refinement-stop-attainability}
+Consider a nonterminal same-level support update, with padded anchor $\mathbf x^0$, previous violation maximum $v>0$, and candidate gain $G$.
+Suppose the updated support retains the anchor's positive support and all candidate edges, and \subsolver satisfies the assumptions of Theorem~\ref{thm:pduot-global}.
+At any fixed restricted tolerance $\varepsilon_{\mathrm r}>0$, the complete stopping rule, including the optimal-anchor readout, accepts after finitely many PDHG evaluations and implies~\eqref{eq:refinement-output-conditions}.
+Subsequent sparsification preserving marginals and cost preserves the restricted certificates on the original active graph after refreshing bound multipliers, and preserves these output conditions.
+Pruning zero-flow edges while protecting newly priced edges preserves the current coupling and the candidate coordinate trials.
+\end{proposition}
+
+\begin{proof}
+\textit{Decrease guarantee.}
+Using the notation of Appendix~\ref{app:refinement-local-stopping}, the generalized-KL identity and projection complementarity give
 \begin{equation*}
-\Phi(\mathbf x^0)-\Phi(\mathbf x)=B-\langle\mathbf w,\mathbf x-\mathbf x^0\rangle\geq L.
+\Phi(\mathbf x^0)-\Phi(\mathbf x)
+=L+\sum_{e\in\mathcal N}[-w_e(x_e-x_e^0)]_+\geq L.
 \end{equation*}
-Let $v$ and $G$ be the preceding scan maximum and coordinate gain.
-After the original restricted KKT test passes, require
-\begin{equation}
-\label{eq:refinement-implemented-gate}
-L\geq G/2,\qquad
-L\geq\varepsilon_{\mathrm r}^2(1+|\Phi(\mathbf x^0)|)
-\quad\text{or}\quad\max\{a,\Omega\}\leq v/2.
-\end{equation}
-The sufficient-decrease expression in~\eqref{eq:refinement-implemented-gate} uses the anchor objective fixed at the start of the call.
-These checks imply~\eqref{eq:refinement-output-conditions}.
-They use $O(|\mathcal N|+m+n)$ work and linear memory, with the log-error reductions evaluated only when the sufficient-decrease test fails.
-KL differences sharing a response reference can be evaluated from its logarithm, avoiding explicit construction of exponentially small responses.
-No missing-edge costs are accessed, and no additional full-space pricing pass is needed.
-Failure of a check continues the same restricted iteration with its anchor and nominal tolerance unchanged.
+The implemented tests~\eqref{eq:refinement-implemented-gate} therefore imply~\eqref{eq:refinement-output-conditions}.
 
-When $G=0$, the solver first tests the unchanged primal anchor with potentials $f_i=-\rho_a\log(r_i^0/a_i)$ and $g_j=-\rho_b\log(q_j^0/b_j)$ if all transported marginals are positive.
-It returns this anchor only if its restricted KKT test and pricing-fidelity test pass; its objective decrease is exactly zero.
-Otherwise, it continues the restricted iteration with~\eqref{eq:refinement-implemented-gate}.
-This readout handles an already optimal anchor, for which strict objective improvement need not exist.
+\par\smallskip\noindent\textit{Finite attainability.}
+Theorem~\ref{thm:pduot-global} gives convergence of mapped iterates and projection multipliers to a finite restricted KKT point with coupling $\mathbf x^\star$.
+Its marginals are positive by node coverage, so all three restricted stopping measures and $a,\Omega$ tend to zero.
+Moreover, $\mathbf w\to0$ and the bound $L$ tends to $\Delta^\star:=\Phi(\mathbf x^0)-\Phi(\mathbf x^\star)$.
+Every candidate coordinate trial is feasible on the updated support, giving $\Delta^\star\geq G$.
+If $G>0$, then $L\geq G/2$ eventually holds with strict margin.
+If $G=0$ and the anchor is suboptimal, $\Delta^\star>0$ likewise gives $L\geq0$ eventually.
+In either case, $\max\{a,\Omega\}\leq v/2$ and the positive-tolerance restricted tests eventually hold, so the call accepts after finitely many evaluations.
+If the anchor is already optimal, node coverage gives positive anchor marginals and its marginal-induced potentials satisfy restricted KKT conditions.
+The initial optimal-anchor readout therefore accepts with $G=0$, zero restricted residuals, and $a=\Omega=0$.
+This handles zero limiting decrease without requiring the iterative bound $L$ to cross zero.
 
-\paragraph{Attainability under a convergent inner core.}
-Suppose the continued mapped iterates and their projection multipliers converge to a finite restricted KKT point.
-Node coverage makes its transported marginals positive, and hence $a,\Omega\to0$.
-The residual $\mathbf w$ tends to zero and~\eqref{eq:refinement-positive-part-bound} tends to the actual optimal objective improvement.
-If $G>0$, retaining the best coordinate trial makes that improvement at least $G$, so $L\geq G/2$ eventually holds with positive margin.
-If $G=0$ and the anchor is suboptimal, the limiting improvement is positive and $L\geq0$ eventually holds.
-If the anchor is already optimal, the initial marginal-induced readout satisfies the restricted KKT and fidelity tests in exact arithmetic.
-Thus each call can meet the additional conditions in finitely many iterations under this convergence assumption.
-Proposition~\ref{prop:pduot-convergence} supplies this convergence for adaptive mapped-point restarts and protected primal-weight updates under its exact-arithmetic assumptions.
-
-\paragraph{Sparsification and numerical scope.}
-Preserving both transported marginals and transport cost preserves the actual objective decrease and $\Omega$, while the potentials and active-edge score maximum remain unchanged on the original active graph.
-The sparsifier keeps a subset of previously positive edges.
-At newly zero edges, choosing the closest nonnegative bound multiplier cannot increase the stationarity residual; at positive edges the multiplier remains zero.
-The restricted split gap is also preserved, so the restricted stopping measures remain within tolerance in exact arithmetic.
-The implementation exposes the \emph{refinement safeguard} through \texttt{refinement\_forcing\_check} for KL penalties and $\ell_2$ stationarity stopping.
-Its progress and forcing tests use the level's evaluated sparse costs and FP64 bound arithmetic; Appendix~\ref{app:implementation-shuttle} specifies the experimental cost-precision policy.
-% \xwz{RERUN REQUIRED: the dedicated safeguard on/off batch is complete, but the historical performance batches still require supported safeguard-enabled reruns. Coarse FP32 evaluated costs are not a full-FP64 cost recomputation; the theorem continues to assume valid gain/decrease bounds and attainable outputs.}
-Its coordinate minimization and reductions use ordinary floating-point arithmetic; their computed bounds are numerical approximations to the exact-arithmetic quantities used in the theorems.
-An unmet condition at an iteration or time limit is reported as failure.
-The finite-termination results assume valid gain and decrease bounds and attainable inner outputs; they do not assert universal finite-precision termination.
+\par\smallskip\noindent\textit{Preservation under support operations.}
+Sparsification leaves marginals, transport cost, potentials, and the active graph unchanged while redistributing flow onto a subset of the previous positive edges.
+Thus it preserves the objective decrease, $\Omega$, both positive-score maxima, the marginal residual, and the restricted split gap.
+Retain zero multipliers on positive edges and choose the closest nonnegative multiplier to the dual slack on each zero edge.
+This cannot increase the stationarity residual: previously positive edges had zero multipliers, and previously zero edges already had admissible nonnegative multipliers.
+Consequently the restricted tests and~\eqref{eq:refinement-output-conditions} remain satisfied.
+Later pruning removes only zero-flow edges, preserving the coupling, marginals, objective, and full-space potentials.
+The accepted restricted certificates refer to the original active graph, as specified in Appendix~\ref{app:hierarchy-pruning}; subsequent restricted solves check their own updated supports.
+Keeping the positive support and newly priced edges also preserves all coordinate trials used by the finite-refinement proof.
+\end{proof}

@@ -11,4 +11,12 @@
 *.xdv
 *.toc
 main.pdf
+before.pdf
 theory/*.pdf
+figures/plot_sources/
+
+# CN: 保留主图源码、字体、许可证和当前布局，只排除依赖与生成的预览。
+# EN: Keep figure sources, fonts, licenses and the current layout; exclude dependencies and generated previews.
+figures/salut_overview_source/node_modules/
+figures/salut_overview_source/*.png
+figures/salut_overview_source/salut-layout-*.excalidraw

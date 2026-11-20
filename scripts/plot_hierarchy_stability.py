@@ -67,8 +67,8 @@ def main():
     from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
     apply_paper_style()
-    fig, axes = plt.subplots(1, 2, figsize=(7.1, 3.55))
-    fig.subplots_adjust(left=.10, right=.98, bottom=.16, top=.80, wspace=.36)
+    fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.45))
+    fig.subplots_adjust(left=.10, right=.98, bottom=.21, top=.77, wspace=.36)
     lo, hi = min(error.min(), bound.min(), prediction.min()) * .45, 2.5
     for ax, values, title, ylabel in zip(
             axes, (bound, prediction), ('(a) Computable upper bound', '(b) Component prediction'),

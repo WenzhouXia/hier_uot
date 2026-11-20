@@ -1,5 +1,5 @@
 {
-  "status": "provisional_pilot",
+  "status": "single_seed_mixed_scales",
   "seed": 42,
   "groups": [
     {
@@ -321,20 +321,76 @@
       "sha256": "a6ccab8d030c098285d5e1d9e08912d30598c7f92615675121aa8c8b345d02f4"
     },
     {
-      "title": "POT L-BFGS-B",
-      "baseline": "pot_lbfgsb",
-      "n": 4096,
+      "title": "AdNS-UOT",
+      "baseline": "adns",
+      "n": 32768,
       "d": 30,
+      "seed": 42,
       "rows": [
         {
+          "method": "adns",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 137.98627956211567,
+          "shared_gap": 0.18410399000394131,
+          "parameter": 0.1
+        },
+        {
+          "method": "adns",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 204.77630070690066,
+          "shared_gap": 0.004180221258862559,
+          "parameter": 0.01
+        },
+        {
+          "method": "adns",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 278.9252960253507,
+          "shared_gap": 2.3470776361942996e-05,
+          "parameter": 0.001
+        },
+        {
+          "method": "adns",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 307.96046177018434,
+          "shared_gap": 1.5465990830437003e-07,
+          "parameter": 0.0001
+        },
+        {
+          "method": "adns",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 326.8675363138318,
+          "shared_gap": 1.0959283593813253e-08,
+          "parameter": 1e-05
+        },
+        {
           "method": "shuttle",
           "rho": [
             0.1,
             0.1
           ],
           "status": "success",
-          "runtime_sec": 0.19353314908221364,
-          "shared_gap": 7.157426072083212e-05,
+          "runtime_sec": 0.7348582232370973,
+          "shared_gap": 9.02746842481744e-05,
           "parameter": 0.0001
         },
         {
@@ -344,8 +400,19 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 0.5164787650573999,
-          "shared_gap": 1.7359081421006898e-07,
+          "runtime_sec": 0.9046034552156925,
+          "shared_gap": 3.3253439235590196e-05,
+          "parameter": 1e-05
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 1.7926901979371905,
+          "shared_gap": 8.282263315823776e-08,
           "parameter": 1e-06
         },
         {
@@ -355,42 +422,75 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 1.5130716930143535,
-          "shared_gap": 1.2907699453761403e-09,
-          "parameter": 1e-08
+          "runtime_sec": 2.803519608452916,
+          "shared_gap": 1.663420930520988e-08,
+          "parameter": 1e-07
         },
         {
-          "method": "pot_lbfgsb",
+          "method": "shuttle",
           "rho": [
             0.1,
             0.1
           ],
           "status": "success",
-          "runtime_sec": 237.05149050801992,
-          "shared_gap": 0.027142423842714217,
+          "runtime_sec": 5.753110614605248,
+          "shared_gap": 1.4718763619586797e-08,
           "parameter": 1e-08
         },
         {
-          "method": "pot_lbfgsb",
+          "method": "adns",
           "rho": [
-            0.1,
-            0.1
+            1.0,
+            1.0
           ],
           "status": "success",
-          "runtime_sec": 270.1498904910404,
-          "shared_gap": 0.020161942165816002,
-          "parameter": 1e-12
+          "runtime_sec": 291.92817254923284,
+          "shared_gap": 0.11460993457221268,
+          "parameter": 0.1
         },
         {
-          "method": "pot_lbfgsb",
+          "method": "adns",
           "rho": [
-            0.1,
-            0.1
+            1.0,
+            1.0
           ],
-          "status": "process_failed",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
-          "parameter": 1e-15
+          "status": "success",
+          "runtime_sec": 439.2384597295895,
+          "shared_gap": 0.0015619519093878662,
+          "parameter": 0.01
+        },
+        {
+          "method": "adns",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 523.4723118115216,
+          "shared_gap": 1.1580822730238164e-05,
+          "parameter": 0.001
+        },
+        {
+          "method": "adns",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 584.0406202347949,
+          "shared_gap": 1.0954896743992579e-07,
+          "parameter": 0.0001
+        },
+        {
+          "method": "adns",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 621.6573015730828,
+          "shared_gap": 1.3114266844685958e-08,
+          "parameter": 1e-05
         },
         {
           "method": "shuttle",
@@ -398,9 +498,9 @@
             1.0,
             1.0
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
+          "status": "success",
+          "runtime_sec": 0.7468384457752109,
+          "shared_gap": 0.0003132751313818549,
           "parameter": 0.0001
         },
         {
@@ -409,9 +509,20 @@
             1.0,
             1.0
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
+          "status": "success",
+          "runtime_sec": 1.1425963528454304,
+          "shared_gap": 4.10146553179992e-05,
+          "parameter": 1e-05
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 2.484413905069232,
+          "shared_gap": 3.884626964240644e-07,
           "parameter": 1e-06
         },
         {
@@ -420,43 +531,76 @@
             1.0,
             1.0
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
+          "status": "success",
+          "runtime_sec": 4.206628459505737,
+          "shared_gap": 2.9045814336141954e-07,
+          "parameter": 1e-07
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 8.877143554389477,
+          "shared_gap": 1.1337825979593725e-08,
           "parameter": 1e-08
         },
         {
-          "method": "pot_lbfgsb",
+          "method": "adns",
           "rho": [
-            1.0,
-            1.0
+            10.0,
+            10.0
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
-          "parameter": 1e-08
+          "status": "success",
+          "runtime_sec": 1086.6992685962468,
+          "shared_gap": 0.04787123882413868,
+          "parameter": 0.1
         },
         {
-          "method": "pot_lbfgsb",
+          "method": "adns",
           "rho": [
-            1.0,
-            1.0
+            10.0,
+            10.0
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
-          "parameter": 1e-12
+          "status": "success",
+          "runtime_sec": 1364.7877183891833,
+          "shared_gap": 0.0006836748026825062,
+          "parameter": 0.01
         },
         {
-          "method": "pot_lbfgsb",
+          "method": "adns",
           "rho": [
-            1.0,
-            1.0
+            10.0,
+            10.0
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
-          "parameter": 1e-15
+          "status": "success",
+          "runtime_sec": 1535.392165931873,
+          "shared_gap": 8.166669113516023e-06,
+          "parameter": 0.001
+        },
+        {
+          "method": "adns",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 1607.7077254178002,
+          "shared_gap": 1.1097128963033734e-07,
+          "parameter": 0.0001
+        },
+        {
+          "method": "adns",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 1622.8780988529325,
+          "shared_gap": 8.760961424901099e-09,
+          "parameter": 1e-05
         },
         {
           "method": "shuttle",
@@ -464,9 +608,9 @@
             10.0,
             10.0
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
+          "status": "success",
+          "runtime_sec": 1.1252108504995704,
+          "shared_gap": 0.00026417261385375447,
           "parameter": 0.0001
         },
         {
@@ -475,9 +619,20 @@
             10.0,
             10.0
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
+          "status": "success",
+          "runtime_sec": 2.1929341796785593,
+          "shared_gap": 4.2033290371748865e-05,
+          "parameter": 1e-05
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 4.772994737140834,
+          "shared_gap": 6.768792857200733e-07,
           "parameter": 1e-06
         },
         {
@@ -486,43 +641,76 @@
             10.0,
             10.0
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
+          "status": "success",
+          "runtime_sec": 10.194895388558507,
+          "shared_gap": 1.5184690110472502e-08,
+          "parameter": 1e-07
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 28.53411507513374,
+          "shared_gap": 7.147988186704059e-09,
           "parameter": 1e-08
         },
         {
-          "method": "pot_lbfgsb",
+          "method": "adns",
           "rho": [
-            10.0,
-            10.0
+            0.045,
+            99.995
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
-          "parameter": 1e-08
+          "status": "success",
+          "runtime_sec": 174.90623378008604,
+          "shared_gap": 0.2200463858717901,
+          "parameter": 0.1
         },
         {
-          "method": "pot_lbfgsb",
+          "method": "adns",
           "rho": [
-            10.0,
-            10.0
+            0.045,
+            99.995
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
-          "parameter": 1e-12
+          "status": "success",
+          "runtime_sec": 240.33697041124105,
+          "shared_gap": 0.005036951454750825,
+          "parameter": 0.01
         },
         {
-          "method": "pot_lbfgsb",
+          "method": "adns",
           "rho": [
-            10.0,
-            10.0
+            0.045,
+            99.995
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
-          "parameter": 1e-15
+          "status": "success",
+          "runtime_sec": 318.9975969204679,
+          "shared_gap": 2.8016357647007513e-05,
+          "parameter": 0.001
+        },
+        {
+          "method": "adns",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 366.99212546180934,
+          "shared_gap": 1.6999608646851235e-07,
+          "parameter": 0.0001
+        },
+        {
+          "method": "adns",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 380.79028120450675,
+          "shared_gap": 2.317838854848722e-09,
+          "parameter": 1e-05
         },
         {
           "method": "shuttle",
@@ -530,9 +718,9 @@
             0.045,
             99.995
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
+          "status": "success",
+          "runtime_sec": 0.8552982769906521,
+          "shared_gap": 0.0040079288896617445,
           "parameter": 0.0001
         },
         {
@@ -541,9 +729,20 @@
             0.045,
             99.995
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
+          "status": "success",
+          "runtime_sec": 0.9060652069747448,
+          "shared_gap": 0.0005159348486229366,
+          "parameter": 1e-05
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 1.6174299772828817,
+          "shared_gap": 8.104417613452578e-06,
           "parameter": 1e-06
         },
         {
@@ -552,47 +751,37 @@
             0.045,
             99.995
           ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
+          "status": "success",
+          "runtime_sec": 2.985130458138883,
+          "shared_gap": 1.3301408591408306e-07,
+          "parameter": 1e-07
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 4.891576778143644,
+          "shared_gap": 1.8050228408980595e-09,
           "parameter": 1e-08
-        },
-        {
-          "method": "pot_lbfgsb",
-          "rho": [
-            0.045,
-            99.995
-          ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
-          "parameter": 1e-08
-        },
-        {
-          "method": "pot_lbfgsb",
-          "rho": [
-            0.045,
-            99.995
-          ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
-          "parameter": 1e-12
-        },
-        {
-          "method": "pot_lbfgsb",
-          "rho": [
-            0.045,
-            99.995
-          ],
-          "status": "pending",
-          "runtime_sec": 0.0,
-          "shared_gap": 0.0,
-          "parameter": 1e-15
         }
       ],
-      "source": "paper_experiments_uot/accuracy_runtime_pareto/results/20261115_pot_lbfgsb_pilot_v2_my4090/summary.csv",
-      "sha256": "702b2210c06f1d2c7d15de6f4f6813f509fa20d938d4553c17124a8479782c15"
+      "source": "paper_experiments/adns_uot/results/tome_appendix_n32768_seed42_cpu2_20261116_v2/salut_comparison.json",
+      "sha256": "557e9b669083fefe1613158e91ee153b915612b0cda0333ec78fd7ae972b4554",
+      "audit_source": "paper_experiments/adns_uot/results/tome_appendix_n32768_seed42_cpu2_20261116_v2/salut_comparison_audit.json",
+      "audit_sha256": "47471852359e56fe83c4d98a401fc35d0be60e0773a8b32363ae7270312ee468",
+      "protocol": "Salut GPU and independent AdNS-UOT single-thread CPU reproduction; shared audited reference",
+      "adns_tolerances": [
+        0.1,
+        0.01,
+        0.001,
+        0.0001,
+        1e-05
+      ],
+      "expected_count": 40,
+      "valid_count": 40
     },
     {
       "title": "MultiScaleOT",

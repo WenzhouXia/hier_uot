@@ -1,0 +1,725 @@
+{
+  "definition": "Complete balanced HELLO solves including initialization; one complete Salut UOT solve",
+  "rows": [
+    {
+      "n": 32768,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 42,
+      "hello_calls": 43,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa0.1_rhob0.1_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "458e155e393d19c82a2c80b4eb701f3207b2590d0e2857a121bd51a37259b09d"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 43,
+      "hello_calls": 43,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa0.1_rhob0.1_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "521179bc3459ee7fbba03cced77c745261005e1b0243a423e7c49912178d8c2f"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 44,
+      "hello_calls": 48,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa0.1_rhob0.1_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "2be32a91344f64aa01d284cfc14f9b89fc355893cfff4681af7f43ae3270540e"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 45,
+      "hello_calls": 47,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa0.1_rhob0.1_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "53e0838f370107ee9197ec128963d406da9425953a11f06f03405006d9165180"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 46,
+      "hello_calls": 45,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa0.1_rhob0.1_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "97890f0b925bdec034dfe3e488b433f52f2e479dcf59cd075a4d0625e4ac5074"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 42,
+      "hello_calls": 3,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa1_rhob1_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "0c1ac1c88b30193a88d87e84322285f1503f0e079105259a1501acf81ca31bb6"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 43,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa1_rhob1_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "05ea94849f69c9eac60148c926109d49ad97b2fbede131665a3e2c302bbfe61d"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 44,
+      "hello_calls": 4,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa1_rhob1_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "be73ac3485600249c156b61d56e9de496e57798e946e4ef34b0477b4959935c1"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 45,
+      "hello_calls": 3,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa1_rhob1_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "9d5a2df6677dfddcba6f88aca43b7fbee6bde01dd159fb0bee7c8e145b3c8cc5"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 46,
+      "hello_calls": 3,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa1_rhob1_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "588d1a03ac94bb9b4cbd26d639921c69e550c447fc731c4d8c38034900d2416c"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 42,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa10_rhob10_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "9f31a1a632eebe39ae2f005e78fa83d4ca6de3eae41c6f1c7b6b203425a4adc7"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 43,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa10_rhob10_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "77a731111a6447a7801b4ec56487ba42e3c00dbb635aeb489f1fbd3f5e21a0bc"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 44,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa10_rhob10_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "8740b592dce21fd6dec8480e14f5cd5645b67eb925f8902c05639d0b8a391136"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 45,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa10_rhob10_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "d82e465110c61e751a9a16f844910f2825f00735c0250305575a7a8c8c97f5f3"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 46,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa10_rhob10_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "676370a31812673cbd13d7e9e6ee834dd7cecc80c4091632bf2c7579189062b7"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 42,
+      "hello_calls": 64,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa0.045_rhob99.995_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "14c938b02121cd4f534f4ec503928dc3a6ed6280d784f367d76263aa1683b8f1"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 43,
+      "hello_calls": 62,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa0.045_rhob99.995_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "552678c591755e068dd43cdafd9eb4257bd9d780bbddf0321f6fd1630005e4dc"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 44,
+      "hello_calls": 67,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa0.045_rhob99.995_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "64529efb66bd3f303220ee54023e89794b9d75e48bcead6e46c650fe80006588"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 45,
+      "hello_calls": 60,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa0.045_rhob99.995_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "9a5acf3e04007fe371f79c79949c4dfbcdd734c3acbd469803b713f7b287e979"
+    },
+    {
+      "n": 32768,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 46,
+      "hello_calls": 65,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n32768_rhoa0.045_rhob99.995_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "4352f357e4f7ad6382800684447466e755e18a504c667df349e6b1f289b12f8e"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 42,
+      "hello_calls": 40,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa0.1_rhob0.1_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "0f9af58377484715c9747f64d3e4182a4a863f8fd10e778885e02e09e63d58cd"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 43,
+      "hello_calls": 42,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa0.1_rhob0.1_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "f5d6373760bb4350b9e7b1756763835b85d504a1b1f00c2de9ff9085ac0f6cd9"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 44,
+      "hello_calls": 40,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa0.1_rhob0.1_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "1d70b9833515e881856709c2a83cfd3455dbaa9b38c2b4b8c2acf23e5e55df48"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 45,
+      "hello_calls": 45,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa0.1_rhob0.1_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "ec642ac81235754a8ea59dc0a48595c0bc606fc7644286082764f328de2fbf20"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 46,
+      "hello_calls": 40,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa0.1_rhob0.1_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "43e777a1c36eab707644cd04d7b4c4eaa153778da39ee413c04d280d12c7acb1"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 42,
+      "hello_calls": 3,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa1_rhob1_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "6ddec4aedef5ae8eaf4811fb164a9051d1b930c92b91d2954e2ca127b0e3973d"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 43,
+      "hello_calls": 3,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa1_rhob1_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "1f6784f1568c16e0a0f9ffb899eb4a2b825090f3accb9bc2656173e657dcf79d"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 44,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa1_rhob1_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "4dc5758e599deda93e87888024680c4faf52924b9a0a1bd969998438ccc731ab"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 45,
+      "hello_calls": 3,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa1_rhob1_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "0eae8b2306b2b48c54e4b22092fda6b5a16f78bdc770123b218bfb9bb630fe1b"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 46,
+      "hello_calls": 3,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa1_rhob1_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "448ee22d26b748be95fd579f6faf8cfda982bd058f5db29bbe082dbc812f7da7"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 42,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa10_rhob10_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "a2e848607a5bb1dca043e1d692bb3a3d29afd6d3653446403479b3964c447c4e"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 43,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa10_rhob10_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "cc30eedee46f24ecf895bf4e7593c096c15b6203263262d9e76f597506baaaac"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 44,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa10_rhob10_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "2efe92eabdb8098d6e8ef8b9b3b320c26d5ebb079a805369ef5b803efa320ceb"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 45,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa10_rhob10_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "c647de19c1b1dd624a4e1c0eab0fa78f3c2682c616450964e5bcac3e126bd374"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 46,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa10_rhob10_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "fda277d48fad6a250a49eadec0d48df79c2fc8ec1b5e4cdcfe58cea9c1cb7fb1"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 42,
+      "hello_calls": 65,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa0.045_rhob99.995_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "cc94df6c947153a23861ecf833d63d1197a4839b76161c972da555767a6c37f1"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 43,
+      "hello_calls": 63,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa0.045_rhob99.995_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "c9a581b7c429ea4e3a883e21ee665aceccd5d60b0b9f8382f4a84ea102151136"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 44,
+      "hello_calls": 65,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa0.045_rhob99.995_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "f74b2e5974bf6b6b945a4d2f48a09165378c8dbde79e5f86f7304825fec135aa"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 45,
+      "hello_calls": 61,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa0.045_rhob99.995_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "d89e4d6ed6b227ff8ce80b5d1c9e698afd2e2c37095077a591e7a0c745ee0856"
+    },
+    {
+      "n": 65536,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 46,
+      "hello_calls": 63,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n65536_rhoa0.045_rhob99.995_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "9e5e9010fd85511c660f210119905eae07810af683207a71667154308534a017"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 42,
+      "hello_calls": 36,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa0.1_rhob0.1_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "8d49abe779503c67d190f7a8d19d118e32feb63b4396c776fb47682108ba5aa8"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 43,
+      "hello_calls": 42,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa0.1_rhob0.1_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "00201259b3d0e488181b1b94e7acce05d16e6ef8937fa82262bb18f583f2850d"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 44,
+      "hello_calls": 41,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa0.1_rhob0.1_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "6ec7069ac4a49312020b2ed9cb36f05477916ce1fc4d9382c8c380e14ed0dab5"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 45,
+      "hello_calls": 40,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa0.1_rhob0.1_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "fbc741cedbdb506ad269e0b9c8de25c632620073366187721d6d8e95e8f8c6be"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        0.1,
+        0.1
+      ],
+      "seed": 46,
+      "hello_calls": 40,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa0.1_rhob0.1_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "520d12d5d16a4ee466612b50b3558c640225ed1ca656cd9368a57cb2ca1c339f"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 42,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa1_rhob1_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "e4bdcc427d3eb630468787a3bcb5c1705c5a1b1fc1524a7785b66b66625060aa"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 43,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa1_rhob1_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "ce7453429beb77a43c2c585476063e0d88c69117a1bcd0aff3808aefbd80a636"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 44,
+      "hello_calls": 3,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa1_rhob1_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "9cc105f772be7717318be1ea25eca5c7b16f7f8d7c7a50637761ab4a50996fd1"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 45,
+      "hello_calls": 3,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa1_rhob1_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "882b65470db1dd9b3369e73f0fc72f0172d40af9c240732d647358d84676b1bd"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        1.0,
+        1.0
+      ],
+      "seed": 46,
+      "hello_calls": 3,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa1_rhob1_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "eafef0e575d2e89f413a34a1cbe68d427c27a7bc5262b5b9340b6d1c3056f7fe"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 42,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa10_rhob10_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "5371b2c36891dd3e66336ccf40c77abe0a4f51fb20dd128c35a6ce84580da469"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 43,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa10_rhob10_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "e4e7f277b6bdc9117305ac82548c81fe48a123d0bfa00b8e015e6880c226c279"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 44,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa10_rhob10_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "7cad413201d7478420b83112605e207299e5b4a6e81a274cbcd9871bc7d119f1"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 45,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa10_rhob10_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "496ca5c37e5ae7484bc85d0e49832cf417f678339eb2eeda1762be458ab371dd"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        10.0,
+        10.0
+      ],
+      "seed": 46,
+      "hello_calls": 2,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa10_rhob10_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "76172a5fb8bbbb61fa3df16543e6df68dae7ae544926abde802eeccbcffd14ec"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 42,
+      "hello_calls": 65,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa0.045_rhob99.995_seed42/hello_uot_repeat0/metrics.json",
+      "sha256": "877d07bdc6830197506925fa90d7200712a39dfdc17855a9ada9c7d5b3607fef"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 43,
+      "hello_calls": 66,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa0.045_rhob99.995_seed43/hello_uot_repeat0/metrics.json",
+      "sha256": "42005935e9249aef71cbe42dfaaa78a53e1888c428584277016fe7a690652bdb"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 44,
+      "hello_calls": 67,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa0.045_rhob99.995_seed44/hello_uot_repeat0/metrics.json",
+      "sha256": "b553644dd396e09cdeff4958d33cb0a2d63c387ae65aef1d1bf46d020c367cf6"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 45,
+      "hello_calls": 66,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa0.045_rhob99.995_seed45/hello_uot_repeat0/metrics.json",
+      "sha256": "e4239cd96e3239f3d00fd49f35763e7783b6c10b3aeac53acaa24b0a16a0e06b"
+    },
+    {
+      "n": 131072,
+      "rho": [
+        0.045,
+        99.995
+      ],
+      "seed": 46,
+      "hello_calls": 64,
+      "salut_calls": 1,
+      "metrics": "paper_experiments_uot/hello_uot_comparison/results/20261119_014027_846890_infra/cases/n131072_rhoa0.045_rhob99.995_seed46/hello_uot_repeat0/metrics.json",
+      "sha256": "41963c10c4396f819e503b24c596c1fd18cb049f7197e3b8c2ed666cb55f1c65"
+    }
+  ]
+}
