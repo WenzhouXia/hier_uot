@@ -417,7 +417,7 @@ See Appendices~\ref{app:benchmark-data}, \ref{app:implementation-details}, and~\
 \paragraph{Runtime, accuracy, and memory.}
 % CN: 定量比较来自 figures/plot_sources/pareto_comparison_analysis_20261119.json；同精度取各方法达到目标 mean gap 的最快扫描点，同预算取不超过基线耗时的 Salut 最小 mean gap，不插值。
 % EN: Quantitative comparisons: figures/plot_sources/pareto_comparison_analysis_20261119.json; matched accuracy uses the fastest scanned point meeting the target mean gap, and matched budgets use the smallest Salut mean gap within the baseline runtime, without interpolation.
-Figure~\ref{fig:uot-runtime-accuracy} compares \ours with strong UOT baselines. It shows one to three orders of magnitude speedups at comparable accuracy and roughly four to five orders of magnitude smaller gaps within matched runtime budgets (Appendix~\ref{app:uot-comparison-protocol}).
+Figure~\ref{fig:uot-runtime-accuracy} compares \ours with strong UOT baselines. It shows one to three orders of magnitude speedups at comparable accuracy and roughly four to five orders of magnitude smaller gaps within matched runtime budgets.
 \ours uses only $0.55$ GiB, versus $16.10$ GiB for \sinkhorn and $56.02$ GiB for \mm, reflecting its linear-memory design.
 With each method's representative parameter setting fixed, mean runtimes vary by $3.4\times$ for \ours ($1.66$--$5.62$ seconds), versus $93.5\times$ for \mm, $16.6\times$ for \hellouot, and $21.8\times$ for \sinkhorn across penalty settings, indicating more stable runtime performance across marginal penalty strengths.
 \begin{figure}[t]
@@ -429,6 +429,7 @@ With each method's representative parameter setting fixed, mean runtimes vary by
 $m=n=32{,}768$.
 Larger markers target higher accuracy.
 The top strip reports the maximum mean peak active GPU memory averaged across plotted configurations and penalty settings.
+Protocol in Appendix~\ref{app:uot-comparison-protocol}.
 }
 \label{fig:uot-runtime-accuracy}
 \end{figure}
@@ -512,11 +513,12 @@ Furthermore, \ours maintains its runtime and accuracy advantages across ground c
 % EN: Experiment record: EXPERIMENT_PROGRESS.md, P01; pinned sources and statistics: figures/plot_sources/restricted_solver_cdf_20261117.json.
 \includegraphics[width=\linewidth]{figures/restricted_solver_runtime_cdf.pdf}
 \caption{\textbf{Restricted-solver runtime CDFs.}
-Fractions reaching $\sharedgap\leq10^{-4}$ versus runtime on snapshots from \ours runs (parent $m=n=65{,}536$).}
+Fractions reaching $\sharedgap\leq10^{-4}$ versus runtime on snapshots from \ours runs (parent $m=n=65{,}536$).
+Protocol in Appendix~\ref{app:restricted-experiment-protocol}.}
 \label{fig:restricted-runtime-cdf}
 \end{figure}
 
-Figure~\ref{fig:restricted-runtime-cdf} compares solvers on 433 restricted UOT snapshots captured during \ours runs (Appendix~\ref{app:restricted-experiment-protocol}).
+Figure~\ref{fig:restricted-runtime-cdf} compares solvers on 433 restricted UOT snapshots captured during \ours runs.
 Over same-snapshot pairs reaching the target, \subsolver achieves geometric mean speedups of $153\times$, $40\times$, and $16\times$ over \pdcs, \mm, and \sinkhorn, respectively.
 Its mean runtime over successful solves also varies less across penalty settings: $1.7\times$, versus $2.2\times$, $325\times$, and $78\times$ for the respective baselines.
 Moreover, \subsolver directly returns primal--dual solutions of the unregularized restricted problem, which \mm and entropic \sinkhorn do not natively provide.
@@ -532,11 +534,12 @@ Moreover, \subsolver directly returns primal--dual solutions of the unregularize
 % CN: 实验记录见 EXPERIMENT_PROGRESS.md 的 A04；固定图源与哈希见 figures/plot_sources/pduot_component_ablation_20261117.json。
 % EN: Experiment record: EXPERIMENT_PROGRESS.md, A04; pinned sources and hashes: figures/plot_sources/pduot_component_ablation_20261117.json.
 \caption{\textbf{Leave-one-out \subsolver component ablations.}
-Fractions reaching KKT tolerance $10^{-6}$ versus iterations (one PDHG map evaluation each) on the same snapshots in Figure~\ref{fig:restricted-runtime-cdf}.}
+Fractions reaching KKT tolerance $10^{-6}$ versus iterations (one PDHG map evaluation each) on the same snapshots in Figure~\ref{fig:restricted-runtime-cdf}.
+Protocol in Appendix~\ref{app:pduot-component-ablation}.}
 \label{fig:pduot-component-ablation-cdf}
 \end{figure}
 
-Figure~\ref{fig:pduot-component-ablation-cdf} isolates the four components of \subsolver on fixed restricted UOT snapshots (Appendix~\ref{app:pduot-component-ablation}).
+Figure~\ref{fig:pduot-component-ablation-cdf} isolates the four components of \subsolver on fixed restricted UOT snapshots.
 Adaptive restart and adaptive weight provide the largest reductions in iterations.
 Preconditioning reduces mean iterations across all four penalty settings, while reflected Halpern updates help except at the weakest penalty.
 
@@ -553,7 +556,8 @@ Preconditioning reduces mean iterations across all four penalty settings, while 
 \caption{\textbf{Component ablations.}
 $m=n$, KKT tolerance $10^{-6}$.
 $n=262{,}144$ for A, $8{,}192$ for B and C, and $16{,}384$ for D and E.
-\refineiters counts finest-level refinement rounds; protocols appear in Appendix~\ref{app:system-component-protocol}.
+\refineiters counts finest-level refinement rounds.
+Protocol in Appendix~\ref{app:system-component-protocol}.
 }
 \label{tab:component-settings-mock}
 \footnotesize
@@ -610,17 +614,18 @@ Removing potential translations and structural edges raises mean runtime by $2.4
 $m=n=16{,}384$, $\varepsilon=10^{-3}$.
 Larger markers indicate larger budgets or tighter thresholds.
 Circles use fixed reconstruction budgets; crosses use automatic budgets.
+Protocol in Appendix~\ref{app:extension-protocols}.
 }
 \label{fig:entropic-runtime-accuracy}
 \end{figure}
 
-Figure~\ref{fig:entropic-runtime-accuracy} compares \ourssparsink with online \sinkhorn and \sparsink on the same entropic UOT objective (Appendix~\ref{app:extension-protocols}).
+Figure~\ref{fig:entropic-runtime-accuracy} compares \ourssparsink with online \sinkhorn and \sparsink on the same entropic UOT objective.
 Across all four penalty settings, \ourssparsink reaches $\sharedgap<5\times10^{-7}$ in $1$--$12$ seconds at $b_{\mathrm e}=8$, and $\sharedgap<10^{-10}$ at $b_{\mathrm e}=32$.
 Appendix~\ref{app:entropic-epsilon-accuracy} further evaluates reconstruction accuracy across entropic strengths.
 % \xwz{The unmeasured Schmitzer/LCN appendix and its main-text promise are temporarily omitted.}
 % Additional comparisons with Schmitzer's multiscale solver and LCN clustering with sparse \sinkhorn are deferred to Appendix~\ref{app:entropic-additional-baselines}.
-% CN: epsilon 扫描来自 paper_experiments_uot/entropic_epsilon_accuracy/results/epsilon_sparse_log7_n16384_20261110_gpu267/summary.json，28/28成功，仅评估返回的 sparse coupling。
-% EN: Epsilon-sweep results come from paper_experiments_uot/entropic_epsilon_accuracy/results/epsilon_sparse_log7_n16384_20261110_gpu267/summary.json, with 28/28 successful sparse-coupling evaluations.
+% CN: epsilon 扫描来自 paper_experiments_uot/entropic_epsilon_accuracy/results/20261117_paper_data_entropic_epsilon_accuracy/summary.json，140/140成功（五 seed），仅评估返回的 sparse coupling。
+% EN: Epsilon-sweep results come from paper_experiments_uot/entropic_epsilon_accuracy/results/20261117_paper_data_entropic_epsilon_accuracy/summary.json, with 140/140 successful five-seed sparse-coupling evaluations.
 % \xwz{If warm-start acceleration becomes a central claim, add a main-text comparison of cold-start and hier_uot--Sinkhorn-initialized full Sinkhorn, reporting end-to-end runtime including initialization as well as continuation iterations.}
 
 
@@ -630,18 +635,17 @@ Appendix~\ref{app:entropic-epsilon-accuracy} further evaluates reconstruction ac
 
 \begin{table}[t]
 \centering
-% CN: 四行实测结果来自 /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/ufgw_solver_comparison/results/20261110_ufgw_starmap_n16384/{summary.json,summary.csv,cases/*/{shuttle,pot}_repeat0/metrics.json}；配置与输入指纹见同目录 config.json、manifest.json，4/4 成功，每组固定 10 个完整 P/Q sweeps。
-% EN: All four measured rows come from /home/xiawenzhou/project/hierarchical_ot/paper_experiments_uot/ufgw_solver_comparison/results/20261110_ufgw_starmap_n16384/{summary.json,summary.csv,cases/*/{shuttle,pot}_repeat0/metrics.json}; config.json and manifest.json record settings and input fingerprints, with 4/4 successful fixed-budget runs of ten complete P/Q sweeps.
-% \xwz{RERUN REQUIRED FOR THE WEIGHT-BUDGET CHANGE: hier_uot UFGW records lack complete restart-count evidence for their inner UOT calls. Rerun both hier_uot rows with J=64, p=1.01 and refresh the linked trajectories in Appendix UFGW Solver Trajectories; retain the declared ten-sweep protocol. POT baselines are unaffected by this controller change. Audit: experiments/primal_weight_budget_20261111/report/history_J64_audit.json.}
-% CN: Time 使用 runtime_sec；Memory 使用 peak_gpu_memory_mib/1024 转为 GiB；objective 为共同 CPU FP64 目标，含 joint entropy 常数；加速比按未舍入耗时计算，不跨 epsilon 比较目标值。
-% EN: Time uses runtime_sec; Memory converts peak_gpu_memory_mib to GiB by division by 1024; objectives use the common CPU FP64 evaluator including joint-entropy constants; speedups use unrounded times, without comparing objectives across epsilon settings.
-% CN: Objective 保留五位小数；同一 epsilon 内按展示精度并列最好的目标值均加粗。
-% EN: Objectives are rounded to five decimal places; tied best displayed objectives within each epsilon group are all bolded.
+% CN: 四行五-seed 实测均值来自 paper_experiments_uot/ufgw_solver_comparison/results/20261117_paper_data_ufgw_solver_comparison/cases/*/{shuttle,pot}_repeat0/metrics.json（seeds 0--4，20/20 成功，含 J=64 与 refinement safeguard）；固定统计与校验和见 figures/plot_sources/ufgw_solver_comparison_20261120.json。
+% EN: All four five-seed measured means come from paper_experiments_uot/ufgw_solver_comparison/results/20261117_paper_data_ufgw_solver_comparison/cases/*/{shuttle,pot}_repeat0/metrics.json (seeds 0--4, 20/20 successful ten-sweep runs with J=64 and the refinement safeguard); pinned statistics and checksums: figures/plot_sources/ufgw_solver_comparison_20261120.json.
+% CN: Time 使用 runtime_sec；Memory 使用 peak_gpu_memory_mib/1024 转为 GiB；objective 为共同 CPU FP64 目标，含 joint entropy 常数；加速比按未舍入均值耗时计算，不跨 epsilon 比较目标值。
+% EN: Time uses runtime_sec; Memory converts peak_gpu_memory_mib to GiB by division by 1024; objectives use the common CPU FP64 evaluator including joint-entropy constants; speedups use unrounded mean times, without comparing objectives across epsilon settings.
+% CN: Objective 保留四位小数；同一 epsilon 内按展示精度并列最好的目标值均加粗。
+% EN: Objectives are rounded to four decimal places; tied best displayed objectives within each epsilon group are all bolded.
 \caption{\textbf{UFGW solver comparison} on STARmap well05--well11 ($m=n=16{,}384$, $d=30$, $\alpha=0.4$, $\rho_a=\rho_b=0.1$).
 Each method runs ten complete sweeps from product couplings.
 \ufgwobj denotes the two-coupling UFGW objective with entropy strength $\varepsilon$ (Appendix~\ref{app:ufgw-extension}).
+Protocol in Appendix~\ref{app:extension-protocols}.
 }
-% \xwz{SEED COVERAGE: Current table uses seed 0, not five-seed means. Add four independent seeds under the final protocol; update this table and its trajectory figure together.}
 \label{tab:ufgw-solvers}
 \footnotesize
 \setlength{\tabcolsep}{2pt}
@@ -649,19 +653,19 @@ Each method runs ten complete sweeps from product couplings.
 \toprule
 $\varepsilon$ & Method & \runtime~$\downarrow$ & \gpumemshort~$\downarrow$ & \ufgwobj~$\downarrow$ \\
 \midrule
-\multirow{2}{*}{$0$} & \bcdmm & 513.38 & 40.02 & 0.1113 \\
- & \oursufgw & \textbf{18.30} & \textbf{0.53} & \textbf{0.1110} \\
+\multirow{2}{*}{$0$} & \bcdmm & 481.53 & 40.02 & 0.1114 \\
+ & \oursufgw & \textbf{16.05} & \textbf{0.53} & \textbf{0.1111} \\
 \midrule
-\multirow{2}{*}{$10^{-3}$} & \bcdsinkhorn & 103.44 & 34.27 & \textbf{0.1222} \\
- & \ourssinkhornufgw & \textbf{17.64} & \textbf{0.53} & \textbf{0.1222} \\
+\multirow{2}{*}{$10^{-3}$} & \bcdsinkhorn & 102.75 & 34.27 & \textbf{0.1223} \\
+ & \ourssinkhornufgw & \textbf{17.58} & \textbf{0.53} & \textbf{0.1223} \\
 \bottomrule
 \end{tabular}
 
 \end{table}
 
 
-Table~\ref{tab:ufgw-solvers} compares our UFGW extensions with POT's \bcdmm and \bcdsinkhorn on the same two-coupling objective, under the common sweep budget and evaluation protocol of Appendix~\ref{app:extension-protocols}.
-Our variants are $28.1\times$ and $5.9\times$ faster at $\varepsilon=0$ and $10^{-3}$, respectively, attain lower or comparable objectives, and reduce peak GPU memory by over $98\%$.
+Table~\ref{tab:ufgw-solvers} compares our UFGW extensions with POT's \bcdmm and \bcdsinkhorn on the same two-coupling objective under a common sweep budget.
+Our variants are $30.0\times$ and $5.8\times$ faster at $\varepsilon=0$ and $10^{-3}$, respectively, attain lower or comparable objectives, and reduce peak GPU memory by over $98\%$.
 Objective--time trajectories appear in Appendix~\ref{app:ufgw-solver-trajectories}.
 
 
@@ -670,7 +674,7 @@ Objective--time trajectories appear in Appendix~\ref{app:ufgw-solver-trajectorie
 
 \paragraph{Temporal transport.}
 % \xwz{RERUN REQUIRED FOR THE WEIGHT-BUDGET CHANGE: the archived hier_uot temporal results do not provide complete per-call restart counts across all time pairs, so unchanged behavior under J=64, p=1.01 cannot be established. Rerun the hier_uot--Sinkhorn configurations and update the linked temporal figures and timing breakdown; keep historical provenance and the authors' per-pair penalties. Full-rank and low-rank baselines are unaffected by this controller change. Audit: experiments/primal_weight_budget_20261111/report/history_J64_audit.json.}
-We evaluate temporal transport on 19 adjacent time pairs from the moscot mouse embryogenesis benchmark~\citep{klein2025mapping} in Figure~\ref{fig:temporal-runtime}, using the published per-pair settings summarized in Appendix~\ref{app:downstream-protocol}.
+We evaluate temporal transport on 19 adjacent time pairs from the moscot mouse embryogenesis benchmark~\citep{klein2025mapping} in Figure~\ref{fig:temporal-runtime}, using the published per-pair settings.
 % CN: 数值来自 paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/{summary.csv,summary_table.csv}，114/114 项已完成；加速比按同一时间对的 coupling_evaluation_sec 相除，含 coupling 与 evaluation。
 % EN: Numbers come from paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/{summary.csv,summary_table.csv}, with 114/114 configurations complete; speedups divide paired coupling_evaluation_sec values, including coupling computation and evaluation.
 Compared with rank-2000 \ulot~\citep{scetbon2023unbalanced}, \ourssparsink is $4.91$--$17.71\times$ faster, with a mean absolute difference in \transitionacc\ from the full-rank \sinkhorn reference of only $0.21$ percentage points versus $2.03$.
@@ -687,7 +691,8 @@ Compared with rank-2000 \ulot~\citep{scetbon2023unbalanced}, \ourssparsink is $4
 \caption{\textbf{Temporal transport on mouse embryogenesis.}
 (a) Coupling computation plus downstream evaluation time; (b) curated transition accuracy; (c) germ-layer accuracy.
 Triangle labels denote \ulot ranks ($1\mathrm{k}=1000$).
-Each horizontal position denotes a distinct adjacent-time-pair instance; higher accuracy is better.}
+Each horizontal position denotes a distinct adjacent-time-pair instance; higher accuracy is better.
+Protocol in Appendix~\ref{app:downstream-protocol}.}
 \label{fig:temporal-runtime}
 % \xwz{SEED COVERAGE: Current application plots use seed 42 only; 19 time pairs are distinct tasks, not independent random seeds. Add four seeds and refresh both accuracy and timing figures.}
 \label{fig:temporal-accuracy}
@@ -703,6 +708,7 @@ Columns denote seven adjacent-time-pair instances, labeled by source embryonic d
 \ours represents \ourssinkhornufgw; \moscot is low-rank UFGW.
 \transitionacc\ is in percent; higher is better.
 Time excludes downstream evaluation.
+Protocol in Appendix~\ref{app:downstream-protocol}.
 }
 % \xwz{SEED COVERAGE: Current MOSTA table uses seed 0 only across seven time pairs. Add four independent seeds for the selected configurations; time pairs do not count as seeds.}
 \label{tab:ufgw-application}
@@ -726,7 +732,7 @@ Metric & Method & 9.5 & 10.5 & 11.5 & 12.5 & 13.5 & 14.5 & 15.5 \\
 \smallskip
 \end{table}
 % \xwz{RERUN REQUIRED FOR THE WEIGHT-BUDGET CHANGE: the selected hier_uot+BCD measurements do not retain complete inner-call restart counts or traces. Rerun that method at the recorded selected settings with J=64, p=1.01 before claiming results from the protected default, and refresh Table tab:ufgw-application. The moscot low-rank baseline is unaffected. Audit: experiments/primal_weight_budget_20261111/report/history_J64_audit.json.}
-We evaluate MOSTA spatiotemporal alignment on seven adjacent time pairs from moscot~\citep{klein2025mapping} (Table~\ref{tab:ufgw-application}; parameters in Appendix~\ref{app:downstream-protocol}).
+We evaluate MOSTA spatiotemporal alignment on seven adjacent time pairs from moscot~\citep{klein2025mapping} (Table~\ref{tab:ufgw-application}).
 Compared with moscot low-rank UFGW, \ourssinkhornufgw is $1.24$--$5.02\times$ faster and improves mean \transitionacc\ by $1.06$ percentage points.
 \section{Conclusion}
 We presented \ours for scaling UOT with linear memory, combining efficient primal--dual restricted solves with dynamic support updates.

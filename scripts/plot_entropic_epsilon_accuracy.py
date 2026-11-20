@@ -22,9 +22,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--capture', action='store_true')
     args = parser.parse_args()
-    snapshot = PAPER/'figures/plot_sources/entropic_epsilon_sparse_20261115.json'
+    snapshot = PAPER/'figures/plot_sources/entropic_epsilon_sparse_20261120.json'
     if args.capture:
-        batch = PROJECT/'paper_experiments_uot/entropic_epsilon_accuracy/results/epsilon_sparse_log7_n16384_20261110_gpu267'
+        batch = PROJECT/'paper_experiments_uot/entropic_epsilon_accuracy/results/20261117_paper_data_entropic_epsilon_accuracy'
         sources = {name: batch/name for name in ('epsilon_aggregate.json', 'config.json')}
         fields = ('shared_gap', 'coupling_relative_l1', 'reference_outside_support_mass_fraction')
         keep = ['n', 'rho_source', 'rho_target', 'epsilon', 'readout', 'planned']
