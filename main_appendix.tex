@@ -458,12 +458,7 @@ For UOT comparisons, all returned couplings are evaluated using the original obj
 The bound is constructed independently using \ours at KKT tolerance $10^{-8}$, followed by FP64 dual-feasibility correction.
 Primal objectives are recomputed in FP64 on the original inputs.
 Restricted-solver comparisons use a reference bound for the same fixed support.
-Entropic UOT comparisons use the full entropic primal $P_\varepsilon$ and an independent FP64 \ottonline bound $D_{\varepsilon,\mathrm{ref}}$ obtained with native stopping threshold $10^{-8}$, with the same normalized gap:
-\begin{equation}
-\entropicgap=\frac{P_\varepsilon-D_{\varepsilon,\mathrm{ref}}}{\max\{|P_\varepsilon|,|D_{\varepsilon,\mathrm{ref}}|,10^{-15}\}}.
-\label{eq:entropic-evaluation-gap}
-\end{equation}
-UFGW comparisons use their corresponding two-coupling objective and a common FP64 evaluation instead.
+Entropic UOT and UFGW comparisons use their corresponding entropic gap and two-coupling objective, defined in Appendices~\ref{app:entropic-epsilon-accuracy} and~\ref{app:ufgw-solver-trajectories}, respectively.
 
 \paragraph{Application accuracy.}
 Following \citet{klein2025mapping}, \transitionacc\ measures the fraction of cell-type transition probability assigned to biologically allowed pairs and is reported in percent.
@@ -541,9 +536,9 @@ The BCD variants solve block subproblems with \ours and \ourssparsink, respectiv
 Our GPU implementation follows POT's multiplicative MM updates and stopping rule~\citep{chapel2021unbalanced}, omitting storage of intermediate couplings.
 Costs and couplings use dense FP64 arrays.
 
-\item \textbf{\sinkhorn.}
+\item \textbf{\sinkhorn and \sinkhornonline.}
 We use OTT-JAX's unbalanced \sinkhorn~\citep{chizat2018scaling} with FP64 log-domain updates and potential recentering.
-We use dense cost storage for small- and medium-scale experiments and online cost evaluation for experiments spanning scales beyond the memory capacity of an 80 GB A100.
+We use dense cost storage (\sinkhorn) for small- and medium-scale experiments, and tiled online cost evaluation (\sinkhornonline, default block size $512$) for experiments spanning scales beyond the memory capacity of an 80 GB A100.
 
 \item \textbf{\ulot.}
 We use the low-rank solver of \citet{scetbon2023unbalanced} through the OTT backend of moscot in FP32.
@@ -623,6 +618,20 @@ The comparison in Figure~\ref{fig:uot-runtime-accuracy} uses two rules:
 % CN: 扫描网格与选取规则见 figures/plot_sources/pareto_comparison_analysis_20261119.json 和 pareto_final_20261119.json；绘图与覆盖记录来自 paper_experiments_uot/accuracy_runtime_pareto/results/20261115_222712_hello_memory_replay/{plot_selection.json,pareto_aggregate.csv}；每个有效绘图点均包含五个 seed。
 % EN: Scanned grids and selection rules: figures/plot_sources/pareto_comparison_analysis_20261119.json and pareto_final_20261119.json; plotting and coverage records: paper_experiments_uot/accuracy_runtime_pareto/results/20261115_222712_hello_memory_replay/{plot_selection.json,pareto_aggregate.csv}; every valid plotted point contains five seeds.
 
+\subsubsection{Million-Point Baseline Comparison}
+\label{app:million-baseline-protocol}
+% CN: 百万规模基线配置为 config_zhuang_million_baselines_pilot.yaml、config_zhuang_million_baselines_remaining3.yaml 及 config_zhuang_million_hello_remaining3.yaml；逐项来源和样本数见 tables/million_comparison.json。
+% EN: Million-scale baseline configurations: config_zhuang_million_baselines_pilot.yaml, config_zhuang_million_baselines_remaining3.yaml and config_zhuang_million_hello_remaining3.yaml; per-run provenance and counts: tables/million_comparison.json.
+For the $3600$\,s comparison at $m=n=1{,}048{,}576$ ($d=30$, Table~\ref{tab:million-scale-baselines} and Appendix~\ref{app:million-scale-additional}), we use the following protocol:
+\begin{itemize}
+\item \emph{Baseline parameter sweep and selection}: matching the Pareto protocol (Appendix~\ref{app:uot-comparison-protocol}), we sweep five settings per baseline and penalty under the $3600$\,s budget and report the configuration achieving the lowest \sharedgap (breaking ties by runtime).
+\item \emph{Block size}: \sinkhornonline and \hellouot's Sinkhorn initializer use block size $512$ (Appendix~\ref{app:implementation-uot-baselines}).
+\item \emph{Wall-clock budget and evaluation}: baselines use a soft $3600$\,s limit, stopping at the first check after elapsed solver time exceeds $3600$\,s and evaluating the latest available primal candidate offline.
+Tables report actual runtimes, which can exceed the budget, and means over completed clean snapshots with both runtime and \sharedgap available, including timeouts.
+\sharedgap is computed per run using~\eqref{eq:experimental-shared-gap} before averaging.
+The independent audited reference is reused only for identical data fingerprints and marginal penalties.
+For \hellouot at $\rho=(1,1)$ and $(10,10)$, the solver exhausts the budget during Sinkhorn initialization before the first outer iteration.
+\end{itemize}
 
 \subsubsection{Restricted UOT Solvers}
 \label{app:restricted-experiment-protocol}
@@ -705,82 +714,103 @@ The BCD variant solves the tensorized-KL two-coupling relaxation, whereas moscot
 \subsection{Supplementary UOT Baselines}
 \label{app:uot-supplementary-baselines}
 
+Figure~\ref{fig:uot-supplementary-baselines} compares \ours separately with \etm, \adnsuot, and \multiscaleot.
+\begin{itemize}
+\item \textbf{\etm\ (a).}
+Deferred because its dense Sinkhorn-type marginal estimation overlaps with \sinkhorn and its CPU-only release required our GPU-accelerated port.
+Across measured settings, \ours surpasses the highest accuracy attained by \etm while running $92.0$--$253.5\times$ faster.
+At smaller $\varepsilon$, the fixed $1{,}000$-iteration marginal estimation under-converges and degrades accuracy.
+
+\item \textbf{\adnsuot\ (b).}
+Deferred because it is CPU-only and required our independent C++ reproduction (official code unavailable).
+Across measured settings, \ours achieves $56.8$--$1{,}213\times$ speedups over \adnsuot at comparable accuracy (including $56.8$--$77.8\times$ at the tightest ${\sim}10^{-8}$ level).
+Moreover, its dense FP64 cost matrix alone occupies $8$\,GiB CPU memory, compared with $0.55$\,GiB GPU memory for \ours.
+
+\item \textbf{\multiscaleot\ (c).}
+Deferred because it targets low-dimensional problems ($d\leq 3$) and required our GPU-accelerated port of its CPU-only release.
+Across measured settings, \ours surpasses the highest accuracy attained by \multiscaleot while running $293$--$1{,}431\times$ faster.
+\end{itemize}
+
 \begin{figure}[tb]
 \centering
-% CN: 固定数据与来源 SHA256：figures/plot_sources/supplementary_baselines_pilot.json；重画入口（项目根目录）：paper_experiments_uot/accuracy_runtime_pareto/plot_supplementary_baselines.py。
-% EN: Frozen plot inputs and source SHA256: figures/plot_sources/supplementary_baselines_pilot.json; redraw from the project root with paper_experiments_uot/accuracy_runtime_pareto/plot_supplementary_baselines.py.
-% CN: 仅替换中间组：AdNS-UOT 与 Salut 的 40 个有效点来自 paper_experiments/adns_uot/results/tome_appendix_n32768_seed42_cpu2_20261116_v2/salut_comparison.json，原始指标与输入/参考审计在同批目录；9 项 AdNS 记录从 v1 复用，原始耗时不变。内存来自 summary.json 的 process_peak_rss_before_evaluation_mib。
-% EN: Only the middle group is replaced: 40 valid AdNS-UOT/Salut observations come from paper_experiments/adns_uot/results/tome_appendix_n32768_seed42_cpu2_20261116_v2/salut_comparison.json, with raw metrics and input/reference audits in that batch; nine AdNS records retain their original v1 runtimes. Memory uses process_peak_rss_before_evaluation_mib in summary.json.
-% CN: ETM 与 MultiScaleOT 两组冻结数据保持不变，来源分别为 accuracy_runtime_pareto/results/20261114_etm_pilot_v7_my4090/summary.csv 和 20261115_lowdim_my4090/lowdim_baselines/summary.json；原 POT 图源归档到 supplementary_baselines_before_adns.json。
-% EN: Frozen ETM and MultiScaleOT data remain unchanged, from accuracy_runtime_pareto/results/20261114_etm_pilot_v7_my4090/summary.csv and 20261115_lowdim_my4090/lowdim_baselines/summary.json; the former POT plot source is archived in supplementary_baselines_before_adns.json.
+% CN: 固定数据与来源 SHA256：figures/plot_sources/supplementary_baselines_20261120.json（同步写入 supplementary_baselines_pilot.json）；重画入口（项目根目录）：paper_experiments_uot/accuracy_runtime_pareto/plot_supplementary_baselines.py。
+% EN: Frozen plot inputs and source SHA256: figures/plot_sources/supplementary_baselines_20261120.json (mirrored to supplementary_baselines_pilot.json); redraw from the project root with paper_experiments_uot/accuracy_runtime_pareto/plot_supplementary_baselines.py.
+% CN: (a) ETM 五 seed 正式数据（n=32768，180/180，A100）来自 accuracy_runtime_pareto/results/20261117_paper_data_etm/pareto_aggregate.csv；(c) MultiScaleOT 五 seed 正式数据（n=18432，d=3，160/160，A100）来自 accuracy_runtime_pareto/results/20261117_paper_data_multiscale/pareto_aggregate.csv；旧 pilot 归档至 supplementary_baselines_before_20261120.json。
+% EN: (a) Five-seed ETM data (n=32768, 180/180, A100) from accuracy_runtime_pareto/results/20261117_paper_data_etm/pareto_aggregate.csv; (c) five-seed MultiScaleOT data (n=18432, d=3, 160/160, A100) from accuracy_runtime_pareto/results/20261117_paper_data_multiscale/pareto_aggregate.csv; prior pilot archived in supplementary_baselines_before_20261120.json.
+% CN: (b) AdNS-UOT 与 Salut 的 40 个单 seed（seed 42）有效点来自 paper_experiments/adns_uot/results/tome_appendix_n32768_seed42_cpu2_20261116_v2/salut_comparison.json，原始指标与输入/参考审计在同批目录。
+% EN: (b) 40 valid seed-42 AdNS-UOT/Salut observations from paper_experiments/adns_uot/results/tome_appendix_n32768_seed42_cpu2_20261116_v2/salut_comparison.json, with raw metrics and input/reference audits in that batch.
 \includegraphics[width=\linewidth]{figures/uot_supplementary_baselines_pilot.pdf}
-% CN: 无框图例重绘使用相同冻结输入，来源校验见 figures/plot_sources/style_refresh_20261117.json。
-% EN: Unframed legends use the same frozen inputs; source checks are in figures/plot_sources/style_refresh_20261117.json.
 \caption{\textbf{Supplementary UOT comparisons.}
-Three groups of $2\times2$ panels compare \ours with (a) \etm, (b) \adnsuot, and (c) \multiscaleot.
-Groups (a), (b), and (c) use $m=n=4{,}096$, $32{,}768$, and $4{,}096$, respectively; (c) uses $d=3$.
-Each group covers the four indicated marginal-penalty settings, using the shared gap in~\eqref{eq:experimental-shared-gap}; larger markers indicate stricter parameter settings.
-In (b), \adnsuot runs on one CPU thread and \ours uses an A100; GPU measurements in (a) and (c) use RTX 4090.
-All groups use seed 42, with one measurement per configuration; (b) includes all five settings for each method and penalty.}
-% \xwz{SEED COVERAGE: Intentional single-seed appendix comparison, seed 42. The AdNS-UOT group has complete parameter coverage (20 points per method); ETM and MultiScaleOT retain their existing pilot data.}
+\ours versus (a) \etm ($n=32{,}768$), (b) \adnsuot ($n=32{,}768$), and (c) \multiscaleot ($n=18{,}432$, $d=3$), with $m=n$.
+Larger markers target higher accuracy.
+}
 \label{fig:uot-supplementary-baselines}
 \end{figure}
-
-We compare \ours separately with \etm, \adnsuot, and \multiscaleot, using matched inputs and references within each comparison.
-Appendix~\ref{app:implementation-extra-baselines} describes the implementations and GPU ports.
-Figure~\ref{fig:uot-supplementary-baselines} combines the ETM and MultiScaleOT pilots with the completed single-seed \adnsuot sweep at $n=32{,}768$.
-In the \adnsuot comparison, \ours reaches comparable or smaller shared gaps in seconds, while the CPU baseline requires hundreds to over a thousand seconds.
-The dense FP64 cost matrix alone occupies 8\,GiB at this scale; the measured CPU-process peak before common evaluation is approximately 8.10\,GiB.
-This process-level peak includes input loading and solver execution, rather than only the solver's workspace.
 
 
 \subsection{Generality of KL-UOT}
 \label{app:uot-generality}
 
-Across all 28 panels, \ours retains the runtime--accuracy advantage for every cost type, dimension, feature set, and reference mass.
+Figure~\ref{fig:uot-generality} evaluates \ours across 28 settings spanning ground costs, datasets, dimensions, and nonuniform reference masses.
+While exceeding each baseline's highest achieved accuracy in every panel, \ours achieves geometric mean speedups of $172\times$ over \mm, $107\times$ over \sinkhorn, and $31\times$ over \hellouot.
 
-\begin{figure}[p] 
+\begin{figure}[htbp] 
 \centering
 % CN: 已结束五 seed 批次的 2339/2500 次有效测量；两轮 timing repair（139 cells/695 runs + 43 cells/66 runs）已修复，固定数据见 figures/plot_sources/generality_final_20261120.json。
 % EN: Completed five-seed batch with 2339/2500 valid measurements; two timing repairs (139 cells/695 runs + 43 cells/66 runs) were applied; pinned data: figures/plot_sources/generality_final_20261120.json.
 \includegraphics[width=\linewidth]{figures/uot_generality_n16384.pdf}
 \caption{\textbf{Runtime--accuracy comparisons across problem settings.}
-Each panel compares runtime against \sharedgap~\eqref{eq:experimental-shared-gap} at $m=n=16{,}384$.
-Rows vary the ground cost ($\ell_2$, $\ell_1$, $\ell_\infty$), dataset (Gaussian-to-ImageNet latent features), dimension ($d=4$, $d=2048$), and reference masses (nonuniform), respectively; all other settings follow the defaults.
-Columns correspond to $(\rho_a,\rho_b)=(0.1,0.1),(1,1),(10,10),(0.045,99.995)$, using KL marginal penalties.
-All panels compare \ours, \mm, and \sinkhorn; panels with $\ell_2^2$ costs additionally include \hellouot.
-Lines connect parameter settings for each method.
-}
+KL-UOT at $m=n=16{,}384$, with each row varying one setting from the default.
+\hellouot appears only in rows (d)--(g), as its released implementation supports only $\ell_2^2$ costs.
+Larger markers target higher accuracy.}
 \label{fig:uot-generality}
 \end{figure}
 \subsection{Direct Comparison with \hellouot}
 \label{app:hello-uot-comparison}
 
 
+
+Figure~\ref{fig:hello-uot-trajectories} breaks down the $m=n=131{,}072$ comparison in Table~\ref{tab:hello-uot-main} by marginal penalty.
+Across all four settings, \ours converges faster than \hellouot's initialization alone.
+Under moderate and strong symmetric penalties, \hellouot terminates in few outer calls but remains $11.3\times$ and $14.4\times$ slower than \ours, respectively, due to the cost of each balanced-OT oracle call.
+Under weak and asymmetric penalties, it requires dozens of outer calls and is $132\times$ and $225\times$ slower, respectively.
+
 \begin{figure}[tb]
 \centering
-% CN: 五 seed 轨迹按 oracle 调用序号取均值，停止后保留最终候选；固定来源见 figures/plot_sources/hello_comparison_final_20261119.json。
-% EN: Five-seed trajectories average oracle-call indices, retaining terminal candidates after stopping; pinned sources: figures/plot_sources/hello_comparison_final_20261119.json.
+% CN: 与正文 Table 2 同批（20261119_hello_tolerance_table）；按各 seed 取 best-so-far 原问题候选后再按 oracle 调用序号取五 seed 均值，停止后保留最终 incumbent；固定来源见 figures/plot_sources/hello_comparison_final_20261120.json。
+% EN: Same batch as Table 2 (20261119_hello_tolerance_table); per-seed best-so-far primal candidates averaged at each oracle-call index, retaining terminal incumbents after stopping; pinned sources: figures/plot_sources/hello_comparison_final_20261120.json.
 \includegraphics[width=\linewidth]{figures/hello_uot_gap_time_n131072.pdf}
-\caption{\textbf{\hellouot trajectories and final \ours solutions.}
-The four panels cover the labeled penalty pairs with $m=n=131{,}072$.
-Brown squares trace observed \hellouot primal candidates after initialization and each outer oracle call; one coral point marks the final \ours solution at its complete solve time.
-Both axes are logarithmic, and \sharedgap uses an independent audited lower bound for each instance.
-}
-% \xwz{SEED COVERAGE: Current trajectories and final Salut points use seed 42 only. Update together with the direct-comparison table after final-protocol five-seed measurements.}
+\caption{\textbf{\hellouot trajectories versus final \ours solutions} ($m=n=131{,}072$).
+Brown squares trace five-seed mean best-so-far \hellouot primal candidates after initialization and each outer balanced-OT oracle call (inner tolerance $10^{-6}$, outer tolerance $10^{-4}$); the coral dot marks the final \ours solution (tolerance $10^{-6}$).}
 \label{fig:hello-uot-trajectories}
 \end{figure}
-\paragraph{Protocol.}
-We use the same pinned TOME inputs for both methods at $n=m\in\{32{,}768,65{,}536,131{,}072\}$, with $d=30$.
-\ours uses its standard hierarchy settings, coarse threshold 256, \subsolver in \texttt{original\_plus} mode, and original-UOT KKT tolerance $10^{-6}$.
-Both methods return their final native solutions; \ours is represented by one point at the complete synchronized solve time, including all hierarchy levels.
-The native stopping tests are method-specific, and the common \sharedgap evaluates the resulting primal accuracy.
 
-\paragraph{Common bound and timing.}
-The common bound in Appendix~\ref{app:experiment-metrics} passes the full-space feasibility audit.
-For \hellouot, initialization time includes the synchronized formal \sinkhorn solve and the initial balanced oracle.
-The legacy \sinkhorn timing starts with resident JAX inputs: its first upload takes place before warmup and is excluded, whereas subsequent balanced-oracle transfers and \ours input transfers are included.
-Both methods are timed through their final native output.
+\subsection{Million-Scale Baselines across Penalty Settings}
+\label{app:million-scale-additional}
+
+Table~\ref{tab:million-scale-baselines-appendix} extends the $3600$\,s million-point comparison across all four penalty settings.
+All baselines exhaust the time budget while retaining gaps over two orders of magnitude larger than \ours.
+By contrast, \ours converges within $126$--$170$\,s across all four penalties, maintaining \sharedgap below $3.7\times10^{-5}$ with the lowest GPU memory.
+
+\begin{table}[htbp]
+\centering
+% CN: 三批基线实测结果和逐次 Gap 计算固定于 tables/million_comparison.json；Salut 来自 scaling_final_20261119.json；表行由 collect.py --million-comparison 生成。
+% EN: Three measured baseline batches and per-run gap calculations are pinned in tables/million_comparison.json; Salut comes from scaling_final_20261119.json; rows are generated by collect.py --million-comparison.
+\caption{\textbf{Million-point linear-memory baseline comparison across penalty settings} ($m=n=1{,}048{,}576$, $d=30$, Zhuang-ABCA-1$\to$Zhuang-ABCA-2).
+Baselines use a soft $3600$\,s budget; $^\dagger$ marks timeouts (reported times are actual runtimes).
+Protocol in Appendix~\ref{app:million-baseline-protocol}.}
+\label{tab:million-scale-baselines-appendix}
+\footnotesize
+\setlength{\tabcolsep}{1.5pt}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lr*{8}{r}@{}}
+\toprule
+\multirow{2}{*}{Method} & \multirow{2}{*}{\gpumemshort~$\downarrow$} & \multicolumn{2}{c}{$\rho=(0.1,0.1)$} & \multicolumn{2}{c}{$\rho=(1,1)$} & \multicolumn{2}{c}{$\rho=(10,10)$} & \multicolumn{2}{c}{$\rho=(0.045,99.995)$} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+ & & \runtime~$\downarrow$ & \sharedgap~$\downarrow$ & \runtime~$\downarrow$ & \sharedgap~$\downarrow$ & \runtime~$\downarrow$ & \sharedgap~$\downarrow$ & \runtime~$\downarrow$ & \sharedgap~$\downarrow$ \\
+\midrule
+\input{tables/million_comparison_appendix_rows.tex}
+\end{tabular*}
+\end{table}
 
 
 % CN: 分析实验附录；占位数据与实测结果必须显式区分。
@@ -788,47 +818,42 @@ Both methods are timed through their final native output.
 \subsection{Accuracy across Entropic Strengths}
 \label{app:entropic-epsilon-accuracy}
 
-We evaluate the returned sparse coupling on TOME E11.5$\to$E12.5 with $m=n=16{,}384$, $d=30$, and mean squared ground cost normalized to one.
-For each of the four penalty settings, we use seven logarithmically spaced values of $\varepsilon$ from $10^{-3.5}$ to $10^{-2.5}$, centered at $10^{-3}$.
-Support reconstruction retains the positive-flow edges of the unregularized solution and allocates the remaining final active-support edge budget to bidirectional dual assignment.
-\ours and sparse refinement use native stopping thresholds of $10^{-6}$; each configuration has a separate FP64 \ottonline reference with native stopping threshold $10^{-8}$ and an independently computed initializer.
-All 140 sparse solves and their independent references pass the declared success checks.
-
-Figure~\ref{fig:entropic-epsilon-accuracy} reports the full-space shared gap~\eqref{eq:entropic-evaluation-gap}, the relative coupling error $E_X=\|\mathbf X-\mathbf X_{\mathrm{ref}}\|_1/\|\mathbf X_{\mathrm{ref}}\|_1$, and the fraction of reference mass omitted by the reconstructed support $\mathcal N$,
+Figure~\ref{fig:entropic-epsilon-accuracy} tests how accurately \ourssparsink approximates the dense entropic solution across seven entropic strengths $\varepsilon\in[10^{-3.5},10^{-2.5}]$ at $m=n=16{,}384$, using the fixed support budget and tolerance $10^{-6}$ against an independent FP64 \ottonline reference (threshold $10^{-8}$) at each $\varepsilon$.
+For entropic UOT comparisons, we evaluate the full entropic primal $P_\varepsilon$ against the independent reference dual bound $D_{\varepsilon,\mathrm{ref}}$ via the normalized shared gap
 \begin{equation}
-\delta_{\mathrm{ref}}=\frac{\sum_{(i,j)\notin\mathcal N}(X_{\mathrm{ref}})_{ij}}{\sum_{ij}(X_{\mathrm{ref}})_{ij}}.
-\label{eq:entropic-reference-omitted-mass}
+\entropicgap=\frac{P_\varepsilon-D_{\varepsilon,\mathrm{ref}}}{\max\{|P_\varepsilon|,|D_{\varepsilon,\mathrm{ref}}|,10^{-15}\}}.
+\label{eq:entropic-evaluation-gap}
 \end{equation}
-Here, $\|\cdot\|_1$ is the entrywise norm, and the sparse output is zero outside $\mathcal N$.
-Consequently, every coupling supported on $\mathcal N$ has $E_X\geq\delta_{\mathrm{ref}}$ against this reference coupling.
-Every $\varepsilon$ defines a different entropic objective; the sweep measures approximation quality for each objective separately.
-
-At $\varepsilon=10^{-3}$, the shared gap is $2.26$--$2.41\times10^{-7}$, the relative coupling error is $9.83\times10^{-5}$--$2.04\times10^{-4}$, and the omitted reference mass fraction is $2.42$--$3.91\times10^{-5}$.
-At $\varepsilon=10^{-2.5}$, the coupling error rises to $2.60\%$--$3.26\%$, with $1.20\%$--$1.41\%$ of the reference mass outside the support.
-These measurements illustrate how the fixed support budget limits approximation as the entropic coupling spreads over more edges.
+Here we additionally report the entrywise relative coupling error $e_{\mathbf X}$ and the reference mass fraction $e_{\mathrm{out}}$ omitted outside the reconstructed support $\mathcal N$:
+\begin{equation*}
+e_{\mathbf X} = \frac{\|\mathbf X-\mathbf X_{\mathrm{ref}}\|_1}{\|\mathbf X_{\mathrm{ref}}\|_1}, \qquad
+e_{\mathrm{out}} = \frac{\sum_{(i,j)\notin\mathcal N}(X_{\mathrm{ref}})_{ij}}{\sum_{ij}(X_{\mathrm{ref}})_{ij}},
+\end{equation*}
+where $e_{\mathrm{out}}$ lower-bounds $e_{\mathbf X}$ since $\mathbf X$ vanishes outside $\mathcal N$.
+Across all four penalty settings, approximation accuracy improves rapidly as $\varepsilon$ decreases: at $\varepsilon=10^{-3}$, the shared gap is $2.26$--$2.41\times10^{-7}$, $e_{\mathbf X}$ is $9.83\times10^{-5}$--$2.04\times10^{-4}$, and $e_{\mathrm{out}}$ is $2.42$--$3.91\times10^{-5}$, with all three metrics smaller still for $\varepsilon<10^{-3}$.
 
 \begin{figure}[tb]
 \centering
 % CN: 三指标五-seed 均值曲线来自 paper_experiments_uot/entropic_epsilon_accuracy/results/20261117_paper_data_entropic_epsilon_accuracy/{epsilon_aggregate.json,config.json}；固定输入及来源 SHA256 见 figures/plot_sources/entropic_epsilon_sparse_20261120.json，重画入口 scripts/plot_entropic_epsilon_accuracy.py；140/140 有效，仅 sparse readout。
 % EN: Five-seed mean metric curves use paper_experiments_uot/entropic_epsilon_accuracy/results/20261117_paper_data_entropic_epsilon_accuracy/{epsilon_aggregate.json,config.json}; pinned inputs and source SHA256 are in figures/plot_sources/entropic_epsilon_sparse_20261120.json. Redraw with scripts/plot_entropic_epsilon_accuracy.py; all 140 sparse observations are valid.
 \includegraphics[width=\linewidth]{figures/entropic_epsilon_sparse_accuracy.pdf}
-\caption{\textbf{Sparse entropic UOT accuracy across entropic strengths.}
-$m=n=16{,}384$, with mean ground cost one.
-Columns separate the four penalty pairs.
-Each panel overlays the shared gap, relative coupling $\ell_1$ error, and omitted reference mass fraction~\eqref{eq:entropic-reference-omitted-mass}, distinguished by color, marker, and line style.
-All axes are logarithmic; the horizontal coordinate is $\varepsilon/10^{-3}$, and each point uses the returned sparse coupling and an independent reference at the same $\varepsilon$.
-}
+\caption{\textbf{Sparse entropic UOT accuracy across entropic strengths} ($m=n=16{,}384$).
+Each point evaluates the returned sparse coupling against an independent FP64 \ottonline reference at the same $\varepsilon$.}
 \label{fig:entropic-epsilon-accuracy}
 \end{figure}
 
 \subsection{UFGW Solver Trajectories}
 \label{app:ufgw-solver-trajectories}
 
-The trajectories use the same runs as Table~\ref{tab:ufgw-solvers}.
-Figure~\ref{fig:ufgw-objective-time} uses the same independent FP64 objective for both methods and excludes its evaluation from the plotted runtime.
-These trajectories describe progress under the fixed sweep budget rather than certify outer convergence or global optimality.
+Figure~\ref{fig:ufgw-objective-time} shows the objective--time trajectories from the same runs as Table~\ref{tab:ufgw-solvers}, evaluated in CPU FP64 on the common two-coupling objective
+\begin{equation}
+\ufgwobj(\mathbf P,\mathbf Q) = \mathcal F_0(\mathbf P,\mathbf Q) + \varepsilon\,\KL(\mathbf P\otimes\mathbf Q\,|\,(\mathbf a\otimes\mathbf b)\otimes(\mathbf a\otimes\mathbf b)),
+\label{eq:ufgw-eval-objective}
+\end{equation}
+where $\mathcal F_0(\mathbf P,\mathbf Q)$ is the unregularized objective in~\eqref{eq:ufgw-relaxation}.
+Our variants complete all ten sweeps $30.0\times$ faster than \bcdmm at $\varepsilon=0$ and $5.8\times$ faster than \bcdsinkhorn at $\varepsilon=10^{-3}$, matching \bcdsinkhorn's objective at $\varepsilon=10^{-3}$ and attaining a lower objective than \bcdmm at $\varepsilon=0$.
 
-\begin{figure*}[tp]
+\begin{figure*}[htb]
 \centering
 % CN: 左右两图均来自 paper_experiments_uot/ufgw_solver_comparison/results/20261117_paper_data_ufgw_solver_comparison/cases/*/{shuttle,pot}_repeat0/trajectory.json（seeds 0--4 按 sweep 取五-seed 均值）；固定轨迹与来源 SHA256 见 figures/plot_sources/ufgw_solver_comparison_20261120.json。
 % EN: Both panels use five-seed sweep-averaged trajectories from paper_experiments_uot/ufgw_solver_comparison/results/20261117_paper_data_ufgw_solver_comparison/cases/*/{shuttle,pot}_repeat0/trajectory.json (seeds 0--4); pinned trajectories and source SHA256: figures/plot_sources/ufgw_solver_comparison_20261120.json.
@@ -842,38 +867,27 @@ These trajectories describe progress under the fixed sweep budget rather than ce
 \includegraphics[width=\linewidth]{figures/ufgw_objective_time_eps0.001.pdf}
 \caption{$\varepsilon=10^{-3}$.}
 \end{subfigure}
-\caption{\textbf{UFGW objective--time trajectories.}
-STARmap well05--well11 with $m=n=16{,}384$, $\alpha=0.4$, and $\rho_a=\rho_b=0.1$.
-Markers show initialization and ten complete sweeps; the initial product couplings are assigned time zero.
-Left: \oursufgw versus \bcdmm; right: \ourssinkhornufgw versus \bcdsinkhorn.
-Main plots show the original objective on linear axes; insets enlarge sweeps 3--10 with shared axis limits for both methods.
-Experiments run on A100 GPUs.}
+\caption{\textbf{UFGW objective--time trajectories} on STARmap well05--well11 ($m=n=16{,}384$, $d=30$, $\alpha=0.4$, $\rho_a=\rho_b=0.1$).
+Markers denote initialization and ten complete sweeps, averaged across five seeds at each sweep.}
 \label{fig:ufgw-objective-time}
 \end{figure*}
 
 
 \subsection{Temporal Transport Timing}
 \label{app:temporal-timing}
-\begin{figure}[tb]
+\begin{figure}[htb]
 \centering
-% CN: 分项数据来自 paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/summary_table.csv；固定绘图输入与 SHA256 见 figures/plot_sources/experiment_figures_20261114.json，由 scripts/refresh_experiment_figures.py 重画。
-% EN: Timing data originate from paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/summary_table.csv; pinned inputs and SHA256 hashes are in figures/plot_sources/experiment_figures_20261114.json, redrawn by scripts/refresh_experiment_figures.py.
+% CN: 分项数据来自 paper_experiments_uot/moscot_time/results/20261117_paper_data_moscot_time/summary_table.csv；固定绘图输入与 SHA256 见 figures/plot_sources/moscot_time_20261120.json，由 moscot_time/collect.py::plot 重画。
+% EN: Timing data originate from paper_experiments_uot/moscot_time/results/20261117_paper_data_moscot_time/summary_table.csv; pinned inputs and SHA256 hashes are in figures/plot_sources/moscot_time_20261120.json, redrawn via moscot_time/collect.py::plot.
 \includegraphics[width=\linewidth]{figures/moscot_time_runtime.pdf}
-\caption{\textbf{Temporal transport timing breakdown.}
-(a) Coupling computation; (b) downstream evaluation.
-Triangle labels denote \ulot ranks ($1\mathrm{k}=1000$).}
-% \xwz{SEED COVERAGE: Current timing breakdown uses seed 42 across 19 time pairs. Refresh with the same five-seed runs used for temporal accuracy.}
+\caption{\textbf{Temporal transport timing breakdown} across the 19 mouse-embryogenesis time pairs (seed 42).
+(a) Coupling computation; (b) downstream evaluation.}
 \label{fig:temporal-timing-breakdown}
 \end{figure}
-Figure~\ref{fig:temporal-timing-breakdown} separates coupling computation from the authors' downstream evaluation pipeline.
-Coupling computation for \ourssparsink includes support reconstruction, sparse refinement, and CSR construction.
-Evaluation includes growth and apoptosis estimates, cell-type aggregation, and both accuracy scores.
-Full-rank and \ulot outputs use native OTT GPU operators, while sparse outputs use CPU CSR operations through the same moscot evaluation API.
-The timings therefore include the effects of each method's native coupling representation and evaluation backend.
-Compilation, warmup, and file I/O are excluded from both stages.
-% CN: 统计来自 paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/{summary.csv,summary_table.csv}；114/114 项已完成。
-% EN: Statistics come from paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/{summary.csv,summary_table.csv}, with 114/114 configurations complete.
-Across all 19 time pairs, the relative deviations of \ourssparsink from full-rank \sinkhorn are below $1.26\%$ for \transitionacc\ and $0.034\%$ for germ-layer accuracy, where relative deviation is the absolute score difference divided by the full-rank score.
+Figure~\ref{fig:temporal-timing-breakdown} separates coupling computation from the moscot downstream evaluation pipeline across the 19 time pairs of Figure~\ref{fig:temporal-runtime}.
+Downstream evaluation uses native OTT GPU operators for full-rank \sinkhorn and \ulot, and CPU CSR operations through the same moscot API for \ourssparsink; even on CPU, \ourssparsink matches \ulot's evaluation speed (and is one to two orders of magnitude faster than full-rank \sinkhorn on late stages) while substantially accelerating coupling computation.
+% CN: 统计来自 paper_experiments_uot/moscot_time/results/20261117_paper_data_moscot_time/{summary.csv,summary_table.csv}；114/114 项已完成（seed 42）。
+% EN: Statistics come from paper_experiments_uot/moscot_time/results/20261117_paper_data_moscot_time/{summary.csv,summary_table.csv}, with 114/114 configurations complete (seed 42).
 
 
 \section{Component and Mechanism Analysis}
@@ -882,19 +896,15 @@ Across all 19 time pairs, the relative deviations of \ourssparsink from full-ran
 \subsection{Hyperparameter Sensitivity}
 \label{app:uot-parameter-sensitivity}
 
-We vary the hierarchy split factor $s$, dual-assignment budget $\kappa$, pricing budget $\gamma$, and support budget factor $\beta$ one at a time.
-The other budget parameters remain at their default values $(s,\kappa,\gamma,\beta)=(4,16,2,10)$, and the coarsest-size threshold is fixed at 256.
-All settings satisfy $\beta\geq\gamma+3$ and use the same original full-space KKT tolerance of $10^{-6}$.
-The default is measured once per penalty pair and seed and reused across blocks; all 180 distinct runs reach the target tolerance.
+Table~\ref{tab:uot-parameter-sensitivity} varies the hierarchy split factor $s$, dual-assignment budget $\kappa$, pricing budget $\gamma$, and support budget factor $\beta$ one at a time around the default $(s,\kappa,\gamma,\beta)=(4,16,2,10)$ at $m=n=262{,}144$ (coarsest threshold $256$, KKT tolerance $10^{-6}$).
+Across all four parameters and penalty settings, runtime stays within $0.94$--$1.52\times$ of the default and memory remains low (scaling linearly with $\kappa$ as expected), showing that \ours is insensitive to hyperparameter choices around the default.
 
 \begin{table}[tb]
 \centering
 % CN: 全部耗时与显存均值来自 paper_experiments_uot/parameter_sensitivity/results/20261117_paper_data_parameter_sensitivity/summary_table.json；原始指标为同批次 cases/*/*/metrics.json；n=262144，五 seed（seeds 42--46），180/180 成功（含 refinement_forcing_check=True 与 J=64）；固定汇总与 SHA256 见 figures/plot_sources/parameter_sensitivity_20261120.json。四块共享每组 penalty 的 baseline，显存为 peak_gpu_memory_mib / 1024。
 % EN: All mean runtimes and memory measurements come from paper_experiments_uot/parameter_sensitivity/results/20261117_paper_data_parameter_sensitivity/summary_table.json, with raw metrics in cases/*/*/metrics.json; n=262144, five seeds (42--46), 180/180 successful runs (refinement_forcing_check=True, J=64); pinned aggregates and SHA256: figures/plot_sources/parameter_sensitivity_20261120.json. Blocks share each penalty's baseline, and memory is peak_gpu_memory_mib / 1024.
-\caption{\textbf{Hyperparameter sensitivity across marginal penalties.}
-$m=n=262{,}144$, KKT tolerance $10^{-6}$.
-\runtime is in seconds; \gpumem is peak active GPU allocation in GiB.
-Each block varies one parameter; bold and underlined entries mark the best and second-best displayed values within that block and penalty setting.}
+\caption{\textbf{Hyperparameter sensitivity across marginal penalties} ($m=n=262{,}144$, KKT tolerance $10^{-6}$).
+Each block varies one parameter; lower is better, with bold and underlined entries marking the best and second-best displayed values per block and penalty.}
 \label{tab:uot-parameter-sensitivity}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -902,7 +912,7 @@ Each block varies one parameter; bold and underlined entries mark the best and s
 \toprule
 \multirow{2}{*}{Variant} & \multicolumn{2}{c}{$(0.1,0.1)$} & \multicolumn{2}{c}{$(1,1)$} & \multicolumn{2}{c}{$(10,10)$} & \multicolumn{2}{c}{$(0.045,99.995)$} \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
- & \runtime & \gpumem & \runtime & \gpumem & \runtime & \gpumem & \runtime & \gpumem \\
+ & \runtime~$\downarrow$ & \gpumem~$\downarrow$ & \runtime~$\downarrow$ & \gpumem~$\downarrow$ & \runtime~$\downarrow$ & \gpumem~$\downarrow$ & \runtime~$\downarrow$ & \gpumem~$\downarrow$ \\
 \midrule
 \multicolumn{9}{l}{\textit{(a) Hierarchy split factor $s$ ($\kappa=16,\gamma=2,\beta=10$)}} \\
 $s=2$ & 17.91 & \textbf{1.625} & 21.84 & \textbf{1.600} & \underline{30.45} & \textbf{1.589} & 18.73 & \textbf{1.637} \\
@@ -935,31 +945,25 @@ $\beta=20$ & \textbf{13.67} & 1.656 & \underline{15.91} & \textbf{1.629} & \text
 % CN: 四档 MERFISH 规模、四组 penalty、五 seed 共 80 个正式 profile；原始来源、SHA256、阶段耗时及扫描次数见 figures/plot_sources/runtime_breakdown_20261119.json；复现入口 scripts/plot_runtime_breakdown.py。
 % EN: Eighty formal MERFISH profiles across four sizes, four penalties and five seeds; sources, SHA256, phase timings and scan counts: figures/plot_sources/runtime_breakdown_20261119.json; redraw with scripts/plot_runtime_breakdown.py.
 \includegraphics[width=\linewidth]{figures/uot_runtime_breakdown.pdf}
-\caption{\textbf{Runtime breakdown of \ours.}
-MERFISH instances at $m=n\in\{2^{14},2^{16},2^{18},2^{20}\}$, reaching KKT tolerance $10^{-6}$ on an A100.
-Bars show each phase's mean runtime as a percentage of mean total runtime over five seeds.
-Other includes support maintenance; labels give mean total runtime in seconds.}
+\caption{\textbf{Runtime breakdown of \ours} on MERFISH instances ($m=n$, KKT tolerance $10^{-6}$).
+Bars show each phase's share of mean total runtime (bar-top labels); Other includes support maintenance.}
 \label{fig:uot-runtime-breakdown}
 \end{figure}
 
-At moderate scale, such as $n=65{,}536$, \subsolver accounts for $55$--$82\%$ of total runtime, highlighting the importance of its efficiency to \ours's overall performance (Figure~\ref{fig:uot-runtime-breakdown}).
+Figure~\ref{fig:uot-runtime-breakdown} decomposes \ours's runtime across problem sizes.
+At moderate scale ($n=65{,}536$), \subsolver accounts for $55$--$82\%$ of total runtime, highlighting the importance of its efficiency to overall performance.
 At one million points per marginal, its share falls to $7$--$31\%$, and initialization and pricing, both involving $O(n^2d)$ pairwise computations, become the dominant costs.
+Accelerating these pairwise scans while preserving linear memory and exact optimality certification is therefore a natural direction for future work.
 
 
 \subsection{Convergence Safeguards}
 \label{app:pduot-weight-budget-experiment}
 
-We examine the iteration cost of the summable weight-update budget~\eqref{eq:pduot-weight-budget} and the refinement safeguard enforced by \checkstop in complete \ours solves.
-For the budget comparison, we retain the safeguard, fix $p=1.01$, and compare $J\in\{1,2,4,8,16,32,64\}$ with the adaptive controller with the budget disabled.
-For the safeguard comparison, we fix $J=64$ and remove only the additional refinement stopping conditions, retaining the same restricted KKT and full-space tolerances.
-The experiment uses TOME E11.5$\to$E12.5 with $m=n=65{,}536$, $d=30$, the four main-comparison penalty pairs, and seeds 42--46.
-All 180 runs reach KKT tolerance $10^{-6}$ using \texttt{finest\_fp64} costs.
-For each seed, we sum inner iterations over all hierarchy levels and the four penalty pairs before computing the mean and standard deviation in Figure~\ref{fig:pduot-weight-budget}.
-No update is clipped for $J\geq4$, including the default $J=64$, and every problem retains its unbudgeted iteration count.
-At $J=1$ and $J=2$, mean total iterations increase by $2.72\%$ and $0.62\%$, respectively.
-Removing the refinement safeguard leaves iteration counts unchanged on 19 of the 20 problems; on the remaining problem, the count decreases from 22,040 to 21,450.
-Retaining the safeguard increases mean total iterations by $0.077\%$ relative to removing it.
-Thus, the default budget and refinement safeguard provide the conditions used in our convergence analysis with little additional iteration cost on these problems.
+Figure~\ref{fig:pduot-weight-budget} measures the iteration cost of the summable weight-update budget~\eqref{eq:pduot-weight-budget} and the refinement safeguard in \checkstop on complete \ours solves ($m=n=65{,}536$, $p=1.01$, KKT tolerance $10^{-6}$).
+For each seed, we sum inner iterations across all hierarchy levels and all four penalty pairs.
+For $J\geq4$ (including the default $J=64$), the weight budget has no effect on iteration counts; even at $J=1$ and $J=2$, mean total iterations increase by only $2.72\%$ and $0.62\%$, respectively.
+Likewise, the refinement safeguard at $J=64$ adds only $0.077\%$ to mean total iterations.
+Thus, the default budget and refinement safeguard enforce our theoretical convergence conditions at negligible iteration overhead.
 
 \begin{figure}[tb]
 \centering
@@ -968,12 +972,9 @@ Thus, the default budget and refinement safeguard provide the conditions used in
 % CN: 固定汇总与原始指标 SHA256：figures/plot_sources/convergence_safeguards_20261115.json；复现入口：paper_experiments_uot/primal_weight_budget/collect.py --batch-id 20261115_224339_safeguard_my4090。
 % EN: Frozen summary and raw-metric SHA256: figures/plot_sources/convergence_safeguards_20261115.json; reproduce with paper_experiments_uot/primal_weight_budget/collect.py --batch-id 20261115_224339_safeguard_my4090.
 \includegraphics[width=3.45in]{figures/uot_primal_weight_budget.pdf}
-\caption{\textbf{Iteration cost of convergence safeguards.}
-Total inner iterations per seed, summed over the four penalty settings with $m=n=65{,}536$ and $p=1.01$.
-The budget groups retain the refinement safeguard; the rightmost group compares safeguard removal at fixed $J=64$.
-The disabled-budget control is measured once per seed and penalty pair and reused across $J$ groups.
-Across the 20 problems, four updates are clipped at $J=1$ and three at $J=2$; no clipping occurs for $J\geq4$.
-Bars show means and error bars denote sample standard deviations over five random seeds.}
+\caption{\textbf{Iteration cost of convergence safeguards} ($m=n=65{,}536$, $p=1.01$).
+Total inner iterations per seed summed over all levels and four penalty pairs; the rightmost pair compares removing the refinement safeguard at $J=64$.
+Bars show means and error bars denote sample standard deviations over five seeds.}
 \label{fig:pduot-weight-budget} 
 \end{figure}
 
@@ -981,9 +982,9 @@ Bars show means and error bars denote sample standard deviations over five rando
 \subsection{Support Sparsification}
 \label{app:sparsification-experiment}
 
-We evaluate the two-pass construction on cyclic sparse supports with $m=n$ ranging from $2^{10}$ to $2^{20}$, using four ground costs and three feature dimensions.
-All 360 recorded runs satisfy the prescribed output-support cap.
-The maximum absolute source and target marginal errors are below $1.1\times10^{-18}$, and the maximum absolute objective error is below $1.1\times10^{-11}$ for both KL and $\ell_2^2$ penalties.
+Figure~\ref{fig:uot-sparsification-scaling} evaluates the two-pass \sparsify procedure on cyclic sparse supports with $m=n\in[2^{10},2^{20}]$ across four ground costs and three feature dimensions.
+All 360 runs satisfy the output-support cap, with maximum absolute marginal errors below $1.1\times10^{-18}$ and objective errors below $1.1\times10^{-11}$ for both KL and $\ell_2^2$ penalties.
+Sparsification time scales nearly linearly with $n$ and is insensitive to feature dimension and ground cost.
 
 \begin{figure}[tb]
 \centering
@@ -992,11 +993,8 @@ The maximum absolute source and target marginal errors are below $1.1\times10^{-
 % CN: 由 paper_experiments/support_sparsification_uot/plot_scaling.py 生成；正文数值核验使用全部 360 条 records.jsonl 记录。
 % EN: Generated by paper_experiments/support_sparsification_uot/plot_scaling.py; numerical checks in the text use all 360 records in records.jsonl.
 \includegraphics[width=0.52\linewidth]{figures/support_sparsification_uot_scaling.pdf}
-\caption{\textbf{UOT support-sparsification scaling.}
-Panels (a)--(c) use feature dimensions $d=4,128,4096$, respectively, on cyclic sparse supports.
-Curves distinguish the four ground costs.
-Time includes both CPU cycle-cancellation passes and convex mixing, excluding compilation, feature and cost preparation, GPU/CPU transfers, and validation.
-Results are medians over five repeated timings per configuration.}
+\caption{\textbf{UOT support-sparsification scaling} on cyclic sparse supports.
+Time covers both CPU cycle-cancellation passes and convex mixing; values are medians over five repeated timings per fixed input.}
 % \xwz{SEED COVERAGE: Five timings reuse each fixed input and are summarized by medians. They are not five independent seeds; retain this exception or rerun independent inputs before changing the statistical claim.}
 \label{fig:uot-sparsification-scaling}
 \end{figure}

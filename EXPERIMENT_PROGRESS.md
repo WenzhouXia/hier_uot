@@ -1,6 +1,6 @@
 # hier_uot 论文实验重新梳理
 
-更新日期：2026-11-19（本次核对队列完成情况，更新 S01 主 Pareto 的完整阶段 HELLO-UOT 补测图源）。
+更新日期：2026-11-21（同步百万规模基线对比 Table 3 / E.4 实测合入状态；保留 S02/S03/S05/A02/Epsilon sweep/UFGW/L01 的五-seed 正式记录及 Temporal transport GPU BCSR 评估待合入提醒）。
 
 ## 统计约定与当前论文的 seed 覆盖
 
@@ -9,23 +9,23 @@
 | 实验／图表 | 当前论文的实际覆盖 | 后续工作 |
 |---|---|---|
 | S01 默认 Pareto，`fig:uot-runtime-accuracy` | 四个展示方法共 373/400 次测量有效；75 个绘制点中 74 个为五 seed 均值，一个 HELLO-UOT 点为三 seed 均值 | 队列已结束，最新耗时、gap、显存均已固定并替换论文图；失败、超时和策略跳过保留记录 |
-| S02 scaling，`fig:uot-large-scale` | seed 42，20 个配置各一次；历史 safeguard 关闭 | 按最终 safeguard、计时与监控协议重跑五 seed，不只是追加四个 seed |
-| S03 generality，`fig:uot-generality` | 五 seed 批次进行中，当前图为部分 seed 均值 | 当前图排除六条审核后待补测记录；当前轮结束后自动续跑 |
-| S04 补充 baseline，`fig:uot-supplementary-baselines` | seed 42；中间组已换为 n=32768 的 AdNS-UOT/Salut，各 20/20 个点；另两组保留 pilot | 按作者约定保留附录单 seed 比较；不同组规模、硬件分别标注 |
-| S05 HELLO-UOT 专项表和轨迹 | seed 42，12 个实例、24 次原生求解 | 审计可复用的 HELLO/reference；Salut 使用最终 safeguard 协议重跑，补齐五 seed并同时替换表和轨迹 |
+| S02 scaling，`fig:uot-large-scale` | seeds 42--46，100/100 求解及 reference 有效（`scaling_final_20261119.json`） | 2026-11-21：百万规模主表和附录已用实测快照替换占位值（`tables/million_comparison.json`）。现已取消旧单点补测 `exp-9aa596626e`，提交 seed 42 三档调参扫描 `exp-e5d2c15d43`（`20261121_zhuang_million_baselines_sweep_seed42`，24 项新测）；完成后与已有 seed 42 中间档复用合并（见下文 S02 说明）并按最小 Gap 选优更新 Table 3 / Table 8 / D.4.2 |
+| S03 generality，`fig:uot-generality` | seeds 42--46，2,339/2,500 有效测量（`generality_final_20261120.json`） | 已完成两轮 timing repair 并替换论文图与 E.2 几何平均加速统计 |
+| S04 补充 baseline，`fig:uot-supplementary-baselines` | seed 42；中间组已换为 n=32768 的 AdNS-UOT/Salut，各 20/20 个点；另两组保留 pilot | 待按需补跑五 seed；不同组规模、硬件已分别标注 |
+| S05 HELLO-UOT 专项表和轨迹 | seeds 42--46；正文 Table 2 与附录 E.3 轨迹均已统一至同一批次 `20261119_hello_tolerance_table`（`hello_tolerance_table_20261120.json` / `hello_comparison_final_20261120.json`） | 已完成并严格对齐 |
 | P01 restricted runtime CDF，`fig:restricted-runtime-cdf` | 四组 penalty 分别为 108/106/119/100 个固定快照，来自 8/7/5/8 个父 seed；每方法每快照一次 | 正式测量已补齐，433/433 个 reference 有效，1,724 项达标、8 项 MM 正常超时；图和统计已更新；统计单位为相关快照，不是五 seed 均值 |
-| A01 system components，`tab:component-settings-mock` | seeds 42--46，五组消融的正式均值 | Panel C 两种后端均接收传播的 primal--dual warm start；五次 PDCS 测量的 36 次受限调用全部记录 `warm_start_used=True` |
-| A02 sensitivity，`tab:uot-parameter-sensitivity` | n=262144、seed 42，一次测量；历史 safeguard 设置 | 最终协议重跑五 seed |
+| A01 system components，`tab:component-settings-mock` | seeds 42--46，五组消融（含 2026-11-20 重跑的 Panel D）正式均值（`component_ablation_20261120.json`） | 已完成 |
+| A02 sensitivity，`tab:uot-parameter-sensitivity` | n=262144、seeds 42--46，180/180 成功，含 `J=64` 与 refinement safeguard（`parameter_sensitivity_20261120.json`） | 已更新为五 seed 正式表 |
 | A03 runtime breakdown，`fig:uot-runtime-breakdown` | 四规模、四组 penalty、五 seed，80/80 clean profile 及配对对照完成 | 已替换为正式 A100 图及结果 |
 | A04 PDUOT CDF，`fig:pduot-component-ablation-cdf` | 四个 penalty 分别为 108/106/119/100 个快照，来自 8/7/5/8 个父 seed；每变体每快照一次 | 已完成固定 corpus 设计；统计单位是相关快照，不改写为五 seed 均值，不因默认声明增加重复 |
 | A05 weight budget / safeguard，`fig:pduot-weight-budget` | seeds 42–46，180/180 收敛 | 五 seed 已完整；保留均值与样本标准差，属于迭代数诊断，不作为耗时证据 |
 | A07 sparsification，`fig:uot-sparsification-scaling` | 每个固定输入五次计时取中位数，360 条记录 | 当前保留 repeated-timing 例外；若改成独立 seed 均值，须重新采样并测量，不能重标旧数据 |
 | Entropic Pareto，`fig:entropic-runtime-accuracy` | seeds 42--46；20 个 reference、320 次方法测量全部成功，64 个点均为五 seed 均值 | 正式图、caption、正文与附录协议已更新；圆点 fixed、叉号 auto，替换历史 direct-reuse 图 |
-| Epsilon sweep，`fig:entropic-epsilon-accuracy` | seed 42，四个 penalty × 七个 epsilon | 最终 sparse-coupling 协议下补四个 seed；不同 epsilon 不是 seed |
-| UFGW solver 表和轨迹 | seed 0，两个 epsilon × 两个算法，十个完整 sweeps | 补四个 seed，并同时替换表和轨迹；保持共同 objective 评价 |
-| Temporal accuracy / timing | seed 42，19 个 time pairs | 固定现有任务和参数，补四个运行 seed；time pair 数不是 seed 数 |
-| MOSTA，`tab:ufgw-application` | seed 0，七个 time pairs | 对已选配置补四个运行 seed，不默认每个 seed 重新调参 |
-| L01 squared-L2 | 正式 Pareto 200/240、generality 150/180 个方法测量有效；均为五 seed 设计；scaling 99/100 成功 | 2026-11-18 耗时审核发现 scaling 初始化异常候选及一项目录冲突，暂缓替换论文图；原始记录全部保留 |
+| Epsilon sweep，`fig:entropic-epsilon-accuracy` | seeds 42--46，四个 penalty × 七个 epsilon，140/140 成功（`entropic_epsilon_sparse_20261120.json`） | 已更新为五 seed 正式图与 E.4 正文统计 |
+| UFGW solver 表和轨迹 | seeds 0--4，两个 epsilon × 两个算法，20/20 成功（`ufgw_solver_comparison_20261120.json`） | 已更新正文 Table 5 与附录 E.5 五-seed 均值轨迹图 |
+| Temporal accuracy / timing | 当前论文已切换至 `20261117_paper_data_moscot_time`（seed 42，19 对，含 `J=64` 与 safeguard，评估为 CPU SciPy CSR，`moscot_time_20261120.json`） | **待更新（已入队）**：`worker.py` 已改用 GPU JAX BCSR 评估（`moscot_API_jax_BCSR_GPU`，`E3.5` 验证 `max transition diff = 0.0`）；已提交 `exp-38bf672bbd`（`20261120_paper_data_moscot_time_seeds43_46`，380 任务，含 `Salut-Sinkhorn` 与 4 个 `ULOT` rank 的 seeds 43--46）和 `exp-31fb1de861`（`20261120_paper_data_moscot_time_seed42_gpueval`，19 任务，seed 42 的 `Salut-Sinkhorn` GPU 评估）。**两批跑完后，需合并确定性 full-rank `Sinkhorn`（seed 42）与 5-seed 随机方法（seeds 42--46），重画正文 Fig. 6 和附录 E.6，同步更新加速比/评估描述及去掉 D.4.5 的单 seed 说明** |
+| MOSTA，`tab:ufgw-application` | seed 0，七个 time pairs | 五 seed 批次 `exp-ac67241785`（`20261120_moscot_hierot`）当前 `needs_attention`（66 accept / 4 needs_repair），修复完成后替换 Table 6 |
+| L01 squared-L2 | 正式 Pareto（`l2_pareto_20261120.json`）、generality（`l2_generality_20261118.json`）、scaling（`l2_scaling_20261120.json`）均为五 seed 正式图 | 已全部合入附录 G |
 
 主文只保留一次默认统计声明，并指向附录 Reporting；正文 caption 不重复列举缺失 seed。附录 Reporting 保留当前实际覆盖，源码注释保留待补任务。补跑完成后，先替换实际图表，再更新覆盖表及本清单；不将超时、OOM、失败或跳过的 seed 计为有效均值样本。
 
@@ -81,6 +81,11 @@
 - **下一步**：按最终 safeguard 和正式计时协议重跑，补齐五 seed。保留旧数据为历史测量，不把完成图源对齐等同于完成协议更新。
 - **补测恢复（2026-11-19）**：`exp-b4f4878adb` 保留已验收的 198 项调度结果，仅恢复两个因旧控制计划直接创建已有目录而失败的方法任务：百万点、seed 46、$\rho=(0.1,0.1)$ 与 $(1,1)$。恢复回调已更新为先归档旧输出再启动；现已入队，优先级第 3，待完成后更新五 seed scaling 图。
 - **解释边界**：线性存储保证与实测 runtime scaling 分开陈述；完整 pricing 每次仍有平方级点对工作。
+- **百万规模基线对比（2026-11-21）**：正文 `tab:million-scale-baselines`（$\rho=(0.1,0.1)$）与附录 E.4 `tab:million-scale-baselines-appendix`（四组 penalty）已合入实测结果，来源固定于 `tables/million_comparison.json`（含 `scaling_final_20261119.json` 及三批基线）。已取消旧 `exp-9aa596626e`，新提交 seed 42 三档全参扫描 `exp-e5d2c15d43`（配置 `config_zhuang_million_baselines_sweep_seed42.yaml`，批次 `20261121_zhuang_million_baselines_sweep_seed42`，24 项任务，`hello_uot` 开启 `memory_diagnostics=True`，关闭 `skip_stricter_after_timeout`）。跑完后按如下映射合并复用，再按各组最小 `shared_gap` 选优并更新 Table 3 / Table 8 / D.4.2：
+  - **`ott_online`**（`[1e-2, 1e-3, 1e-4]`）：`1e-2, 1e-4` 取自 `20261121_zhuang_million_baselines_sweep_seed42`；复用 `1e-3`（$\rho=(0.1,0.1)$ 取自 `20261120_180336_881185_infra`，其余三组取自 `20261120_212454_277339_infra`）。
+  - **`ulot`**（`[128, 256, 512]`）：`256, 512` 取自 `20261121_zhuang_million_baselines_sweep_seed42`；复用 `128`（$\rho=(0.1,0.1)$ 取自 `20261120_180336_881185_infra`，其余三组取自 `20261120_212454_277339_infra`）。
+  - **`hello_uot`**（`[1e-4, 1e-6, 1e-8]`）：`1e-4, 1e-8` 取自 `20261121_zhuang_million_baselines_sweep_seed42`（带实测峰值显存）；复用 `1e-6`（$\rho=(0.1,0.1)$ 取自 `20261120_180336_881185_infra`，其余三组取自 `20261121_143431_900071_infra`）。
+  - **`hier_uot`**：直接复用 `figures/plot_sources/scaling_final_20261119.json`（seeds 42--46）。
 - **追溯**：旧 E03；正文 `fig:uot-large-scale`，逐项精度来源为归档 `scaling_accuracy.csv`。
 
 ### S03：KL-UOT 的跨问题设置比较

@@ -401,7 +401,7 @@ We evaluate \ours in terms of unregularized UOT accuracy and scalability, restri
 % CN: 绘图字号与图例间距统一；固定输入、输出哈希及数据一致性检查见 figures/plot_sources/layout_refresh_20261118.json。
 % EN: Unified plot typography and legend spacing; fixed inputs, output hashes and data-preservation checks: figures/plot_sources/layout_refresh_20261118.json.
 Unless otherwise specified, experiments use TOME E11.5--E12.5 ($d=30$) with $\ell_2^2$ ground costs on a single NVIDIA A100 GPU.
-Our main comparison includes \mm, \sinkhorn, and \hellouot; additional baselines are considered in the appendix.
+Our main comparison includes \mm, \sinkhorn, and \hellouot.
 We use weak, moderate, and strong symmetric penalties, $(\rho_a,\rho_b)=(0.1,0.1),(1,1),(10,10)$, and the asymmetric setting $(0.045,99.995)$ adapted from the moscot temporal benchmark~\citep{klein2025mapping}.
 We report solver runtime (\runtime, seconds), peak active GPU memory (\gpumemshort, GiB), and primal accuracy using a shared objective gap (\sharedgap)~\eqref{eq:experimental-shared-gap}.
 In runtime--accuracy plots, lines connect parameter settings of the same method.
@@ -419,7 +419,7 @@ See Appendices~\ref{app:benchmark-data}, \ref{app:implementation-details}, and~\
 % EN: Quantitative comparisons: figures/plot_sources/pareto_comparison_analysis_20261119.json; matched accuracy uses the fastest scanned point meeting the target mean gap, and matched budgets use the smallest Salut mean gap within the baseline runtime, without interpolation.
 Figure~\ref{fig:uot-runtime-accuracy} compares \ours with strong UOT baselines. It shows one to three orders of magnitude speedups at comparable accuracy and roughly four to five orders of magnitude smaller gaps within matched runtime budgets.
 \ours uses only $0.55$ GiB, versus $16.10$ GiB for \sinkhorn and $56.02$ GiB for \mm, reflecting its linear-memory design.
-With each method's representative parameter setting fixed, mean runtimes vary by $3.4\times$ for \ours ($1.66$--$5.62$ seconds), versus $93.5\times$ for \mm, $16.6\times$ for \hellouot, and $21.8\times$ for \sinkhorn across penalty settings, indicating more stable runtime performance across marginal penalty strengths.
+At fixed representative settings, mean runtime varies by $3.4\times$ across penalties for \ours, versus $16.6$--$93.5\times$ for the baselines, indicating more stable performance across marginal penalty strengths.
 \begin{figure}[t]
 \centering
 % CN: 固定结果及单项正常超时补测见 figures/plot_sources/pareto_final_20261119.json；有效曲线点不变。
@@ -469,38 +469,36 @@ The \hellouot rows sweep its inner tolerance, with outer tolerance $100\times$ t
 \centering
 % CN: 五 seed 图和统计来自 main_scaling/results/20261119_clean_scaling_v2/（15 个计时离群点已在原 batch 上 repair）；100/100 求解及 reference 有效，固定数据见 figures/plot_sources/scaling_final_20261119.json。
 % EN: Five-seed plot and statistics: main_scaling/results/20261119_clean_scaling_v2/ (15 timing outliers repaired in place); all 100 solves and references are valid; pinned data: figures/plot_sources/scaling_final_20261119.json.
-\includegraphics[width=\linewidth]{figures/uot_zhuang_scaling.pdf}
+\includegraphics[width=\linewidth]{figures/uot_zhuang_scaling.pdf} 
 \caption{\textbf{Million-point UOT scalability.}
-(a) Runtime and (b) peak GPU memory on Zhuang-ABCA-1$\to$Zhuang-ABCA-2 ($m=n$, $d=30$).
+(a) Runtime and (b) peak GPU memory on Zhuang-ABCA-1$\to$Zhuang-ABCA-2 ($m=n$, $d=30$). 
 Gray lines indicate linear and quadratic scaling.}
 \label{fig:uot-large-scale}
 \end{figure}
 
 \begin{table}[t]
 \centering
-% CN: 假数据占位！仅用于预览排版效果：Online Sinkhorn、ULOT、HELLO-UOT 三行的数值均为猜测的假数据，待百万规模 1 小时上限实测完成后替换。Salut 一行使用 scaling_final_20261119.json 在 n=1,048,576 上四组 penalty、五 seed 的真实均值。
-% EN: PLACEHOLDER / MOCK DATA! For layout preview only: the Online Sinkhorn, ULOT, and HELLO-UOT rows contain guessed placeholder numbers to be replaced after running the million-scale one-hour benchmark. The Salut row uses the measured mean over four penalty settings and five seeds at n=1,048,576 from scaling_final_20261119.json.
-\caption{\textbf{Million-point comparison against linear-memory baselines} ($m=n=1{,}048{,}576$, Zhuang-ABCA-1$\to$Zhuang-ABCA-2, mean over four penalty settings).
-Baselines use a one-hour ($3600$\,s) wall-clock budget ($\varepsilon=10^{-3}$ for online \sinkhorn, rank $128$ for \ulot, inner tolerance $10^{-6}$ for \hellouot); $^\dagger$ indicates hitting the time limit before convergence.}
+% CN: 基线逐次目标、实际耗时及来源见 tables/million_comparison.json；Salut 来自 scaling_final_20261119.json；按 shared gap 定义（eq:experimental-shared-gap）逐次计算后取均值。HELLO-UOT 显存按作者约定沿用相同 batch size 的 Sinkhorn-Online 实测峰值。
+% EN: Per-run baseline objectives, actual times and sources: tables/million_comparison.json; Salut: scaling_final_20261119.json; gaps are normalized per run before averaging. HELLO-UOT memory follows the author's convention using the measured Sinkhorn-Online peak at the same batch size.
+\caption{\textbf{Million-point comparison against linear-memory baselines} ($m=n=1{,}048{,}576$, $d=30$, Zhuang-ABCA-1$\to$Zhuang-ABCA-2, $\rho=(0.1,0.1)$).
+$^\dagger$ marks soft timeouts (reported times are actual runtimes).
+Protocol in Appendix~\ref{app:million-baseline-protocol}.}
 \label{tab:million-scale-baselines}
 \footnotesize
-\setlength{\tabcolsep}{2pt}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrr@{}}
+\setlength{\tabcolsep}{1.5pt}
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrr@{}}
 \toprule
-Method & \runtime~$\downarrow$ & \sharedgap~$\downarrow$ \\
+Method & \runtime~$\downarrow$ & \gpumemshort~$\downarrow$ & \sharedgap~$\downarrow$ \\
 \midrule
-Online \sinkhorn & $3600.0^\dagger$ & $1.84\times10^{-1}$ \\
-\ulot & $2145.6^\dagger$ & $6.23\times10^{-2}$ \\
-\hellouot & $3600.0^\dagger$ & $8.91\times10^{-3}$ \\
-\ours & \textbf{138.8} & $\boldsymbol{2.97\times10^{-5}}$ \\
-\bottomrule
+\input{tables/million_comparison_main_rows.tex}
 \end{tabular*}
 \end{table}
 
-Figure~\ref{fig:uot-large-scale} scales \ours to over one million points per marginal on whole-brain MERFISH data~\citep{zhang2023wholebrainmerfish}.
-Figure~\ref{fig:uot-large-scale} shows linear memory growth and subquadratic runtime growth over the measured range.
-At one million points per marginal, \ours takes $126$--$170$ seconds using at most $6.50$ GiB on a single A100, with shared gaps below $7.1\times10^{-5}$ across all cases.
-Under a one-hour wall-clock budget at $m=n=1{,}048{,}576$, Table~\ref{tab:million-scale-baselines} further compares \ours against linear-memory baselines: the baselines either exhaust the time budget or remain orders of magnitude less accurate, whereas \ours reaches a mean gap of $2.97\times10^{-5}$ in $138.8$ seconds.
+Figure~\ref{fig:uot-large-scale} shows linear memory growth up to $m=n=1{,}048{,}576$ on whole-brain MERFISH data~\citep{zhang2023wholebrainmerfish}, where \ours finishes in $126$--$170$ seconds using at most $6.50$ GiB on a single A100 with shared gaps below $7.1\times10^{-5}$.
+Runtime grows nearly linearly at moderate scales and shifts toward quadratic scaling near one million points as the $O(n^2d)$ pairwise computations in initialization and full-space pricing become dominant (Appendix~\ref{app:runtime-breakdown}).
+Table~\ref{tab:million-scale-baselines} compares methods at $\rho=(0.1,0.1)$, the most favorable setting for baseline convergence.
+\ours attains gaps over two orders of magnitude smaller than the baselines in $126$ seconds with lower peak memory; the baseline runs exceed the soft $3600$\,s budget without converging.
+Results across all four penalty settings appear in Appendix~\ref{app:million-scale-additional}.
 
 \paragraph{Generality.}
 Furthermore, \ours maintains its runtime and accuracy advantages across ground costs, datasets, dimensions, and reference masses (see Appendix~\ref{app:uot-generality}).
@@ -554,7 +552,6 @@ Preconditioning reduces mean iterations across all four penalty settings, while 
 \begin{table}[t]
 \centering
 \caption{\textbf{Component ablations.}
-$m=n$, KKT tolerance $10^{-6}$.
 $n=262{,}144$ for A, $8{,}192$ for B and C, and $16{,}384$ for D and E.
 \refineiters counts finest-level refinement rounds.
 Protocol in Appendix~\ref{app:system-component-protocol}.
@@ -619,7 +616,7 @@ Protocol in Appendix~\ref{app:extension-protocols}.
 \label{fig:entropic-runtime-accuracy}
 \end{figure}
 
-Figure~\ref{fig:entropic-runtime-accuracy} compares \ourssparsink with online \sinkhorn and \sparsink on the same entropic UOT objective.
+Figure~\ref{fig:entropic-runtime-accuracy} compares \ourssparsink with \sinkhornonline and \sparsink on the same entropic UOT objective.
 Across all four penalty settings, \ourssparsink reaches $\sharedgap<5\times10^{-7}$ in $1$--$12$ seconds at $b_{\mathrm e}=8$, and $\sharedgap<10^{-10}$ at $b_{\mathrm e}=32$.
 Appendix~\ref{app:entropic-epsilon-accuracy} further evaluates reconstruction accuracy across entropic strengths.
 % \xwz{The unmeasured Schmitzer/LCN appendix and its main-text promise are temporarily omitted.}
@@ -673,25 +670,18 @@ Objective--time trajectories appear in Appendix~\ref{app:ufgw-solver-trajectorie
 \label{sec:downstream-applications}
 
 \paragraph{Temporal transport.}
-% \xwz{RERUN REQUIRED FOR THE WEIGHT-BUDGET CHANGE: the archived hier_uot temporal results do not provide complete per-call restart counts across all time pairs, so unchanged behavior under J=64, p=1.01 cannot be established. Rerun the hier_uot--Sinkhorn configurations and update the linked temporal figures and timing breakdown; keep historical provenance and the authors' per-pair penalties. Full-rank and low-rank baselines are unaffected by this controller change. Audit: experiments/primal_weight_budget_20261111/report/history_J64_audit.json.}
 We evaluate temporal transport on 19 adjacent time pairs from the moscot mouse embryogenesis benchmark~\citep{klein2025mapping} in Figure~\ref{fig:temporal-runtime}, using the published per-pair settings.
-% CN: 数值来自 paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/{summary.csv,summary_table.csv}，114/114 项已完成；加速比按同一时间对的 coupling_evaluation_sec 相除，含 coupling 与 evaluation。
-% EN: Numbers come from paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/{summary.csv,summary_table.csv}, with 114/114 configurations complete; speedups divide paired coupling_evaluation_sec values, including coupling computation and evaluation.
-Compared with rank-2000 \ulot~\citep{scetbon2023unbalanced}, \ourssparsink is $4.91$--$17.71\times$ faster, with a mean absolute difference in \transitionacc\ from the full-rank \sinkhorn reference of only $0.21$ percentage points versus $2.03$.
-% CN: rank2000 配对加速和 MOSTA 平均准确率提升核验见 figures/plot_sources/downstream_analysis_20261117.json。
-% EN: Rank-2000 paired speedups and the MOSTA mean accuracy gain are audited in figures/plot_sources/downstream_analysis_20261117.json.
+% CN: 数值来自 paper_experiments_uot/moscot_time/results/20261117_paper_data_moscot_time/{summary.csv,summary_table.csv}，114/114 项已完成（含 J=64 与 refinement safeguard，seed 42）；固定汇总与 SHA256 见 figures/plot_sources/moscot_time_20261120.json；加速比按同一时间对的 coupling_evaluation_sec 相除，含 coupling 与 evaluation。
+% EN: Numbers come from paper_experiments_uot/moscot_time/results/20261117_paper_data_moscot_time/{summary.csv,summary_table.csv}, with 114/114 configurations complete (J=64 and refinement safeguard, seed 42); pinned aggregates and SHA256: figures/plot_sources/moscot_time_20261120.json; speedups divide paired coupling_evaluation_sec values, including coupling computation and evaluation.
+Compared with rank-2000 \ulot~\citep{scetbon2023unbalanced}, \ourssparsink is $2.57$--$24.56\times$ faster, with a mean absolute difference in \transitionacc\ from the full-rank \sinkhorn reference of only $0.21$ percentage points versus $2.03$.
 
 \begin{figure}[t]
 \centering
-% CN: 三联图来自 paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/temporal_runtime_accuracy.pdf；数据为同目录 summary.csv、summary_table.csv；114/114 已完成。
-% EN: Triptych source: paper_experiments_uot/moscot_time/results/20261102_005354_paper_data/temporal_runtime_accuracy.pdf; data: summary.csv and summary_table.csv in the same batch; 114/114 complete.
-% CN: 本次从 figures/plot_sources/experiment_figures_20261114.json 的固定汇总输入重画，入口为 scripts/refresh_experiment_figures.py；图例使用 Salut-Sinkhorn。
-% EN: Redrawn from the pinned aggregate inputs in figures/plot_sources/experiment_figures_20261114.json via scripts/refresh_experiment_figures.py, with the Salut-Sinkhorn legend.
+% CN: 三联图来自 paper_experiments_uot/moscot_time/results/20261117_paper_data_moscot_time/{summary_table.csv,stage_summary.csv,manifest.json}；固定绘图输入与 SHA256 见 figures/plot_sources/moscot_time_20261120.json，由 moscot_time/collect.py::plot 重画；114/114 已完成。
+% EN: Triptych data: paper_experiments_uot/moscot_time/results/20261117_paper_data_moscot_time/{summary_table.csv,stage_summary.csv,manifest.json}; pinned plot inputs and SHA256: figures/plot_sources/moscot_time_20261120.json, redrawn via moscot_time/collect.py::plot; 114/114 complete.
 \includegraphics[width=\linewidth]{figures/moscot_time_runtime_accuracy.pdf}
 \caption{\textbf{Temporal transport on mouse embryogenesis.}
 (a) Coupling computation plus downstream evaluation time; (b) curated transition accuracy; (c) germ-layer accuracy.
-Triangle labels denote \ulot ranks ($1\mathrm{k}=1000$).
-Each horizontal position denotes a distinct adjacent-time-pair instance; higher accuracy is better.
 Protocol in Appendix~\ref{app:downstream-protocol}.}
 \label{fig:temporal-runtime}
 % \xwz{SEED COVERAGE: Current application plots use seed 42 only; 19 time pairs are distinct tasks, not independent random seeds. Add four seeds and refresh both accuracy and timing figures.}
@@ -704,20 +694,19 @@ Protocol in Appendix~\ref{app:downstream-protocol}.}
 % CN: 两方法实测精度与正式 runtime_sec 均来自 paper_experiments_uot/moscot_spatiotemporal/results/20261101_213655_selected_compare_im2/{summary.csv,summary.json,cases/*/*/metrics.json}，14/14 成功且收敛。BCD 参数来源：results/20261031_203031_my4090/selection.json；ULFGW 使用本次 config.yaml 的作者最优参数。表格四舍五入，加速比按未舍入耗时计算。
 % EN: Measured accuracies and formal runtime_sec for both methods come from paper_experiments_uot/moscot_spatiotemporal/results/20261101_213655_selected_compare_im2/{summary.csv,summary.json,cases/*/*/metrics.json}, with 14/14 successful converged runs. BCD parameters: results/20261031_203031_my4090/selection.json; ULFGW uses the author-selected parameters in this measurement batch's config.yaml. Table entries are rounded; speedups use unrounded times.
 \caption{\textbf{Spatiotemporal alignment on MOSTA.}
-Columns denote seven adjacent-time-pair instances, labeled by source embryonic day (E).
+Columns denote seven adjacent-time-pair instances.
 \ours represents \ourssinkhornufgw; \moscot is low-rank UFGW.
-\transitionacc\ is in percent; higher is better.
-Time excludes downstream evaluation.
+\transitionacc\ is in percent.
 Protocol in Appendix~\ref{app:downstream-protocol}.
 }
 % \xwz{SEED COVERAGE: Current MOSTA table uses seed 0 only across seven time pairs. Add four independent seeds for the selected configurations; time pairs do not count as seeds.}
 \label{tab:ufgw-application}
 \footnotesize
-\setlength{\tabcolsep}{2.3pt}
+\setlength{\tabcolsep}{1.8pt}
 \renewcommand{\arraystretch}{1.12}
 \begin{tabular}{@{}llrrrrrrr@{}}
 \toprule
-Metric & Method & 9.5 & 10.5 & 11.5 & 12.5 & 13.5 & 14.5 & 15.5 \\
+Metric & Method & E9.5 & E10.5 & E11.5 & E12.5 & E13.5 & E14.5 & E15.5 \\
 \midrule
 \multirow{2}{*}{\transitionacc~$\uparrow$}
  & \ours & \textbf{37.0} & \textbf{40.8} & \textbf{40.5} & 39.0 & \textbf{49.2} & \textbf{50.5} & \textbf{47.8} \\
@@ -739,4 +728,4 @@ We presented \ours for scaling UOT with linear memory, combining efficient prima
 Its core solver, \subsolver, admits global convergence and a local linear rate, while its stopping rules ensure finite support refinement to a prescribed KKT tolerance despite inexact solves.
 Experiments demonstrate fast, high-accuracy computation across penalty strengths and million-point scalability on a single GPU.
 Extensions to entropic UOT and UFGW further accelerate biological alignment tasks while preserving competitive downstream accuracy.
-A remaining limitation is the $O(n^2d)$ cost of the pairwise computations in initialization and pricing, which dominates at million-point scales; reducing it while retaining linear memory and the convergence guarantees is a natural next step.
+Reducing the $O(n^2d)$ pairwise cost of initialization and pricing while preserving linear memory and convergence guarantees remains future work.

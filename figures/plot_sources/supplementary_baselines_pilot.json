@@ -1,12 +1,19 @@
 {
-  "status": "single_seed_mixed_scales",
+  "status": "five_seed_a100_etm_multiscale_single_seed_adns",
   "seed": 42,
   "groups": [
     {
       "title": "ETM-Approx+HELLO",
       "baseline": "etm",
-      "n": 4096,
+      "n": 32768,
       "d": 30,
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
       "rows": [
         {
           "method": "shuttle",
@@ -15,9 +22,12 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 0.20447031501680613,
-          "shared_gap": 7.157426072083212e-05,
-          "parameter": 0.0001
+          "runtime_sec": 1.6447628900408744,
+          "runtime_sec_std": 0.8685753457493454,
+          "shared_gap": 8.952149512791297e-05,
+          "shared_gap_std": 9.568769123887583e-06,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -26,9 +36,12 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 0.5293620810844004,
-          "shared_gap": 1.7359081437397687e-07,
-          "parameter": 1e-06
+          "runtime_sec": 1.6178869875147939,
+          "runtime_sec_std": 0.7474213211450786,
+          "shared_gap": 3.063853759343387e-05,
+          "shared_gap_std": 9.386318343917116e-06,
+          "parameter": 1e-05,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -37,9 +50,40 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 1.5062398810405284,
-          "shared_gap": 1.2907701092841008e-09,
-          "parameter": 1e-08
+          "runtime_sec": 2.057384403795004,
+          "runtime_sec_std": 0.31783655985120673,
+          "shared_gap": 4.257622558607404e-06,
+          "shared_gap_std": 9.300728656615879e-06,
+          "parameter": 1e-06,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 3.6899416252970694,
+          "runtime_sec_std": 0.7974823214596269,
+          "shared_gap": 7.725371910148541e-08,
+          "shared_gap_std": 1.2719012046551936e-07,
+          "parameter": 1e-07,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.1,
+            0.1
+          ],
+          "status": "success",
+          "runtime_sec": 6.049450768716634,
+          "runtime_sec_std": 0.5357069298431643,
+          "shared_gap": 1.2885131133296163e-08,
+          "shared_gap_std": 1.8948624599200887e-08,
+          "parameter": 1e-08,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -48,9 +92,12 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 38.767619649879634,
-          "shared_gap": 0.006691898081044378,
-          "parameter": 0.01
+          "runtime_sec": 362.23799830060454,
+          "runtime_sec_std": 65.5998906636769,
+          "shared_gap": 0.015304531692577467,
+          "shared_gap_std": 7.45716493449521e-05,
+          "parameter": 0.01,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -59,9 +106,12 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 40.18132909596898,
-          "shared_gap": 0.0001307741918015896,
-          "parameter": 0.001
+          "runtime_sec": 410.0561562361196,
+          "runtime_sec_std": 86.81294316281122,
+          "shared_gap": 0.00015444106790806514,
+          "shared_gap_std": 7.927390218235615e-07,
+          "parameter": 0.001,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -70,9 +120,12 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 20.50331533397548,
-          "shared_gap": 0.0064002682186804554,
-          "parameter": 0.0001
+          "runtime_sec": 315.51068839598446,
+          "runtime_sec_std": 22.862721392261008,
+          "shared_gap": 0.009134467904800539,
+          "shared_gap_std": 0.000759700388622861,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -81,9 +134,12 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 16.46441446687095,
-          "shared_gap": 0.14247641742025804,
-          "parameter": 1e-05
+          "runtime_sec": 291.61601545475423,
+          "runtime_sec_std": 30.096265227024332,
+          "shared_gap": 0.2102384036777775,
+          "shared_gap_std": 0.009114879889843974,
+          "parameter": 1e-05,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -92,9 +148,12 @@
             1.0
           ],
           "status": "success",
-          "runtime_sec": 0.22099186992272735,
-          "shared_gap": 0.00021210287289925343,
-          "parameter": 0.0001
+          "runtime_sec": 1.8752254916355013,
+          "runtime_sec_std": 1.1791257626255085,
+          "shared_gap": 0.0003319845722268017,
+          "shared_gap_std": 2.083368845789131e-05,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -103,9 +162,12 @@
             1.0
           ],
           "status": "success",
-          "runtime_sec": 0.8594567109830678,
-          "shared_gap": 5.109918577895128e-08,
-          "parameter": 1e-06
+          "runtime_sec": 1.5649078054353596,
+          "runtime_sec_std": 0.21186929650300332,
+          "shared_gap": 4.319680801695763e-05,
+          "shared_gap_std": 9.900099828149866e-06,
+          "parameter": 1e-05,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -114,9 +176,40 @@
             1.0
           ],
           "status": "success",
-          "runtime_sec": 2.8768406249582767,
-          "shared_gap": 8.329540705664685e-10,
-          "parameter": 1e-08
+          "runtime_sec": 2.959829633310437,
+          "runtime_sec_std": 0.7125693121446559,
+          "shared_gap": 5.209268179272399e-07,
+          "shared_gap_std": 5.895441190720527e-07,
+          "parameter": 1e-06,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 4.676367896422744,
+          "runtime_sec_std": 0.9377481063741524,
+          "shared_gap": 1.4829369697903017e-07,
+          "shared_gap_std": 1.2619915514218942e-07,
+          "parameter": 1e-07,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 10.123629470728337,
+          "runtime_sec_std": 0.7913723035208944,
+          "shared_gap": 6.97700517723843e-09,
+          "shared_gap_std": 4.6481612205106974e-09,
+          "parameter": 1e-08,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -125,9 +218,12 @@
             1.0
           ],
           "status": "success",
-          "runtime_sec": 19.527468709042296,
-          "shared_gap": 0.0006935840957651204,
-          "parameter": 0.01
+          "runtime_sec": 281.09971667248755,
+          "runtime_sec_std": 22.801121923242423,
+          "shared_gap": 0.0012348588051079284,
+          "shared_gap_std": 9.331990040746685e-06,
+          "parameter": 0.01,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -136,9 +232,12 @@
             1.0
           ],
           "status": "success",
-          "runtime_sec": 16.85119619080797,
-          "shared_gap": 0.0010013806518357727,
-          "parameter": 0.001
+          "runtime_sec": 282.3705960068852,
+          "runtime_sec_std": 9.473423873646414,
+          "shared_gap": 0.0015029212401929443,
+          "shared_gap_std": 0.00014565082113550856,
+          "parameter": 0.001,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -147,9 +246,12 @@
             1.0
           ],
           "status": "success",
-          "runtime_sec": 15.958654880989343,
-          "shared_gap": 0.10465950417288361,
-          "parameter": 0.0001
+          "runtime_sec": 289.34289707448335,
+          "runtime_sec_std": 33.61580094452413,
+          "shared_gap": 0.13421738380083598,
+          "shared_gap_std": 0.004646760204370609,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -158,9 +260,12 @@
             1.0
           ],
           "status": "success",
-          "runtime_sec": 18.385580792091787,
-          "shared_gap": 0.17386752122782734,
-          "parameter": 1e-05
+          "runtime_sec": 284.5368375327438,
+          "runtime_sec_std": 15.997669989608735,
+          "shared_gap": 0.21476098655713477,
+          "shared_gap_std": 0.005321730705685229,
+          "parameter": 1e-05,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -169,9 +274,12 @@
             10.0
           ],
           "status": "success",
-          "runtime_sec": 0.3375165059696883,
-          "shared_gap": 0.00012765884941745052,
-          "parameter": 0.0001
+          "runtime_sec": 1.8000688588246703,
+          "runtime_sec_std": 0.35005652468407716,
+          "shared_gap": 0.00031685268082976443,
+          "shared_gap_std": 0.0001917722971060195,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -180,9 +288,12 @@
             10.0
           ],
           "status": "success",
-          "runtime_sec": 1.803153770044446,
-          "shared_gap": 5.426906252885398e-07,
-          "parameter": 1e-06
+          "runtime_sec": 3.1489089893177153,
+          "runtime_sec_std": 0.6479486278678517,
+          "shared_gap": 2.6131491987282217e-05,
+          "shared_gap_std": 1.686248907600652e-05,
+          "parameter": 1e-05,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -191,9 +302,40 @@
             10.0
           ],
           "status": "success",
-          "runtime_sec": 8.112806526944041,
-          "shared_gap": 1.9885235148742352e-08,
-          "parameter": 1e-08
+          "runtime_sec": 6.676373456418514,
+          "runtime_sec_std": 1.122979026481202,
+          "shared_gap": 4.607346365999123e-07,
+          "shared_gap_std": 2.5611411475623554e-07,
+          "parameter": 1e-06,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 13.175746982358396,
+          "runtime_sec_std": 1.6418041345056282,
+          "shared_gap": 1.0367065870757884e-08,
+          "shared_gap_std": 5.0090785057620365e-09,
+          "parameter": 1e-07,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 27.787058107182382,
+          "runtime_sec_std": 3.2587069073779538,
+          "shared_gap": 4.222528005785366e-09,
+          "shared_gap_std": 3.3753688022696104e-09,
+          "parameter": 1e-08,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -202,9 +344,12 @@
             10.0
           ],
           "status": "success",
-          "runtime_sec": 21.731987121980637,
-          "shared_gap": 8.045161100403543e-05,
-          "parameter": 0.01
+          "runtime_sec": 289.57697590738536,
+          "runtime_sec_std": 14.624591850259486,
+          "shared_gap": 0.0001054387804122523,
+          "shared_gap_std": 1.9553780512726e-06,
+          "parameter": 0.01,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -213,9 +358,12 @@
             10.0
           ],
           "status": "success",
-          "runtime_sec": 18.96823007799685,
-          "shared_gap": 0.0052225749599134124,
-          "parameter": 0.001
+          "runtime_sec": 307.84411916583775,
+          "runtime_sec_std": 30.51039038752338,
+          "shared_gap": 0.008216240932790879,
+          "shared_gap_std": 0.0008285981820052486,
+          "parameter": 0.001,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -224,9 +372,12 @@
             10.0
           ],
           "status": "success",
-          "runtime_sec": 21.557512521045282,
-          "shared_gap": 0.030439069469250946,
-          "parameter": 0.0001
+          "runtime_sec": 324.6501081706956,
+          "runtime_sec_std": 32.368964342697765,
+          "shared_gap": 0.04077272652975338,
+          "shared_gap_std": 0.0019693608861092865,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -235,9 +386,12 @@
             10.0
           ],
           "status": "success",
-          "runtime_sec": 29.84506377298385,
-          "shared_gap": 0.03972751874766885,
-          "parameter": 1e-05
+          "runtime_sec": 382.7540524635464,
+          "runtime_sec_std": 42.60599029318761,
+          "shared_gap": 0.05150426304798963,
+          "shared_gap_std": 0.0020815821908856448,
+          "parameter": 1e-05,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -246,9 +400,12 @@
             99.995
           ],
           "status": "success",
-          "runtime_sec": 0.20422711200080812,
-          "shared_gap": 0.009067474513099485,
-          "parameter": 0.0001
+          "runtime_sec": 1.1298530532047153,
+          "runtime_sec_std": 0.18852270899046314,
+          "shared_gap": 0.00629214635511825,
+          "shared_gap_std": 0.004730370874994013,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -257,9 +414,12 @@
             99.995
           ],
           "status": "success",
-          "runtime_sec": 1.0933900498785079,
-          "shared_gap": 6.553363782418872e-07,
-          "parameter": 1e-06
+          "runtime_sec": 1.369308179244399,
+          "runtime_sec_std": 0.3232161570889883,
+          "shared_gap": 0.0005387785798685386,
+          "shared_gap_std": 0.00018303811639669846,
+          "parameter": 1e-05,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -268,9 +428,40 @@
             99.995
           ],
           "status": "success",
-          "runtime_sec": 3.289810071932152,
-          "shared_gap": 1.7265050402093328e-09,
-          "parameter": 1e-08
+          "runtime_sec": 2.059914324991405,
+          "runtime_sec_std": 0.30574390777653954,
+          "shared_gap": 7.69592531151067e-06,
+          "shared_gap_std": 4.478633009620798e-07,
+          "parameter": 1e-06,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 3.1839490024372936,
+          "runtime_sec_std": 0.7370911584038077,
+          "shared_gap": 1.978688357255093e-07,
+          "shared_gap_std": 1.1521268577292762e-07,
+          "parameter": 1e-07,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 6.306837382912636,
+          "runtime_sec_std": 1.127974483607726,
+          "shared_gap": 3.0862598864330597e-09,
+          "shared_gap_std": 3.3300964818943043e-09,
+          "parameter": 1e-08,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -279,9 +470,12 @@
             99.995
           ],
           "status": "success",
-          "runtime_sec": 21.472427136963233,
-          "shared_gap": 0.0031243673598968435,
-          "parameter": 0.01
+          "runtime_sec": 323.7672432400286,
+          "runtime_sec_std": 12.597596506626843,
+          "shared_gap": 0.0033343960624295636,
+          "shared_gap_std": 6.44286470717768e-05,
+          "parameter": 0.01,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -290,9 +484,12 @@
             99.995
           ],
           "status": "success",
-          "runtime_sec": 62.28250097902492,
-          "shared_gap": 0.00015474736564601537,
-          "parameter": 0.001
+          "runtime_sec": 504.9269775023684,
+          "runtime_sec_std": 173.96903111596328,
+          "shared_gap": 0.0001768475463993416,
+          "shared_gap_std": 2.773639832808661e-06,
+          "parameter": 0.001,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -301,9 +498,12 @@
             99.995
           ],
           "status": "success",
-          "runtime_sec": 22.271070987917483,
-          "shared_gap": 0.018666220201999224,
-          "parameter": 0.0001
+          "runtime_sec": 326.29346877168865,
+          "runtime_sec_std": 30.53934846148148,
+          "shared_gap": 0.018790219885928203,
+          "shared_gap_std": 0.0009044657372532,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
           "method": "etm",
@@ -312,13 +512,16 @@
             99.995
           ],
           "status": "success",
-          "runtime_sec": 22.960644112201408,
-          "shared_gap": 0.28559335382748113,
-          "parameter": 1e-05
+          "runtime_sec": 287.74029876384884,
+          "runtime_sec_std": 30.118906947910094,
+          "shared_gap": 0.337368424018637,
+          "shared_gap_std": 0.009297508062565485,
+          "parameter": 1e-05,
+          "seed_count": 5
         }
       ],
-      "source": "paper_experiments_uot/accuracy_runtime_pareto/results/20261114_etm_pilot_v7_my4090/summary.csv",
-      "sha256": "a6ccab8d030c098285d5e1d9e08912d30598c7f92615675121aa8c8b345d02f4"
+      "source": "paper_experiments_uot/accuracy_runtime_pareto/results/20261117_paper_data_etm/pareto_aggregate.csv",
+      "sha256": "8ca9abe437423d2b553091c371e9ddf3ecf56f297ddecb911a89c10d6bafa56e"
     },
     {
       "title": "AdNS-UOT",
@@ -786,8 +989,15 @@
     {
       "title": "MultiScaleOT",
       "baseline": "multiscale_torch",
-      "n": 4096,
+      "n": 18432,
       "d": 3,
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
       "rows": [
         {
           "method": "shuttle",
@@ -796,9 +1006,12 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 0.17848420795053244,
-          "shared_gap": 0.0008463430274134687,
-          "parameter": 0.0001
+          "runtime_sec": 0.6449375178664922,
+          "runtime_sec_std": 0.18851247399879473,
+          "shared_gap": 0.0036058750219533703,
+          "shared_gap_std": 0.00014257704037837468,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -807,9 +1020,12 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 0.5412581639830023,
-          "shared_gap": 2.3119192560491874e-05,
-          "parameter": 1e-06
+          "runtime_sec": 0.7588694589212537,
+          "runtime_sec_std": 0.19873394589061844,
+          "shared_gap": 0.00014709174325698194,
+          "shared_gap_std": 8.220365843053954e-05,
+          "parameter": 1e-05,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
@@ -818,141 +1034,40 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 2.301171558909118,
-          "shared_gap": 6.648138087517018e-11,
-          "parameter": 1e-08
+          "runtime_sec": 1.174087100662291,
+          "runtime_sec_std": 0.16459132811888055,
+          "shared_gap": 8.845010221235854e-05,
+          "shared_gap_std": 6.509699315316084e-05,
+          "parameter": 1e-06,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
           "rho": [
-            1.0,
-            1.0
+            0.1,
+            0.1
           ],
           "status": "success",
-          "runtime_sec": 0.21134069096297026,
-          "shared_gap": 0.0008619292119148763,
-          "parameter": 0.0001
+          "runtime_sec": 2.361406970396638,
+          "runtime_sec_std": 0.6060478672210992,
+          "shared_gap": 1.1498951201247636e-06,
+          "shared_gap_std": 1.2530263353348845e-06,
+          "parameter": 1e-07,
+          "seed_count": 5
         },
         {
           "method": "shuttle",
           "rho": [
-            1.0,
-            1.0
+            0.1,
+            0.1
           ],
           "status": "success",
-          "runtime_sec": 1.2456003741826862,
-          "shared_gap": 7.472599579786837e-07,
-          "parameter": 1e-06
-        },
-        {
-          "method": "shuttle",
-          "rho": [
-            1.0,
-            1.0
-          ],
-          "status": "success",
-          "runtime_sec": 5.938450417947024,
-          "shared_gap": 1.2068751390401515e-10,
-          "parameter": 1e-08
-        },
-        {
-          "method": "shuttle",
-          "rho": [
-            10.0,
-            10.0
-          ],
-          "status": "success",
-          "runtime_sec": 0.5952017821837217,
-          "shared_gap": 0.00047195187737413664,
-          "parameter": 0.0001
-        },
-        {
-          "method": "shuttle",
-          "rho": [
-            10.0,
-            10.0
-          ],
-          "status": "success",
-          "runtime_sec": 3.1634864050429314,
-          "shared_gap": 3.09192987142793e-06,
-          "parameter": 1e-06
-        },
-        {
-          "method": "shuttle",
-          "rho": [
-            10.0,
-            10.0
-          ],
-          "status": "success",
-          "runtime_sec": 16.443862673826516,
-          "shared_gap": 4.373161761457237e-10,
-          "parameter": 1e-08
-        },
-        {
-          "method": "shuttle",
-          "rho": [
-            0.045,
-            99.995
-          ],
-          "status": "success",
-          "runtime_sec": 0.1821471550501883,
-          "shared_gap": 0.09382755255707562,
-          "parameter": 0.0001
-        },
-        {
-          "method": "shuttle",
-          "rho": [
-            0.045,
-            99.995
-          ],
-          "status": "success",
-          "runtime_sec": 0.6590839920099825,
-          "shared_gap": 3.898558626270364e-05,
-          "parameter": 1e-06
-        },
-        {
-          "method": "shuttle",
-          "rho": [
-            0.045,
-            99.995
-          ],
-          "status": "success",
-          "runtime_sec": 2.4572195392102003,
-          "shared_gap": 7.209852633618761e-10,
-          "parameter": 1e-08
-        },
-        {
-          "method": "multiscale_torch",
-          "rho": [
-            0.045,
-            99.995
-          ],
-          "status": "success",
-          "runtime_sec": 5.509529635077342,
-          "shared_gap": 0.001561003961844574,
-          "parameter": 0.0001
-        },
-        {
-          "method": "multiscale_torch",
-          "rho": [
-            0.045,
-            99.995
-          ],
-          "status": "success",
-          "runtime_sec": 5.523830996127799,
-          "shared_gap": 0.063865980913711,
-          "parameter": 0.001
-        },
-        {
-          "method": "multiscale_torch",
-          "rho": [
-            0.045,
-            99.995
-          ],
-          "status": "success",
-          "runtime_sec": 4.648584385868162,
-          "shared_gap": 0.5203991612657648,
-          "parameter": 0.01
+          "runtime_sec": 5.113027729652822,
+          "runtime_sec_std": 0.6969783311102458,
+          "shared_gap": 2.4578667470500816e-07,
+          "shared_gap_std": 3.828514992064744e-07,
+          "parameter": 1e-08,
+          "seed_count": 5
         },
         {
           "method": "multiscale_torch",
@@ -961,9 +1076,12 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 5.257152314065024,
-          "shared_gap": 0.0016749325913935592,
-          "parameter": 0.0001
+          "runtime_sec": 836.2492045167834,
+          "runtime_sec_std": 1152.9228229179548,
+          "shared_gap": 0.5978610237944602,
+          "shared_gap_std": 0.00364952033679019,
+          "parameter": 0.01,
+          "seed_count": 5
         },
         {
           "method": "multiscale_torch",
@@ -972,9 +1090,12 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 5.399877318879589,
-          "shared_gap": 0.06893870437281371,
-          "parameter": 0.001
+          "runtime_sec": 923.3496647201479,
+          "runtime_sec_std": 1133.038911496589,
+          "shared_gap": 0.10708331476301759,
+          "shared_gap_std": 0.001287465711479876,
+          "parameter": 0.001,
+          "seed_count": 5
         },
         {
           "method": "multiscale_torch",
@@ -983,42 +1104,82 @@
             0.1
           ],
           "status": "success",
-          "runtime_sec": 4.753045188961551,
-          "shared_gap": 0.5391243094463884,
-          "parameter": 0.01
+          "runtime_sec": 922.8779826292769,
+          "runtime_sec_std": 1127.8689303976598,
+          "shared_gap": 0.004153491848781042,
+          "shared_gap_std": 6.03975264017961e-05,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
-          "method": "multiscale_torch",
+          "method": "shuttle",
           "rho": [
-            10.0,
-            10.0
+            1.0,
+            1.0
           ],
           "status": "success",
-          "runtime_sec": 43.86985392216593,
-          "shared_gap": 0.00023391328178388034,
-          "parameter": 0.0001
+          "runtime_sec": 0.654212879575789,
+          "runtime_sec_std": 0.12706972009766523,
+          "shared_gap": 0.003566948462392278,
+          "shared_gap_std": 0.0004641451141744052,
+          "parameter": 0.0001,
+          "seed_count": 5
         },
         {
-          "method": "multiscale_torch",
+          "method": "shuttle",
           "rho": [
-            10.0,
-            10.0
+            1.0,
+            1.0
           ],
           "status": "success",
-          "runtime_sec": 29.690285922959447,
-          "shared_gap": 0.00883351911344609,
-          "parameter": 0.001
+          "runtime_sec": 1.2474347960203886,
+          "runtime_sec_std": 0.20324382076725672,
+          "shared_gap": 0.00010553844033751544,
+          "shared_gap_std": 6.0214797777430546e-05,
+          "parameter": 1e-05,
+          "seed_count": 5
         },
         {
-          "method": "multiscale_torch",
+          "method": "shuttle",
           "rho": [
-            10.0,
-            10.0
+            1.0,
+            1.0
           ],
           "status": "success",
-          "runtime_sec": 14.040907024173066,
-          "shared_gap": 0.1162456218624009,
-          "parameter": 0.01
+          "runtime_sec": 2.83049474041909,
+          "runtime_sec_std": 0.329109833353038,
+          "shared_gap": 3.4302419245628046e-05,
+          "shared_gap_std": 5.046068826208551e-05,
+          "parameter": 1e-06,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 6.142488319426775,
+          "runtime_sec_std": 1.6546030445404645,
+          "shared_gap": 1.3255922215464143e-06,
+          "shared_gap_std": 1.445806372314095e-06,
+          "parameter": 1e-07,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            1.0,
+            1.0
+          ],
+          "status": "success",
+          "runtime_sec": 18.310137685574592,
+          "runtime_sec_std": 4.305840115284766,
+          "shared_gap": 1.4922409774058075e-07,
+          "shared_gap_std": 1.7922949364320464e-07,
+          "parameter": 1e-08,
+          "seed_count": 5
         },
         {
           "method": "multiscale_torch",
@@ -1027,9 +1188,12 @@
             1.0
           ],
           "status": "success",
-          "runtime_sec": 9.828444284852594,
-          "shared_gap": 0.0005001063438043657,
-          "parameter": 0.0001
+          "runtime_sec": 441.2157685926184,
+          "runtime_sec_std": 91.05723741172478,
+          "shared_gap": 0.27963324524457633,
+          "shared_gap_std": 0.006981931394190605,
+          "parameter": 0.01,
+          "seed_count": 5
         },
         {
           "method": "multiscale_torch",
@@ -1038,9 +1202,12 @@
             1.0
           ],
           "status": "success",
-          "runtime_sec": 8.179646373027936,
-          "shared_gap": 0.019702627099078152,
-          "parameter": 0.001
+          "runtime_sec": 609.5011344233528,
+          "runtime_sec_std": 95.91657844785695,
+          "shared_gap": 0.031765279805011384,
+          "shared_gap_std": 0.0010228228297429168,
+          "parameter": 0.001,
+          "seed_count": 5
         },
         {
           "method": "multiscale_torch",
@@ -1049,13 +1216,240 @@
             1.0
           ],
           "status": "success",
-          "runtime_sec": 5.487555445171893,
-          "shared_gap": 0.23264336678898095,
-          "parameter": 0.01
+          "runtime_sec": 653.3347533008084,
+          "runtime_sec_std": 94.45942510279828,
+          "shared_gap": 0.0012177321987202716,
+          "shared_gap_std": 3.962781337662953e-05,
+          "parameter": 0.0001,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 1.2932086616754532,
+          "runtime_sec_std": 0.2737861242328653,
+          "shared_gap": 0.001394835631097665,
+          "shared_gap_std": 0.0009006571423386847,
+          "parameter": 0.0001,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 3.589886648952961,
+          "runtime_sec_std": 0.9625667270051065,
+          "shared_gap": 0.00018556515505332142,
+          "shared_gap_std": 0.0001311460348765519,
+          "parameter": 1e-05,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 8.290162249654532,
+          "runtime_sec_std": 2.5818315299419887,
+          "shared_gap": 7.648717872781478e-06,
+          "shared_gap_std": 1.0628440827901205e-05,
+          "parameter": 1e-06,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 21.18788373749703,
+          "runtime_sec_std": 3.7858063445545427,
+          "shared_gap": 3.280759499656966e-07,
+          "shared_gap_std": 4.921062341059635e-07,
+          "parameter": 1e-07,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 53.099328972771765,
+          "runtime_sec_std": 9.271248253171892,
+          "shared_gap": 5.896591687096568e-08,
+          "shared_gap_std": 8.572420949751295e-08,
+          "parameter": 1e-08,
+          "seed_count": 5
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 833.0857903251424,
+          "runtime_sec_std": 141.878299692712,
+          "shared_gap": 0.14732120586248798,
+          "shared_gap_std": 0.006396728559587444,
+          "parameter": 0.01,
+          "seed_count": 5
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 1611.639339810051,
+          "runtime_sec_std": 142.5514356096259,
+          "shared_gap": 0.014622173050525156,
+          "shared_gap_std": 0.0007175457912038559,
+          "parameter": 0.001,
+          "seed_count": 5
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            10.0,
+            10.0
+          ],
+          "status": "success",
+          "runtime_sec": 2235.3548647105695,
+          "runtime_sec_std": 171.4283217946416,
+          "shared_gap": 0.0005750691386217958,
+          "shared_gap_std": 2.892077313771983e-05,
+          "parameter": 0.0001,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 0.5652393154799938,
+          "runtime_sec_std": 0.03284483466849106,
+          "shared_gap": 0.026714290422787654,
+          "shared_gap_std": 0.0029974977512633853,
+          "parameter": 0.0001,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 0.725715447589755,
+          "runtime_sec_std": 0.01653709789669324,
+          "shared_gap": 0.00482366423252596,
+          "shared_gap_std": 0.000206430808146016,
+          "parameter": 1e-05,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 1.175415614247322,
+          "runtime_sec_std": 0.05998616747139257,
+          "shared_gap": 0.00016664285566266108,
+          "shared_gap_std": 9.40308018069453e-05,
+          "parameter": 1e-06,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 2.123358254507184,
+          "runtime_sec_std": 0.08549216464117872,
+          "shared_gap": 3.4418693196807255e-06,
+          "shared_gap_std": 3.6127113971284025e-06,
+          "parameter": 1e-07,
+          "seed_count": 5
+        },
+        {
+          "method": "shuttle",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 5.465071391873062,
+          "runtime_sec_std": 0.49576212343041304,
+          "shared_gap": 5.015024897847768e-07,
+          "shared_gap_std": 6.045473439898722e-07,
+          "parameter": 1e-08,
+          "seed_count": 5
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 429.61896102949976,
+          "runtime_sec_std": 146.95915373746814,
+          "shared_gap": 0.5825058578386627,
+          "shared_gap_std": 0.003834082705200336,
+          "parameter": 0.01,
+          "seed_count": 5
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 373.77403426244854,
+          "runtime_sec_std": 28.041960685134505,
+          "shared_gap": 0.10271105011796429,
+          "shared_gap_std": 0.0013850565339008373,
+          "parameter": 0.001,
+          "seed_count": 5
+        },
+        {
+          "method": "multiscale_torch",
+          "rho": [
+            0.045,
+            99.995
+          ],
+          "status": "success",
+          "runtime_sec": 344.4447189545259,
+          "runtime_sec_std": 4.682399629764058,
+          "shared_gap": 0.003991002082313653,
+          "shared_gap_std": 6.858632809811208e-05,
+          "parameter": 0.0001,
+          "seed_count": 5
         }
       ],
-      "source": "paper_experiments_uot/accuracy_runtime_pareto/results/20261115_lowdim_my4090/lowdim_baselines/summary.json",
-      "sha256": "4a12d7081b234c70ea6c2a02d6bc7fb7f8f035466184babcceffb7fac9f79891"
+      "source": "paper_experiments_uot/accuracy_runtime_pareto/results/20261117_paper_data_multiscale/pareto_aggregate.csv",
+      "sha256": "6a8e13e9ad37e427895bc87b6db3b405c1a5b3d9869f0aab4986f7135d0f84ac"
     }
   ]
 }

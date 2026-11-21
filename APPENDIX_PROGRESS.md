@@ -1,6 +1,6 @@
 # 附录分布与精简规划
 
-进度更新日期：2026-11-20。章节页码按 2026-11-20 编译的本地 `main.pdf` 和 `main.aux` 核对。附录采用 A–G 七个一级章节：A–F 为 KL 主线及其扩展，平方 L2 边际惩罚独立为末尾的 G。B.1 分为全局与局部收敛，B.2 分为有限终止与停止条件有限可达性。
+进度更新日期：2026-11-21。章节页码按 2026-11-21 编译的本地 `main.pdf` 和 `main.aux` 核对。附录采用 A–G 七个一级章节：A–F 为 KL 主线及其扩展，平方 L2 边际惩罚独立为末尾的 G。B.1 分为全局与局部收敛，B.2 分为有限终止与停止条件有限可达性。
 
 ## 逐节整理进度
 
@@ -42,12 +42,13 @@
 
 | 小节 | 完成 |
 |---|:---:|
-| E.1 Supplementary UOT Baselines | |
-| E.2 Generality of KL-UOT | |
-| E.3 Direct Comparison with HELLO-UOT | |
-| E.4 Accuracy across Entropic Strengths | |
-| E.5 UFGW Solver Trajectories | |
-| E.6 Temporal Transport Timing | |
+| E.1 Supplementary UOT Baselines | ✓ |
+| E.2 Generality of KL-UOT | ✓ |
+| E.3 Direct Comparison with HELLO-UOT | ✓ |
+| E.4 Million-Scale Baselines across Penalty Settings | ✓ |
+| E.5 Accuracy across Entropic Strengths | ✓ |
+| E.6 UFGW Solver Trajectories | ✓ |
+| E.7 Temporal Transport Timing | ✓ |
 
 ### F. Component and Mechanism Analysis
 
@@ -69,7 +70,7 @@
 
 ## 当前分布
 
-2026-11-20 核对稿共 36 页，附录从第 11 页开始，共 26 页。F 整理前为 40 页，D 整理前为 41 页，B.1 整理前为 42 页，更早的停止准则精简前为 44 页。图表浮动会影响总页数，后续仍需做内容取舍。E、F 之间不再使用 `\clearpage`，E.5、E.6 的两张图落在 F 章首页顶部。
+2026-11-21 核对稿共 36 页，附录从第 11 页开始，共 26 页。F 整理前为 40 页，D 整理前为 41 页，B.1 整理前为 42 页，更早的停止准则精简前为 44 页。图表浮动会影响总页数，后续仍需做内容取舍。E、F 之间不再使用 `\clearpage`，E.5、E.6 的两张图落在 F 章首页顶部。
 
 下表为当前编译稿的章节起始页，不代表各组独占页数。
 
@@ -78,9 +79,9 @@
 | A. Algorithm Details | 11 | A.1 受限模型；A.2 PDUOT Component Details（Preconditioning、Adaptive restart、Adaptive weight、Dual proximal step 四段；末段为 KL prox 的 FP32 预测 + FP64 精修与稳定回代）；A.3 完整 Stop；A.4 Active-Support Operations（初始化、pricing、Spar/pruning） |
 | B. Convergence Guarantees | 15 | B.1.1 PDUOT 全局收敛；B.1.2 局部线性收敛；B.2.1 非精确 refinement 有限终止；B.2.2 停止条件有限可达与 Spar 相容性 |
 | C. Extensions | 21 | C.1 sparse entropic UOT；C.2 UFGW |
-| D. Experimental Setup | 22 | D.1 数据；D.2 共同指标与测量；D.3 Solver Implementations；D.4 Experiment Protocols（24 页起，跨 24–25 页；D.4.1–D.4.5 与正文 4.1–4.5 同名对应） |
-| E. Additional Performance and Applications | 26 | E.1 额外 baseline；E.2 KL-UOT generality；E.3 HELLO-UOT；E.4 epsilon 扫描；E.5 UFGW 轨迹；E.6 temporal timing |
-| F. Component and Mechanism Analysis | 29 | F.1 Salut 参数；F.2 耗时分解；F.3 Adaptive-Weight Budget；F.4 Spar；F.5 层间响应稳定性 |
+| D. Experimental Setup | 23 | D.1 数据；D.2 共同指标与测量；D.3 Solver Implementations（含 Sinkhorn 与 Sinkhorn-Online）；D.4 Experiment Protocols（24 页起，跨 24–26 页；D.4.1–D.4.6 分别对应正文 Pareto、Million-Point Baseline Comparison、Restricted、Component、Extensions、Downstream） |
+| E. Additional Performance and Applications | 26 | E.1 额外 baseline；E.2 KL-UOT generality；E.3 HELLO-UOT；E.4 百万规模全 penalty 对比（待 `exp-9aa596626e` 补测 HELLO-UOT 后三组）；E.5 epsilon 扫描；E.6 UFGW 轨迹；E.7 temporal timing |
+| F. Component and Mechanism Analysis | 30 | F.1 Salut 参数；F.2 耗时分解；F.3 Adaptive-Weight Budget；F.4 Spar；F.5 层间响应稳定性 |
 | G. Squared-L2 Marginal Penalties | 33 | G.1 模型、proximal、readout 与停止规则；G.2 PDUOT 收敛与有限 refinement；G.3 实验（当前为 pilot 状态说明，正式曲线待补） |
 
 F.5 从第 31 页开始，只保留正文引用的 shared-side response stability 命题、证明及 weighted potential stability 推论。辅助 inheritance bound、预测器、证书与相应实验已成套归档，不再形成第二条方法叙事。
