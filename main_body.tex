@@ -26,21 +26,20 @@ This flexibility supports applications in single-cell genomics~\citep{schiebinge
 Let $\mathbf{a}\in\mathbb R_{++}^m$ and $\mathbf{b}\in\mathbb R_{++}^n$ be the reference masses of two discrete measures, and let $\mathbf{C}\in\mathbb R^{m\times n}$ be their pairwise cost matrix.
 UOT minimizes transport cost plus divergence penalties on the deviations of the transported marginals from $\mathbf{a}$ and $\mathbf{b}$.
 % \xwz{The general-marginal-penalty appendix is temporarily omitted; restore its cross-reference only after that extension is written.}
-We mainly focus on the widely used KL marginal penalties:
+Given a convex marginal penalty $\mathcal{D}(\cdot\,|\,\cdot)$ and weights $\rho_a,\rho_b>0$, UOT solves
 \begin{equation}
 \label{eq:primal-uot}
-\min_{\mathbf{X}\geq 0}\quad \langle \mathbf{C},\mathbf{X}\rangle+\rho_a\KL(\mathbf{X}\mathbf{1}_n\,|\,\mathbf{a})
-+\rho_b\KL(\mathbf{X}^\top\mathbf{1}_m\,|\,\mathbf{b}),
+\min_{\mathbf{X}\geq 0} \Phi(\mathbf{X}):=\langle \mathbf{C},\mathbf{X}\rangle+\rho_a\mathcal{D}(\mathbf{X}\mathbf{1}_n\,|\,\mathbf{a})
++\rho_b\mathcal{D}(\mathbf{X}^\top\mathbf{1}_m\,|\,\mathbf{b}),
 \end{equation}
-Here, $\mathbf{X}\in\mathbb R_+^{m\times n}$ is the coupling, $\rho_a,\rho_b>0$ control the marginal penalties, and $\KL(\mathbf{p}\,|\,\mathbf{h})=\sum_k(p_k\log(p_k/h_k)-p_k+h_k)$.
-For $\ell_2^2$ marginal penalties, Appendix~\ref{app:l2-penalty} provides corresponding convergence guarantees, with experiments in Appendix~\ref{app:l2-experiments}.
+where $\mathbf{X}\in\mathbb R_+^{m\times n}$ is the coupling.
+We focus on two standard choices: the KL divergence $\KL(\mathbf{p}\,|\,\mathbf{h})$ and the squared-$\ell_2$ penalty $\frac{1}{2}\|\mathbf{p}-\mathbf{h}\|_2^2$ (Appendix~\ref{app:pduot-details}).
 
 The dual of~\eqref{eq:primal-uot} optimizes potentials $\mathbf{f}\in\mathbb R^m$ and $\mathbf{g}\in\mathbb R^n$:
 \begin{equation} 
 \label{eq:dual-uot}
 \begin{aligned}
-&D(\mathbf{f},\mathbf{g}):=\rho_a\langle \mathbf{a},\mathbf{1}_m-e^{-\mathbf{f}/\rho_a}\rangle
-+\rho_b\langle \mathbf{b},\mathbf{1}_n-e^{-\mathbf{g}/\rho_b}\rangle,\\
+&D(\mathbf{f},\mathbf{g}):=-\rho_a\mathcal{D}^*(-\mathbf{f}/\rho_a\,|\,\mathbf{a})-\rho_b\mathcal{D}^*(-\mathbf{g}/\rho_b\,|\,\mathbf{b}),\\
 &\max_{\mathbf{f},\mathbf{g}}D(\mathbf{f},\mathbf{g})\quad\text{s.t.}\quad f_i+g_j\leq C_{ij}\quad\forall i,j.
 \end{aligned}
 \end{equation}
@@ -167,7 +166,7 @@ Restricted UOT solves with \subsolver alternate with active-support updates, ini
 
 For an active support $\mathcal N$, let $\mathbf x\in\mathbb R_+^{|\mathcal N|}$ collect its edge flows and $\mathbf c_{\mathcal N}\in\mathbb R^{|\mathcal N|}$ their costs.
 The marginal-sum operator $\mathbf A_{\mathcal N}\in\mathbb R^{(m+n)\times|\mathcal N|}$ satisfies $\mathbf A_{\mathcal N}\mathbf x=(\mathbf X\mathbf1_n,\mathbf X^\top\mathbf1_m)$, where $\mathbf X\in\mathbb R_+^{m\times n}$ is zero outside $\mathcal N$.
-With $G(\mathbf r,\mathbf q)=\rho_a\KL(\mathbf r\,|\,\mathbf a)+\rho_b\KL(\mathbf q\,|\,\mathbf b)$, problem~\eqref{eq:restricted-uot} becomes
+With $G(\mathbf{r},\mathbf{q})=\rho_a\mathcal{D}(\mathbf{r}\,|\,\mathbf{a})+\rho_b\mathcal{D}(\mathbf{q}\,|\,\mathbf{b})$, problem~\eqref{eq:restricted-uot} becomes
 
 \begin{equation}
 \label{eq:restricted-uot-vector}
@@ -179,10 +178,7 @@ Writing $F(\mathbf x)=\langle\mathbf c_{\mathcal N},\mathbf x\rangle+\iota_{\mat
 \begin{equation*}
 \min_{\mathbf{x}}\max_{\mathbf{y}}\;F(\mathbf{x})+\langle \mathbf{A}_{\mathcal N}\mathbf{x},\mathbf{y}\rangle-G^*(\mathbf{y}),
 \end{equation*}
-where
-\begin{equation*}
-G^*(\mathbf{y})=\rho_a\sum_i a_i(e^{y_i/\rho_a}-1)+\rho_b\sum_j b_j(e^{y_{m+j}/\rho_b}-1).
-\end{equation*}
+where $G^*(\mathbf{y})$ separates nodewise across the two marginals (Appendix~\ref{app:pduot-details}).
 
 With positive diagonal steps $\mathbf D_x,\mathbf D_y$, the primal-first PDHG map is $\pduotmap(\mathbf x,\mathbf y)=(\widehat{\mathbf x},\widehat{\mathbf y})$:
 \begin{equation}
@@ -276,13 +272,14 @@ Method & \shortstack{Reflected\\Halpern} & Precond. & \shortstack{Adaptive\\rest
 At each finer level, we initialize the active support using dual potentials from a coarser UOT solution, then refine the active support while controlling its size.
 
 \paragraph{Active-support initialization.}
-For UOT problems sharing one side, changes in that side's normalized optimal marginal-response shape are bounded in terms of the cost interaction relative to its marginal penalty (Proposition~\ref{prop:uot-hierarchy-stability}, Appendix~\ref{app:uot-hierarchy-stability}).
-This stability motivates a shared-side hierarchy following \hello~\citep{xia2026dual}, with adjacent levels changing only one side.
-We inherit the shared-side potential, complete the other by a $c$-transform, and reconcile the potentially unequal marginal-response totals using the optimal translation of \citet[Proposition~2]{sejourne2022faster}:
-\begin{equation*}
-(\mathbf f,\mathbf g)\leftarrow(\mathbf f+t^\star\mathbf1_m,\mathbf g-t^\star\mathbf1_n).
-\end{equation*}
-Here $t^\star$ maximizes the dual objective over scalar shifts, while all dual scores remain unchanged (see Appendix~\ref{app:hierarchy-init}).
+For UOT problems sharing one side, changes in that side's dual response are bounded in terms of the cost interaction relative to its marginal penalty (Proposition~\ref{prop:uot-hierarchy-stability}, Appendix~\ref{app:uot-hierarchy-stability}).
+Following \hello~\citep{xia2026dual}, this motivates a shared-side hierarchy whose adjacent levels refine only one side (Appendix~\ref{app:hierarchy-init}).
+Denoting finest node counts by $N_a,N_b$ and total reference masses by $A,B$ (allowing $A\ne B$), the stability conditions yield the level-$\ell$ specifications:
+\begin{itemize}
+\item \textbf{KL:} sliced reference masses directly with fixed $\rho_a,\rho_b$.
+\item \textbf{Squared-$\ell_2$ (proposed):} reference masses rescaled proportionally to totals $A,B$, with $\rho_{a,\ell}=\rho_{a,\mathrm{fine}}\frac{n_{a,\ell}}{N_a}$ and $\rho_{b,\ell}=\rho_{b,\mathrm{fine}}\frac{n_{b,\ell}}{N_b}$ (shared side and finest problem unchanged).
+\end{itemize}
+\init then inherits the shared-side potential, completes the other by a $c$-transform, and applies the score-preserving translation $(\mathbf{f},\mathbf{g})\leftarrow(\mathbf{f}+t^\star\mathbf{1}_m,\mathbf{g}-t^\star\mathbf{1}_n)$ with $t^\star\in\arg\max_{t\in\mathbb R} D(\mathbf{f}+t\mathbf{1}_m,\mathbf{g}-t\mathbf{1}_n)$ (Appendix~\ref{app:hierarchy-init}).
 
 The resulting scores $\boldsymbol\sigma^0$ guide active-support initialization: writing $\operatorname{Top}_k(\boldsymbol\sigma)$ for the union of the top-$k$ edges in each row and column, we construct
 \begin{equation*}

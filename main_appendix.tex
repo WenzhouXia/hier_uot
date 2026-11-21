@@ -19,6 +19,27 @@ Its dual is
 The objective is unchanged from~\eqref{eq:dual-uot}; only the active inequalities are retained.
 \end{definition}
 
+Because $\mathcal{D}(\mathbf{p}\,|\,\mathbf{h})=\sum_k \mathcal{D}_k(p_k\,|\,h_k)$ is separable across coordinates, $G(\mathbf{r},\mathbf{q})=\sum_v \rho_v \mathcal{D}_v(r_v\,|\,m_v)$ and its conjugate $G^*(\mathbf{y})=\sum_v \rho_v \mathcal{D}_v^*(y_v/\rho_v\,|\,m_v)$ decompose nodewise, with $y_v=-f_i$ on source nodes and $y_v=-g_j$ on target nodes.
+Here $\mathcal{D}_v^*(u\,|\,m_v):=\sup_{r\geq 0}\{ur-\mathcal{D}_v(r\,|\,m_v)\}$.
+Table~\ref{tab:penalty-formulas} summarizes the nodewise definitions, conjugates, marginal responses $\widehat{r}_v$, and proximal maps $\operatorname{prox}_{\sigma_v G_v^*}(s_v)$ with $G_v(r):=\rho_v\mathcal{D}_v(r\,|\,m_v)$ and step size $\sigma_v=(\mathbf{D}_y)_{vv}>0$ (see Appendix~\ref{app:l2-penalty} for additional $\ell_2^2$ details).
+
+\begin{table}[t]
+\centering
+\caption{Nodewise penalty formulas for a node with reference mass $m_v>0$, penalty weight $\rho_v>0$, and dual step $\sigma_v>0$, where $u_v$ in the KL proximal map solves $u_v+e^{u_v}=\log(\sigma_v m_v/\rho_v)+s_v/\rho_v$.}
+\label{tab:penalty-formulas}
+\footnotesize
+\begin{tabular}{lll}
+\toprule
+Quantity & KL & Squared-$\ell_2$ \\
+\midrule
+$\mathcal{D}_v(r\,|\,m_v)$ ($r\geq0$) & $r\log(r/m_v)-r+m_v$ & $\frac{1}{2}(r-m_v)^2$ \\[4pt]
+$\mathcal{D}_v^*(u\,|\,m_v)$ & $m_v(e^{u}-1)$ & $\frac{1}{2}[u+m_v]_+^2-\frac{1}{2}m_v^2$ \\[4pt]
+$\widehat{r}_v(f)$ & $m_v e^{-f/\rho_v}$ & $[m_v-f/\rho_v]_+$ \\[4pt]
+$\operatorname{prox}_{\sigma_v G_v^*}(s_v)$ & $\rho_v\bigl(u_v-\log(\sigma_v m_v/\rho_v)\bigr)$ & $\begin{cases}s_v,& s_v\leq-\rho_v m_v,\\ \frac{s_v-\sigma_v m_v}{1+\sigma_v/\rho_v},& s_v>-\rho_v m_v\end{cases}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{\subsolver Component Details}
 \label{app:pduot-controls}
 \paragraph{Preconditioning.}
@@ -60,14 +81,11 @@ Algorithm~\ref{alg:pduot} presents the control structure with one outer iteratio
 For clarity, its stopping and restart tests are shown at each iteration; the implementation evaluates them periodically, reusing the last residual between checks.
 
 \paragraph{Dual proximal step.}
-With KL penalties, the nodewise proximal map in~\eqref{eq:pduot-map} reduces to the scalar equation
-\begin{equation*}
-u_v+e^{u_v}=\log(\sigma_vm_v/\rho_v)+s_v/\rho_v,
-\end{equation*}
-where $\sigma_v=(\mathbf D_y)_{vv}$, $m_v$ is the node mass, $\rho_v$ its marginal penalty, and $s_v=(\mathbf y+\mathbf D_y\mathbf A_{\mathcal N}(2\widehat{\mathbf x}-\mathbf x))_v$; the update is $\widehat y_v=\rho_v(u_v-\log(\sigma_vm_v/\rho_v))$.
+In~\eqref{eq:pduot-map}, each node evaluates $\widehat{y}_v=\operatorname{prox}_{\sigma_v G_v^*}(s_v)$ with $\sigma_v=(\mathbf{D}_y)_{vv}$ and $s_v=(\mathbf{y}+\mathbf{D}_y\mathbf{A}_{\mathcal N}(2\widehat{\mathbf{x}}-\mathbf{x}))_v$ via Table~\ref{tab:penalty-formulas}.
+For KL penalties, $u_v$ satisfies $u_v+e^{u_v}=\log(\sigma_v m_v/\rho_v)+s_v/\rho_v$.
 We predict $u_v$ by a short Newton iteration in FP32 and refine it in FP64 to a rounding-level residual; if refinement fails, the update is exposed as NaN so that the KKT checks reject it.
 When $e^{u_v}\le1$, we evaluate $\widehat y_v=y_v+\sigma_v(r_v-m_ve^{u_v-\log(\sigma_vm_v/\rho_v)})$ from the original optimality condition, with $r_v=(\mathbf A_{\mathcal N}(2\widehat{\mathbf x}-\mathbf x))_v$, which avoids cancellation between the two logarithms that $\rho_v$ amplifies.
-For squared $\ell_2^2$ penalties the proximal map is closed form (Appendix~\ref{app:l2-penalty}).
+For squared $\ell_2^2$ penalties the proximal map is closed form (Table~\ref{tab:penalty-formulas}).
 
 \subsection{Stopping Criterion}
 \label{app:stopping-criterion}
